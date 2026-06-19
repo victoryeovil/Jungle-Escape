@@ -1,0 +1,24 @@
+{
+  "level_id": 16,
+  "world": "Hidden Gates",
+  "name": "Spike Detour",
+  "move_limit": 18,
+  "perfect_moves": 13,
+  "grid": [
+    "WWWWWWWWW",
+    "WP.......W",
+    "W.WWSSW.W",
+    "W.WK..W.W",
+    "W.WWWWW.W",
+    "W.......W",
+    "WSWWGWWSW",
+    "W..C....W",
+    "W......EW",
+    "WWWWWWWWW"
+  ],
+  "legend": {
+    "W": "wall", "P": "player_start", ".": "floor",
+    "K": "key", "G": "gate", "S": "spike", "C": "coin", "E": "exit"
+  },
+  "hint": "Watch out for spikes! They're deadly. Navigate around them carefully."
+}

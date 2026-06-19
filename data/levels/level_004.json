@@ -1,0 +1,21 @@
+{
+  "level_id": 4,
+  "world": "Jungle Path",
+  "name": "Gem Hunt",
+  "move_limit": 0,
+  "perfect_moves": 9,
+  "grid": [
+    "WWWWWWW",
+    "WP.C..W",
+    "W..W..W",
+    "W..W.MW",
+    "W..W..W",
+    "W....EW",
+    "WWWWWWW"
+  ],
+  "legend": {
+    "W": "wall", "P": "player_start", ".": "floor",
+    "C": "coin", "M": "gem", "E": "exit"
+  },
+  "hint": "There's a gem hidden on the right side. It's worth going for!"
+}

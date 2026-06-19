@@ -1,0 +1,24 @@
+{
+  "level_id": 14,
+  "world": "Hidden Gates",
+  "name": "Gem Gate",
+  "move_limit": 18,
+  "perfect_moves": 13,
+  "grid": [
+    "WWWWWWWWW",
+    "WP.......W",
+    "W.WW.WW.W",
+    "W.WK.MW.W",
+    "W.WW.WW.W",
+    "W.......W",
+    "WWWGWWWWW",
+    "W.....C.W",
+    "W......EW",
+    "WWWWWWWWW"
+  ],
+  "legend": {
+    "W": "wall", "P": "player_start", ".": "floor",
+    "K": "key", "G": "gate", "M": "gem", "C": "coin", "E": "exit"
+  },
+  "hint": "Key and gem are in separate alcoves. Plan your order carefully."
+}

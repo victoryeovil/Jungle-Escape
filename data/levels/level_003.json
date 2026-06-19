@@ -1,0 +1,21 @@
+{
+  "level_id": 3,
+  "world": "Jungle Path",
+  "name": "Winding Path",
+  "move_limit": 0,
+  "perfect_moves": 10,
+  "grid": [
+    "WWWWWWW",
+    "WP....W",
+    "WWWW..W",
+    "W....CW",
+    "W.WWWWW",
+    "W....EW",
+    "WWWWWWW"
+  ],
+  "legend": {
+    "W": "wall", "P": "player_start", ".": "floor",
+    "C": "coin", "E": "exit"
+  },
+  "hint": "The path twists — follow it around the walls."
+}

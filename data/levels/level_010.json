@@ -1,0 +1,24 @@
+{
+  "level_id": 10,
+  "world": "Jungle Path",
+  "name": "World 1 Boss: Jungle Gate",
+  "move_limit": 20,
+  "perfect_moves": 15,
+  "grid": [
+    "WWWWWWWWWW",
+    "WP.C......W",
+    "W.WWWWWW.W",
+    "W.W.....W.W",
+    "W.W.CFC.W.W",
+    "W.W.....W.W",
+    "W.WWWWWW.W",
+    "W....M....W",
+    "WWWWWWWWEW",
+    "WWWWWWWWWW"
+  ],
+  "legend": {
+    "W": "wall", "P": "player_start", ".": "floor",
+    "C": "coin", "F": "fruit", "M": "gem", "E": "exit"
+  },
+  "hint": "The final World 1 challenge! Collect as much as you can before the exit."
+}

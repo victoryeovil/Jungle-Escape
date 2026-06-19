@@ -1,0 +1,22 @@
+{
+  "level_id": 5,
+  "world": "Jungle Path",
+  "name": "First Fruit",
+  "move_limit": 0,
+  "perfect_moves": 11,
+  "grid": [
+    "WWWWWWWW",
+    "WP......W",
+    "W.WWWW.W",
+    "W.WF...W",
+    "W.W.WWWWW",
+    "W.W.C..W",
+    "W.....EW",
+    "WWWWWWWW"
+  ],
+  "legend": {
+    "W": "wall", "P": "player_start", ".": "floor",
+    "F": "fruit", "C": "coin", "E": "exit"
+  },
+  "hint": "Fruit gives double coins! Navigate through the maze to find it."
+}

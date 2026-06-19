@@ -1,0 +1,40 @@
+# Godot editor/import cache
+.godot/
+.import/
+*.import
+
+# Godot exports and local export settings
+export.cfg
+export_presets.cfg
+*.apk
+*.aab
+*.ipa
+*.pck
+*.zip
+
+# Local signing credentials
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+
+# Mono/C# generated files, if enabled later
+.mono/
+data_*/
+mono_crash.*.json
+
+# Logs and crash dumps
+*.log
+logs/
+crash/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
+*.temp
+*.swp
+*.swo
+.vscode/
+.idea/

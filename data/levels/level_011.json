@@ -1,0 +1,22 @@
+{
+  "level_id": 11,
+  "world": "Hidden Gates",
+  "name": "First Key",
+  "move_limit": 14,
+  "perfect_moves": 10,
+  "grid": [
+    "WWWWWWWW",
+    "WP.K...W",
+    "W......W",
+    "WWWWGWWW",
+    "W......W",
+    "W....C.W",
+    "W.....EW",
+    "WWWWWWWW"
+  ],
+  "legend": {
+    "W": "wall", "P": "player_start", ".": "floor",
+    "K": "key", "G": "gate", "C": "coin", "E": "exit"
+  },
+  "hint": "Collect the key before reaching the gate — the gate won't open without it!"
+}

@@ -1,0 +1,27 @@
+{
+  "level_id": 20,
+  "world": "Hidden Gates",
+  "name": "World 2 Boss: Hidden Temple Gate",
+  "move_limit": 26,
+  "perfect_moves": 20,
+  "grid": [
+    "WWWWWWWWWWWW",
+    "WP..........W",
+    "W.WWWWWWWWW.W",
+    "W.WK..C...W.W",
+    "W.W.WWWWW.W.W",
+    "W.W.W.N.W.W.W",
+    "W.W.WWSWW.W.W",
+    "W.W.......W.W",
+    "W.WWGWWWWWW.W",
+    "W....M......W",
+    "WWWWWWWWWWEW",
+    "WWWWWWWWWWWW"
+  ],
+  "legend": {
+    "W": "wall", "P": "player_start", ".": "floor",
+    "K": "key", "G": "gate", "N": "snake", "S": "spike",
+    "C": "coin", "M": "gem", "E": "exit"
+  },
+  "hint": "The toughest level yet. Snake and spike defend the inner vault. Plan every move."
+}

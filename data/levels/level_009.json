@@ -1,0 +1,24 @@
+{
+  "level_id": 9,
+  "world": "Jungle Path",
+  "name": "Treasure Trail",
+  "move_limit": 18,
+  "perfect_moves": 14,
+  "grid": [
+    "WWWWWWWWW",
+    "WP.......W",
+    "W.C.C.C.W",
+    "W.......W",
+    "W.WWWWW.W",
+    "W.F...M.W",
+    "W.......W",
+    "W.......W",
+    "W......EW",
+    "WWWWWWWWW"
+  ],
+  "legend": {
+    "W": "wall", "P": "player_start", ".": "floor",
+    "C": "coin", "F": "fruit", "M": "gem", "E": "exit"
+  },
+  "hint": "Rich in rewards — coins, a fruit AND a gem. Spend moves wisely."
+}

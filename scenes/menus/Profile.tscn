@@ -1,0 +1,79 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/Profile.gd" id="1_profile"]
+
+[node name="Profile" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_profile")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.06, 0.18, 0.06, 1)
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -240.0
+offset_right = 180.0
+offset_bottom = 240.0
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+theme_override_constants/separation = 14
+
+[node name="LblTitle" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+text = "Profile"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 24
+
+[node name="LblName" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+text = "Explorer"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 20
+
+[node name="StatsGrid" type="VBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+
+[node name="LblCoins" type="Label" parent="Panel/VBox/StatsGrid"]
+layout_mode = 2
+text = "Coins:  0"
+
+[node name="LblGems" type="Label" parent="Panel/VBox/StatsGrid"]
+layout_mode = 2
+text = "Gems:   0"
+
+[node name="LblStars" type="Label" parent="Panel/VBox/StatsGrid"]
+layout_mode = 2
+text = "Stars:  0"
+
+[node name="LblLevels" type="Label" parent="Panel/VBox/StatsGrid"]
+layout_mode = 2
+text = "Levels: 0"
+
+[node name="BtnLogout" type="Button" parent="Panel/VBox"]
+layout_mode = 2
+text = "Log Out"
+modulate = Color(1, 0.6, 0.3, 1)
+
+[node name="BtnBack" type="Button" parent="Panel/VBox"]
+layout_mode = 2
+text = "< Back"

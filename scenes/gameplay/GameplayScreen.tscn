@@ -1,0 +1,247 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/GameplayScreen.gd" id="1_gs"]
+[ext_resource type="Script" path="res://scripts/gameplay/Grid.gd" id="2_grid"]
+[ext_resource type="Script" path="res://scripts/gameplay/Player.gd" id="3_player"]
+[ext_resource type="Script" path="res://scripts/gameplay/InputHandler.gd" id="4_input"]
+[ext_resource type="Script" path="res://scripts/ui/HUD.gd" id="5_hud"]
+[ext_resource type="Script" path="res://scripts/ui/PauseMenu.gd" id="6_pause"]
+[ext_resource type="Script" path="res://scripts/ui/LevelComplete.gd" id="7_complete"]
+[ext_resource type="Script" path="res://scripts/ui/GameOver.gd" id="8_over"]
+
+[node name="GameplayScreen" type="Node2D"]
+script = ExtResource("1_gs")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 480.0
+offset_bottom = 854.0
+color = Color(0.06, 0.20, 0.06, 1)
+
+[node name="Grid" type="Node2D" parent="."]
+script = ExtResource("2_grid")
+
+[node name="Player" type="Node2D" parent="Grid"]
+script = ExtResource("3_player")
+
+[node name="InputHandler" type="Node" parent="."]
+script = ExtResource("4_input")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+script = ExtResource("5_hud")
+
+[node name="TopBar" type="HBoxContainer" parent="HUD"]
+layout_mode = 0
+offset_right = 480.0
+offset_bottom = 60.0
+theme_override_constants/separation = 12
+
+[node name="BtnPause" type="Button" parent="HUD/TopBar"]
+layout_mode = 2
+custom_minimum_size = Vector2(48, 48)
+text = "||"
+
+[node name="LblLevel" type="Label" parent="HUD/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Level 1"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 18
+
+[node name="LblCoins" type="Label" parent="HUD/TopBar"]
+layout_mode = 2
+text = "🪙 0"
+
+[node name="LblKeys" type="Label" parent="HUD/TopBar"]
+layout_mode = 2
+text = "🗝 0"
+visible = false
+
+[node name="LblMoves" type="Label" parent="HUD/TopBar"]
+layout_mode = 2
+text = "0"
+
+[node name="BottomBar" type="HBoxContainer" parent="HUD"]
+layout_mode = 0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -60.0
+offset_right = 480.0
+theme_override_constants/separation = 16
+
+[node name="BtnHint" type="Button" parent="HUD/BottomBar"]
+layout_mode = 2
+custom_minimum_size = Vector2(120, 50)
+text = "Hint 💡"
+
+[node name="BtnRestart" type="Button" parent="HUD/BottomBar"]
+layout_mode = 2
+custom_minimum_size = Vector2(120, 50)
+text = "Restart ↺"
+
+[node name="PauseMenu" type="Control" parent="."]
+layout_mode = 0
+offset_right = 480.0
+offset_bottom = 854.0
+visible = false
+process_mode = 2
+script = ExtResource("6_pause")
+
+[node name="Panel" type="Panel" parent="PauseMenu"]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -140.0
+offset_top = -160.0
+offset_right = 140.0
+offset_bottom = 160.0
+
+[node name="VBox" type="VBoxContainer" parent="PauseMenu/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 14
+
+[node name="LblPaused" type="Label" parent="PauseMenu/Panel/VBox"]
+layout_mode = 2
+text = "PAUSED"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 24
+
+[node name="BtnResume" type="Button" parent="PauseMenu/Panel/VBox"]
+layout_mode = 2
+text = "Resume"
+
+[node name="BtnRestart" type="Button" parent="PauseMenu/Panel/VBox"]
+layout_mode = 2
+text = "Restart Level"
+
+[node name="BtnSettings" type="Button" parent="PauseMenu/Panel/VBox"]
+layout_mode = 2
+text = "Settings"
+
+[node name="BtnQuit" type="Button" parent="PauseMenu/Panel/VBox"]
+layout_mode = 2
+text = "Quit to Menu"
+
+[node name="LevelComplete" type="Control" parent="."]
+layout_mode = 0
+offset_right = 480.0
+offset_bottom = 854.0
+visible = false
+script = ExtResource("7_complete")
+
+[node name="Panel" type="Panel" parent="LevelComplete"]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -200.0
+offset_right = 160.0
+offset_bottom = 200.0
+
+[node name="VBox" type="VBoxContainer" parent="LevelComplete/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 12
+
+[node name="LblLevel" type="Label" parent="LevelComplete/Panel/VBox"]
+layout_mode = 2
+text = "Level Complete!"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 26
+
+[node name="LblStars" type="Label" parent="LevelComplete/Panel/VBox"]
+layout_mode = 2
+text = "★★★"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 32
+
+[node name="LblCoins" type="Label" parent="LevelComplete/Panel/VBox"]
+layout_mode = 2
+text = "+0 Coins"
+horizontal_alignment = 1
+
+[node name="LblMoves" type="Label" parent="LevelComplete/Panel/VBox"]
+layout_mode = 2
+text = "0 Moves"
+horizontal_alignment = 1
+
+[node name="Buttons" type="HBoxContainer" parent="LevelComplete/Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BtnReplay" type="Button" parent="LevelComplete/Panel/VBox/Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "↺ Replay"
+
+[node name="BtnNext" type="Button" parent="LevelComplete/Panel/VBox/Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Next ▶"
+
+[node name="BtnMap" type="Button" parent="LevelComplete/Panel/VBox/Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Map"
+
+[node name="BtnShare" type="Button" parent="LevelComplete/Panel/VBox"]
+layout_mode = 2
+text = "📤 Share Score"
+
+[node name="BtnChallenge" type="Button" parent="LevelComplete/Panel/VBox"]
+layout_mode = 2
+text = "⚔ Challenge Friend"
+
+[node name="GameOver" type="Control" parent="."]
+layout_mode = 0
+offset_right = 480.0
+offset_bottom = 854.0
+visible = false
+script = ExtResource("8_over")
+
+[node name="Panel" type="Panel" parent="GameOver"]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -140.0
+offset_top = -120.0
+offset_right = 140.0
+offset_bottom = 120.0
+
+[node name="VBox" type="VBoxContainer" parent="GameOver/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 14
+
+[node name="LblReason" type="Label" parent="GameOver/Panel/VBox"]
+layout_mode = 2
+text = "Try Again!"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 22
+
+[node name="Buttons" type="HBoxContainer" parent="GameOver/Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BtnRetry" type="Button" parent="GameOver/Panel/VBox/Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "↺ Retry"
+
+[node name="BtnMap" type="Button" parent="GameOver/Panel/VBox/Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Map"

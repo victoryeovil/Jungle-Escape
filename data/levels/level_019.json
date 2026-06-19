@@ -1,0 +1,25 @@
+{
+  "level_id": 19,
+  "world": "Hidden Gates",
+  "name": "Snake Preview",
+  "move_limit": 22,
+  "perfect_moves": 16,
+  "grid": [
+    "WWWWWWWWWW",
+    "WP........W",
+    "W.WWWWWWW.W",
+    "W.WK.....W.W",
+    "W.W.WWWN.W.W",
+    "W.W.W....W.W",
+    "W.W.WSSW.W.W",
+    "W.W......W.W",
+    "W.WWGWWWW.W",
+    "W.....C..EW",
+    "WWWWWWWWWW"
+  ],
+  "legend": {
+    "W": "wall", "P": "player_start", ".": "floor",
+    "K": "key", "G": "gate", "N": "snake", "S": "spike", "C": "coin", "E": "exit"
+  },
+  "hint": "A snake appears for the first time. Avoid it — it's just as deadly as a spike."
+}

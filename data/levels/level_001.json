@@ -1,0 +1,21 @@
+{
+  "level_id": 1,
+  "world": "Jungle Path",
+  "name": "First Steps",
+  "move_limit": 0,
+  "perfect_moves": 6,
+  "grid": [
+    "WWWWWW",
+    "WP...W",
+    "W....W",
+    "W...CW",
+    "W....W",
+    "W...EW",
+    "WWWWWW"
+  ],
+  "legend": {
+    "W": "wall", "P": "player_start", ".": "floor",
+    "C": "coin", "E": "exit"
+  },
+  "hint": "Swipe right and down to reach the exit. Grab the coin on the way!"
+}

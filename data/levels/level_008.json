@@ -1,0 +1,21 @@
+{
+  "level_id": 8,
+  "world": "Jungle Path",
+  "name": "Gem Vault",
+  "move_limit": 14,
+  "perfect_moves": 10,
+  "grid": [
+    "WWWWWWWW",
+    "WP....MW",
+    "W.WWWW.W",
+    "W......W",
+    "W.WWWW.W",
+    "WM....EW",
+    "WWWWWWWW"
+  ],
+  "legend": {
+    "W": "wall", "P": "player_start", ".": "floor",
+    "M": "gem", "E": "exit"
+  },
+  "hint": "Two gems, one path. Gems are rare — worth the detour!"
+}

@@ -1,0 +1,23 @@
+{
+  "level_id": 12,
+  "world": "Hidden Gates",
+  "name": "Two Locks",
+  "move_limit": 18,
+  "perfect_moves": 14,
+  "grid": [
+    "WWWWWWWWW",
+    "WP.......W",
+    "W.K.W.K.W",
+    "W...W...W",
+    "WGWWWWGWW",
+    "W.......W",
+    "W..C....W",
+    "W......EW",
+    "WWWWWWWWW"
+  ],
+  "legend": {
+    "W": "wall", "P": "player_start", ".": "floor",
+    "K": "key", "G": "gate", "C": "coin", "E": "exit"
+  },
+  "hint": "Two keys, two gates. Collect both keys before hitting any gate."
+}

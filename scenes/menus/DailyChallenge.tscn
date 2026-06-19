@@ -1,0 +1,55 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/DailyChallenge.gd" id="1_daily"]
+
+[node name="DailyChallenge" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_daily")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.05, 0.18, 0.10, 1)
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -200.0
+offset_right = 160.0
+offset_bottom = 200.0
+theme_override_constants/separation = 20
+
+[node name="LblTitle" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Daily Challenge"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 32
+
+[node name="LblComingSoon" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Coming Soon!"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 20
+modulate = Color(0.7, 1.0, 0.5, 1)
+
+[node name="LblDesc" type="Label" parent="VBox"]
+layout_mode = 2
+text = "A new challenge every day.\nBeat your friends and climb the ranks!"
+horizontal_alignment = 1
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 16
+
+[node name="BtnBack" type="Button" parent="VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 50)
+text = "< Back"
+theme_override_font_sizes/font_size = 18

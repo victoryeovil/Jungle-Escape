@@ -1,0 +1,24 @@
+{
+  "level_id": 17,
+  "world": "Hidden Gates",
+  "name": "Spike Garden",
+  "move_limit": 20,
+  "perfect_moves": 15,
+  "grid": [
+    "WWWWWWWWWW",
+    "WP........W",
+    "W.S.W.S..W",
+    "W...W....W",
+    "W.K.WWWW.W",
+    "W.S......W",
+    "WWWGWWWW.W",
+    "W.......CW",
+    "W.......EW",
+    "WWWWWWWWWW"
+  ],
+  "legend": {
+    "W": "wall", "P": "player_start", ".": "floor",
+    "K": "key", "G": "gate", "S": "spike", "C": "coin", "E": "exit"
+  },
+  "hint": "Spikes are scattered. Look before you swipe!"
+}

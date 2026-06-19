@@ -1,0 +1,34 @@
+{
+  "id": 1,
+  "length": 26,
+  "seed": 17,
+  "name": "Jungle Trail",
+  "obstacles": [
+    { "type": "rock",  "lane": 0, "row": 5  },
+    { "type": "rock",  "lane": 2, "row": 7  },
+    { "type": "log",   "lane": 1, "row": 10 },
+    { "type": "branch", "lane": 1, "row": 13 },
+    { "type": "rock",  "lane": 0, "row": 16 },
+    { "type": "log",   "lane": 1, "row": 20 },
+    { "type": "rock",  "lane": 2, "row": 23 }
+  ],
+  "coins": [
+    { "lane": 1, "row": 2  },
+    { "lane": 1, "row": 3  },
+    { "lane": 1, "row": 4  },
+    { "lane": 2, "row": 6  },
+    { "lane": 1, "row": 8  },
+    { "lane": 0, "row": 9  },
+    { "lane": 2, "row": 11 },
+    { "lane": 0, "row": 12 },
+    { "lane": 2, "row": 14 },
+    { "lane": 1, "row": 15 },
+    { "lane": 1, "row": 17 },
+    { "lane": 0, "row": 18 },
+    { "lane": 2, "row": 18 },
+    { "lane": 1, "row": 21 },
+    { "lane": 0, "row": 22 },
+    { "lane": 1, "row": 24 },
+    { "gem": true, "lane": 1, "row": 25 }
+  ]
+}

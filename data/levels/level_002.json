@@ -1,0 +1,21 @@
+{
+  "level_id": 2,
+  "world": "Jungle Path",
+  "name": "Coin Collector",
+  "move_limit": 0,
+  "perfect_moves": 8,
+  "grid": [
+    "WWWWWWW",
+    "WP....W",
+    "W.C.C.W",
+    "W.....W",
+    "W..C..W",
+    "W....EW",
+    "WWWWWWW"
+  ],
+  "legend": {
+    "W": "wall", "P": "player_start", ".": "floor",
+    "C": "coin", "E": "exit"
+  },
+  "hint": "Collect all three coins before reaching the exit for max stars!"
+}

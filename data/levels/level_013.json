@@ -1,0 +1,24 @@
+{
+  "level_id": 13,
+  "world": "Hidden Gates",
+  "name": "Key Maze",
+  "move_limit": 20,
+  "perfect_moves": 15,
+  "grid": [
+    "WWWWWWWWWW",
+    "WP........W",
+    "W.WWWWWW.W",
+    "W.WK....W.W",
+    "W.W.WWWW.W",
+    "W.W.....W.W",
+    "W.WWGWWW.W",
+    "W.....C..W",
+    "W.......EW",
+    "WWWWWWWWWW"
+  ],
+  "legend": {
+    "W": "wall", "P": "player_start", ".": "floor",
+    "K": "key", "G": "gate", "C": "coin", "E": "exit"
+  },
+  "hint": "The key is deep in the maze. You must find it before the gate will open."
+}

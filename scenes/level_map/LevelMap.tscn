@@ -1,0 +1,63 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/LevelMap.gd" id="1_map"]
+
+[node name="LevelMap" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_map")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.06, 0.18, 0.06, 1)
+
+[node name="Header" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+offset_bottom = 64.0
+theme_override_constants/separation = 10
+
+[node name="BtnBack" type="Button" parent="Header"]
+layout_mode = 2
+custom_minimum_size = Vector2(60, 48)
+text = "< Back"
+
+[node name="LblWorld" type="Label" parent="Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Select Level"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 22
+
+[node name="TopBar" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+offset_top = 64.0
+offset_bottom = 100.0
+theme_override_constants/separation = 20
+
+[node name="LblCoins" type="Label" parent="TopBar"]
+layout_mode = 2
+text = "🪙 0"
+
+[node name="LblStars" type="Label" parent="TopBar"]
+layout_mode = 2
+text = "★ 0"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 100.0
+
+[node name="GridContainer" type="GridContainer" parent="ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 4
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12

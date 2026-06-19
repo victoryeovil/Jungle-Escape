@@ -1,0 +1,56 @@
+[gd_scene format=3 uid="uid://clfg72vx3skq"]
+
+[ext_resource type="Script" uid="uid://d1owuflxa84c4" path="res://scripts/ui/SplashScreen.gd" id="1_splash"]
+
+[node name="SplashScreen" type="Control" unique_id=1164837174]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_splash")
+
+[node name="Background" type="ColorRect" parent="." unique_id=770104060]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.17542103, 0.19148058, 0.12515649, 1)
+
+[node name="VBox" type="VBoxContainer" parent="." unique_id=1869409890]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -100.0
+offset_right = 150.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+
+[node name="LblTitle" type="Label" parent="VBox" unique_id=1787277315]
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+text = "JUNGLE ESCAPE"
+horizontal_alignment = 1
+
+[node name="LblSubtitle" type="Label" parent="VBox" unique_id=1965015593]
+modulate = Color(0.8, 1, 0.6, 1)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Lost Path"
+horizontal_alignment = 1
+
+[node name="LblLoading" type="Label" parent="VBox" unique_id=682593984]
+modulate = Color(0.7, 0.7, 0.7, 1)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Loading..."
+horizontal_alignment = 1

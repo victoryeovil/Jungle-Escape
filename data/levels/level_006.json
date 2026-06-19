@@ -1,0 +1,22 @@
+{
+  "level_id": 6,
+  "world": "Jungle Path",
+  "name": "Crossroads",
+  "move_limit": 14,
+  "perfect_moves": 10,
+  "grid": [
+    "WWWWWWWW",
+    "W...P..W",
+    "W..C...W",
+    "W......W",
+    "WWWW.WWW",
+    "W.C....W",
+    "W.....EW",
+    "WWWWWWWW"
+  ],
+  "legend": {
+    "W": "wall", "P": "player_start", ".": "floor",
+    "C": "coin", "E": "exit"
+  },
+  "hint": "You have a move limit now. Plan your route before swiping!"
+}

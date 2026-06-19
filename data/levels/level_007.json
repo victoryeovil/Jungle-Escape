@@ -1,0 +1,23 @@
+{
+  "level_id": 7,
+  "world": "Jungle Path",
+  "name": "The Maze",
+  "move_limit": 16,
+  "perfect_moves": 12,
+  "grid": [
+    "WWWWWWWWW",
+    "WP.......W",
+    "W.WWWWW.W",
+    "W.W.C..W.W",
+    "W.W.WWWW.W",
+    "W.W.....CW",
+    "W.WWWWWW.W",
+    "W.......EW",
+    "WWWWWWWWWW"
+  ],
+  "legend": {
+    "W": "wall", "P": "player_start", ".": "floor",
+    "C": "coin", "E": "exit"
+  },
+  "hint": "Spiral inward to grab the coins, then find the path out."
+}

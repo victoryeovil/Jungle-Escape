@@ -1,0 +1,25 @@
+{
+  "level_id": 18,
+  "world": "Hidden Gates",
+  "name": "Key Vault",
+  "move_limit": 22,
+  "perfect_moves": 17,
+  "grid": [
+    "WWWWWWWWWWW",
+    "WP.........W",
+    "W.WWWWWWWW.W",
+    "W.W..K...W.W",
+    "W.W.WWWW.W.W",
+    "W.W.W..S.W.W",
+    "W.W.WWWW.W.W",
+    "W.W......W.W",
+    "W.WWGWWWWW.W",
+    "W....C....EW",
+    "WWWWWWWWWWWW"
+  ],
+  "legend": {
+    "W": "wall", "P": "player_start", ".": "floor",
+    "K": "key", "G": "gate", "S": "spike", "C": "coin", "E": "exit"
+  },
+  "hint": "A spike guards a shortcut. Go the long way or test your nerve."
+}
