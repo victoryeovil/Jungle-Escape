@@ -333,7 +333,7 @@ func _draw_river_art() -> void:
 	for i in range(4):
 		var base_x := float(i) * 112.0 + 18.0
 		var sy := 418.0 + float(i % 2) * 10.0
-		var alpha := 0.10 + 0.16 * abs(sin(_shimmer_t + float(i) * 0.9))
+		var alpha: float = 0.10 + 0.16 * absf(sin(_shimmer_t + float(i) * 0.9))
 		draw_rect(Rect2(base_x, sy, 90.0 + float(i) * 12.0, 4.0),
 			Color(C_SHIMMER.r, C_SHIMMER.g, C_SHIMMER.b, alpha))
 	# Reeds on banks
