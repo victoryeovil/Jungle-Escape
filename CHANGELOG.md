@@ -1,5 +1,21 @@
 # CHANGELOG — Jungle Escape: Lost Path
 
+## [Unreleased] - Generated 3D Asset Fill Pass
+
+### Added
+- **Original generated low-poly 3D asset kit** - 54 new `.glb` files created under `assets/3d/` for environment path pieces, foliage, trees, rocks, obstacles, bridges, finish gates, rewards, collectibles, wildlife, and the Sand Shoes prop.
+- **3D material and VFX resources** - added `mossy_stone.tres`, `water_stylized.tres`, `foliage_sway.gdshader`, and six `GPUParticles3D` scene resources for torch flame, finish glow, pickup sparkle, dust puff, hit burst, and sand trail effects.
+- **Repeatable asset generator** - added `tools/generate_missing_3d_assets.py`, a deterministic local GLB/resource generator for the project-authored missing 3D asset pass.
+
+### Changed
+- **`MISSING_3D_ASSETS.md`** now marks generated GLB/resource targets as `Generated (original)` and clarifies that level runtime dressing remains procedural until `LevelManager3D.gd` is wired to instantiate the new assets.
+- **`ASSET_LICENSES.md` and `assets/3d/ASSET_CREDITS.md`** now document the generated assets as original project-authored output with no third-party attribution requirement.
+- **Poly Pizza Elephant entry** in `ASSET_LICENSES.md` is marked not imported / not used because `assets/3d/wildlife/elephant.glb` is now an original generated asset.
+
+### Validation
+- Generated 54 GLB files and confirmed all 56 project GLBs have valid `glTF` 2.0 binary headers, JSON chunks, meshes, and materials.
+- Godot import metadata has not been generated yet because the editor/headless executable is not available from this shell.
+
 ## [Unreleased] - Jungle Map Visual Overhaul
 
 ### Changed

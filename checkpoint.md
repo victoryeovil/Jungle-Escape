@@ -1,4 +1,53 @@
-# CHECKPOINT - Session 17
+# CHECKPOINT - Session 18
+
+---
+
+## Session 18 — Generated Missing 3D Asset Fill Pass
+
+### Current Focus
+Create project-local 3D assets for the concrete missing GLB/resource targets tracked in `MISSING_3D_ASSETS.md`, following the same auditability expectation used for the imported Kairo and Zuri character assets.
+
+### What Changed This Session
+
+**Generated asset pipeline**
+- Added `tools/generate_missing_3d_assets.py`.
+- The script writes deterministic glTF 2.0 binary `.glb` files directly, using only local Python standard library code.
+- Assets are original project-authored low-poly models, not third-party downloads.
+
+**Generated 3D files**
+- Created 54 new `.glb` files under:
+  - `assets/3d/environment/`
+  - `assets/3d/obstacles/`
+  - `assets/3d/goals/`
+  - `assets/3d/rewards/`
+  - `assets/3d/collectibles/`
+  - `assets/3d/wildlife/`
+  - `assets/3d/upgrades/`
+- Covered path pieces, grass/ferns/bushes/vines, palms, jungle trees, tree clusters, rocks, logs, spikes, mud, river gap kit, bridges, boulder, slide barrier, pressure plate, sand dune, gates, portal, altars, treasure chest, resource collectibles, Big 5 wildlife, supporting wildlife, and Sand Shoes prop.
+
+**Generated materials and VFX**
+- Added `assets/3d/materials/mossy_stone.tres`.
+- Added `assets/3d/materials/water_stylized.tres`.
+- Added `assets/3d/vfx/foliage_sway.gdshader`.
+- Added `assets/3d/vfx/torch_flame.tscn`, `finish_glow.tscn`, `pickup_sparkle.tscn`, `dust_puff.tscn`, `hit_burst.tscn`, and `sand_trail.tscn`.
+
+**Asset tracking updates**
+- Updated `MISSING_3D_ASSETS.md` with `Generated (original)` status for the generated GLB/resource targets.
+- Clarified that level dressing runtime is still procedural until `LevelManager3D.gd` is wired to instantiate the new GLBs.
+- Updated `ASSET_LICENSES.md` and `assets/3d/ASSET_CREDITS.md` to document the generated assets as original project output.
+- Marked the previously planned CC BY Poly Pizza elephant as not imported / not used, because the elephant GLB now exists as original generated output.
+
+### Validation
+- Ran `python tools\generate_missing_3d_assets.py`; it generated 54 GLB files successfully.
+- Parsed all 56 project `.glb` files, including Kairo and Zuri, and confirmed valid `glTF` 2.0 binary headers, matching file lengths, JSON chunks, mesh arrays, and material arrays.
+- Listed generated `.glb`, `.tres`, `.gdshader`, and `.tscn` files under `assets/3d`.
+- Godot import validation was not run because no Godot executable is available from this shell.
+
+### Next Recommended Steps
+1. Open the project in Godot so `.import` metadata is generated for the new `.glb` assets.
+2. Wire high-impact runtime replacements first: collectibles, bridge pieces, obstacle props, finish gates, then wildlife and dense foliage.
+3. Add animation loops later for wildlife; current generated wildlife GLBs are static low-poly models.
+4. Generate or source the remaining non-3D UI assets separately: resource icons, character thumbnails, home-stage images, and map background art.
 
 ---
 

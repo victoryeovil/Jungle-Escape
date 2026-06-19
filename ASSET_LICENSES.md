@@ -48,7 +48,8 @@ This root ledger summarizes commercial-safety status for all assets. Detailed im
 - **License:** CC BY 3.0 — **ATTRIBUTION REQUIRED IN GAME CREDITS**
 - **Credit line:** "Elephant" by Poly by Google, CC BY 3.0
 - **Download:** https://poly.pizza/m/cx0-TiCjDOx
-- **Used for:** Elephant silhouette in Wildlands zone
+- **Status:** Not imported / not used after the generated original elephant GLB pass.
+- **Former intended use:** Elephant silhouette in Wildlands zone
 - **Extract to:** `res://assets/3d/animals/elephant.glb`
 
 ---
@@ -75,6 +76,14 @@ This root ledger summarizes commercial-safety status for all assets. Detailed im
 | CC BY-NC| ❌ no      | ✅ REQUIRED | ✅      |
 
 **Rule:** Default to CC0. Use CC BY only when CC0 unavailable; add credit line.
+
+---
+
+## Project-Authored Generated 3D Assets
+
+| Asset group | Source | License/status | Local files | Usage notes |
+| --- | --- | --- | --- | --- |
+| Generated low-poly 3D environment, obstacle, goal, reward, collectible, wildlife, upgrade, material, and VFX assets | Authored in `tools/generate_missing_3d_assets.py` for this project | Original project-authored output; no third-party license or attribution required | `res://assets/3d/environment/`, `res://assets/3d/obstacles/`, `res://assets/3d/goals/`, `res://assets/3d/rewards/`, `res://assets/3d/collectibles/`, `res://assets/3d/wildlife/`, `res://assets/3d/upgrades/`, `res://assets/3d/materials/`, `res://assets/3d/vfx/` | Low-poly GLB/resource fill pass for the targets tracked in `MISSING_3D_ASSETS.md`. Godot still needs to import the GLBs in-editor to create `.import` metadata before runtime replacement work. |
 
 ---
 
