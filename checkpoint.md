@@ -1,4 +1,120 @@
-# CHECKPOINT - Session 18
+# CHECKPOINT - Session 21
+
+---
+
+## Session 21 — Explorer Shop Preview, Level Gates, and Gameplay Response
+
+### Current Focus
+Fix Choose Explorer interactions so Equip actually changes the selected character, buying requires a preview confirmation, and later characters unlock only after specific level milestones.
+
+### What Changed This Session
+
+**Constants.gd**
+- Added `available_after_level` to every skin.
+- Current gates:
+  - Kairo and Zuri: available from start.
+  - Monkey: after Level 3.
+  - Robot Explorer: after Level 5.
+  - Treasure Hunter: after Level 8.
+  - Tribal Adventurer: after Level 10.
+  - Golden Explorer: after Level 20 and still requires 60 stars.
+
+**Shop.gd**
+- Art-plate mode now uses full-row invisible hit targets instead of only the small button rectangle.
+- Unlocked explorer rows equip immediately and refresh visible feedback.
+- Locked explorer rows open a preview modal first.
+- Preview modal shows explorer description, cost, level/star requirement, and an explicit Buy/Locked action.
+- Purchases now validate level gates, star gates, and currency before unlocking.
+- Successful purchase unlocks and equips the explorer.
+- Art-plate mode now overlays an "Equipped" pill over the selected explorer and "Lvl N" pills over unavailable explorers.
+
+**Player3D.gd**
+- Kairo and Zuri still use their imported GLB scenes.
+- Other selected skins no longer silently look like Kairo in gameplay.
+- Monkey, Robot, Treasure Hunter, Tribal Adventurer, and Golden Explorer now use distinct procedural placeholder body/head colors and sizing until final 3D character GLBs are imported.
+
+### Validation
+- Ran `git diff --check`; no whitespace errors were reported.
+- Godot runtime validation was not run because `godot`, `godot4`, and `Godot_v4.6.3-stable_win64_console.exe` are not available on PATH from this shell.
+
+### Next Recommended Steps
+1. Run Choose Explorer in Godot and test: Kairo/Zuri Equip, locked Monkey preview before Level 3, Monkey buy after Level 3, and gameplay model change after equipping.
+2. Replace procedural placeholder variants with final GLBs for Monkey, Robot, Treasure, Tribal, and Golden when art assets are ready.
+
+---
+
+## Session 20 — Home and Choose Explorer Reference Art Plates
+
+### Current Focus
+Make the Home Building and Choose Explorer screens match the supplied full-screen reference images while preserving the existing build, skin, and navigation logic through transparent hit targets.
+
+### What Changed This Session
+
+**Imported screen art**
+- Copied `C:\Users\dell\Downloads\home.png` to `assets/backgrounds/bg_home_building.png`.
+- Copied `C:\Users\dell\Downloads\build.png` to `assets/backgrounds/bg_choose_explorer.png`.
+- Both images are 941x1672, matching the portrait aspect used by the project.
+
+**HomeBuilding.gd**
+- Added `HOME_ART_PATH = "res://assets/backgrounds/bg_home_building.png"`.
+- Added reference-art loading via `ResourceLoader` with raw `ImageTexture` fallback before Godot import metadata exists.
+- When the art is present, the screen draws the full-screen image through `_draw()` and transparent hit targets over the visible back button, plus button, and six stage action areas.
+- Existing procedural home-building UI remains as fallback when the PNG is missing.
+
+**Shop.gd / Choose Explorer**
+- Added `SHOP_ART_PATH = "res://assets/backgrounds/bg_choose_explorer.png"`.
+- Added reference-art loading via `ResourceLoader` with raw `ImageTexture` fallback before Godot import metadata exists.
+- When the art is present, existing scene controls are hidden, the image is drawn through `_draw()`, and transparent hit targets cover the visible back button, currency plus buttons, skin equip/buy buttons, and the bottom "Let's Explore" button.
+- Existing procedural/list-based shop UI remains as fallback when the PNG is missing.
+
+**Asset tracking**
+- Updated `MISSING_UI_ASSETS.md` to list the two full-screen UI art plates as filled.
+- Updated `ASSET_LICENSES.md` with user-provided rows for the home-building and choose-explorer art plates.
+- Updated `CHANGELOG.md` with the screen art-plate implementation details.
+
+### Validation
+- Confirmed `bg_home_building.png` and `bg_choose_explorer.png` are 941x1672, `Format24bppRgb`.
+- Godot runtime validation was not run because `godot`, `godot4`, and `Godot_v4.6.3-stable_win64_console.exe` are not available on PATH from this shell.
+
+### Next Recommended Steps
+1. Open the project in Godot so `.import` metadata is generated for the two new PNG files.
+2. Run Home Building and Choose Explorer screens, then test back navigation, stage build tap, skin equip/buy taps, and "Let's Explore".
+3. Confirm rights for the user-provided art plates before app-store submission if the images are not original or licensed for this project.
+
+---
+
+## Session 19 — Reference Jungle Map Art Plate
+
+### Current Focus
+Make the level-select/map page match the supplied jungle map reference image as closely as possible while preserving navigation and level selection.
+
+### What Changed This Session
+
+**Map art asset**
+- Copied `C:\Users\dell\Downloads\map.png` to `assets/backgrounds/bg_jungle_map.png`.
+- Source image dimensions are 941x1672, which closely matches the project's 480x854 portrait aspect ratio.
+
+**LevelSelect.gd**
+- Added `MAP_ART_PATH = "res://assets/backgrounds/bg_jungle_map.png"`.
+- Added reference-art loading via `ResourceLoader` with raw `ImageTexture` fallback before Godot import metadata exists.
+- When the art is present, `_draw()` now draws the full-screen map image and skips the procedural background, birds, labels, medallions, header, and bottom strip so the visible page matches the supplied design.
+- Added transparent hit targets over the embedded back button, plus/upgrade-shop button, and six level markers.
+- Kept the existing procedural map as fallback if the PNG is missing.
+
+**Asset tracking**
+- Updated `MISSING_UI_ASSETS.md` to mark `bg_jungle_map.png` present.
+- Updated `ASSET_LICENSES.md` with a user-provided UI asset row for the map art.
+- Updated `CHANGELOG.md` with the map art plate implementation details.
+
+### Validation
+- Confirmed `assets/backgrounds/bg_jungle_map.png` is 941x1672, `Format24bppRgb`.
+- Ran `git diff --check`; no whitespace errors were reported.
+- Godot runtime validation was not run because `godot`, `godot4`, and `Godot_v4.6.3-stable_win64_console.exe` are not available on PATH from this shell.
+
+### Next Recommended Steps
+1. Open the project in Godot so `bg_jungle_map.png.import` metadata is generated.
+2. Run the game, open Jungle Map, and verify the back button, plus button, Level 1 tap, and any unlocked level taps.
+3. If store submission is planned, confirm the user-provided map image rights before shipping.
 
 ---
 

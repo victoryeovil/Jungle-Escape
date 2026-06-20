@@ -1,0 +1,59 @@
+{
+  "id": 10,
+  "length": 38,
+  "seed": 130,
+  "name": "The Lost Paw Trail",
+  "turns": [
+    { "row": 20, "dir": -1 }
+  ],
+  "obstacles": [
+    { "type": "rock",   "lane": 1, "row": 3  },
+    { "type": "rock",   "lane": 0, "row": 6  },
+    { "type": "branch", "lane": 2, "row": 9  },
+    { "type": "spike",  "lane": 1, "row": 13 },
+    { "type": "rock",   "lane": 0, "row": 16 },
+    { "type": "branch", "lane": 1, "row": 20 },
+    { "type": "rock",   "lane": 2, "row": 23 },
+    { "type": "spike",  "lane": 0, "row": 26 },
+    { "type": "rock",   "lane": 1, "row": 29 },
+    { "type": "branch", "lane": 2, "row": 32 },
+    { "type": "rock",   "lane": 0, "row": 35 }
+  ],
+  "coins": [
+    { "lane": 1, "row": 2  },
+    { "lane": 2, "row": 2  },
+    { "lane": 0, "row": 4  },
+    { "lane": 2, "row": 5  },
+    { "lane": 1, "row": 7  },
+    { "lane": 0, "row": 8  },
+    { "lane": 2, "row": 10 },
+    { "lane": 1, "row": 11 },
+    { "lane": 0, "row": 12 },
+    { "lane": 2, "row": 14 },
+    { "lane": 0, "row": 15 },
+    { "lane": 1, "row": 17 },
+    { "lane": 2, "row": 18 },
+    { "lane": 0, "row": 19 },
+    { "lane": 2, "row": 21 },
+    { "lane": 1, "row": 22 },
+    { "lane": 0, "row": 24 },
+    { "lane": 2, "row": 25 },
+    { "lane": 1, "row": 27 },
+    { "lane": 0, "row": 28 },
+    { "lane": 1, "row": 30 },
+    { "lane": 2, "row": 31 },
+    { "lane": 0, "row": 33 },
+    { "lane": 1, "row": 34 },
+    { "lane": 2, "row": 36 },
+    { "gem": true, "lane": 1, "row": 37 },
+    { "gem": true, "lane": 0, "row": 38 }
+  ],
+  "collectables": [
+    { "type": "food",          "lane": 2, "row": 3  },
+    { "type": "medicine_pack", "lane": 1, "row": 6  },
+    { "type": "food",          "lane": 0, "row": 11 },
+    { "type": "dog_token",     "lane": 2, "row": 16 },
+    { "type": "food",          "lane": 1, "row": 23 },
+    { "type": "medicine_pack", "lane": 1, "row": 32 }
+  ]
+}

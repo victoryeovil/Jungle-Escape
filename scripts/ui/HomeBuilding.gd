@@ -4,11 +4,20 @@ extends Control
 # Shows the 6-stage home construction progress.
 # Each stage has a cost (from Constants.HOME_STAGES); player spends resources to advance.
 
+const HOME_ART_PATH := "res://assets/backgrounds/bg_home_building.png"
+
 var _stage_cards: Array[Control] = []
 var _status_lbl: Label = null
 var _progress_bar: ColorRect = null
+var _home_art_texture: Texture2D = null
 
 func _ready() -> void:
+	_home_art_texture = _load_art_texture(HOME_ART_PATH)
+	if _using_art_plate():
+		_build_art_plate()
+		_build_status_label()
+		queue_redraw()
+		return
 	_build_background()
 	_build_header()
 	_build_progress_header()
@@ -31,6 +40,28 @@ func _build_background() -> void:
 	sky.size = Vector2(480, 110)
 	sky.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(sky)
+
+func _draw() -> void:
+	if _using_art_plate():
+		var draw_size := size
+		if draw_size.x <= 0.0 or draw_size.y <= 0.0:
+			draw_size = get_viewport_rect().size
+		draw_texture_rect(_home_art_texture, Rect2(Vector2.ZERO, draw_size), false)
+
+func _build_art_plate() -> void:
+	_art_hit(Rect2(10, 10, 58, 44)).pressed.connect(_on_back)
+	_art_hit(Rect2(430, 12, 42, 44)).pressed.connect(_on_plus)
+
+	var stage_rows := [
+		Rect2(350, 302, 106, 42),
+		Rect2(350, 392, 106, 42),
+		Rect2(350, 480, 106, 42),
+		Rect2(350, 571, 106, 42),
+		Rect2(350, 660, 106, 42),
+		Rect2(350, 750, 106, 42),
+	]
+	for i in range(stage_rows.size()):
+		_art_hit(stage_rows[i]).pressed.connect(_on_build.bind(i))
 
 func _build_header() -> void:
 	var hdr := ColorRect.new()
@@ -287,7 +318,42 @@ func _on_back() -> void:
 	EventBus.play_sfx.emit("button")
 	GameManager.go_to_level_select()
 
+func _on_plus() -> void:
+	EventBus.play_sfx.emit("button")
+	GameManager.go_to_upgrade_shop()
+
 # ─── Helpers ──────────────────────────────────────────────────────────────────
+
+func _art_hit(rect: Rect2) -> Button:
+	var btn := Button.new()
+	btn.text = ""
+	btn.flat = true
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.position = rect.position
+	btn.size = rect.size
+	btn.custom_minimum_size = rect.size
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var empty := StyleBoxEmpty.new()
+	btn.add_theme_stylebox_override("normal", empty)
+	btn.add_theme_stylebox_override("hover", empty)
+	btn.add_theme_stylebox_override("pressed", empty)
+	btn.add_theme_stylebox_override("focus", empty)
+	add_child(btn)
+	return btn
+
+func _load_art_texture(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		var tex := load(path)
+		if tex is Texture2D:
+			return tex as Texture2D
+
+	var img := Image.new()
+	if img.load(path) == OK:
+		return ImageTexture.create_from_image(img)
+	return null
+
+func _using_art_plate() -> bool:
+	return _home_art_texture != null
 
 func _can_afford_stage(stage_idx: int) -> bool:
 	if stage_idx >= Constants.HOME_STAGES.size():

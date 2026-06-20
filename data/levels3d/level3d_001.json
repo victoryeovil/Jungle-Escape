@@ -30,5 +30,10 @@
     { "lane": 0, "row": 22 },
     { "lane": 1, "row": 24 },
     { "gem": true, "lane": 1, "row": 25 }
+  ],
+  "collectables": [
+    { "type": "map_piece", "lane": 0, "row": 8  },
+    { "type": "wood",      "lane": 2, "row": 17 },
+    { "type": "map_piece", "lane": 2, "row": 22 }
   ]
 }

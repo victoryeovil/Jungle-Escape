@@ -54,5 +54,10 @@
     { "lane": 1, "row": 39 },
     { "gem": true, "lane": 0, "row": 39 },
     { "gem": true, "lane": 2, "row": 39 }
+  ],
+  "collectables": [
+    { "type": "food",           "lane": 2, "row": 6  },
+    { "type": "sunstone_shard", "lane": 2, "row": 20 },
+    { "type": "food",           "lane": 1, "row": 31 }
   ]
 }

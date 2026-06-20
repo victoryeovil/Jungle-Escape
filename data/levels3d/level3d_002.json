@@ -46,5 +46,10 @@
     { "lane": 1, "row": 32 },
     { "gem": true, "lane": 0, "row": 32 },
     { "gem": true, "lane": 2, "row": 32 }
+  ],
+  "collectables": [
+    { "type": "wood", "lane": 2, "row": 4  },
+    { "type": "food", "lane": 2, "row": 14 },
+    { "type": "wood", "lane": 0, "row": 18 }
   ]
 }

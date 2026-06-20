@@ -120,6 +120,7 @@ func jump() -> void:
 	# Sand blocks jumping entirely without Sand Shoes
 	if _current_surface == "sand" and not SaveManager.has_upgrade("sand_shoes"):
 		sand_blocked.emit()
+		EventBus.play_sfx.emit("bump")
 		return
 	if is_on_floor() or state == State.RUN:
 		_set_slide_collision(false)
@@ -131,6 +132,7 @@ func jump() -> void:
 				jump_vel *= 1.06
 		velocity.y = jump_vel
 		state = State.JUMP
+		EventBus.play_sfx.emit("jump")
 		_update_character_animation(true)
 
 func slide() -> void:
@@ -140,6 +142,7 @@ func slide() -> void:
 		state = State.SLIDE
 		_slide_timer = SLIDE_DURATION
 		_set_slide_collision(true)
+		EventBus.play_sfx.emit("slide")
 		_update_character_animation(true)
 
 func move_lane(direction: int) -> void:
@@ -190,6 +193,7 @@ func die() -> void:
 	state = State.DEAD
 	velocity = Vector3.ZERO
 	_set_slide_collision(false)
+	EventBus.play_sfx.emit("damage")
 	_play_character_animation(ANIM_HIT, true)
 	died.emit()
 
@@ -234,6 +238,10 @@ func _detect_surface() -> void:
 
 func _apply_selected_character_model() -> void:
 	var skin_id := SaveManager.get_selected_skin()
+	if not CHARACTER_SCENE_PATHS.has(skin_id):
+		_use_placeholder_character(skin_id)
+		return
+
 	var scene_path: String = CHARACTER_SCENE_PATHS.get(skin_id, DEFAULT_CHARACTER_SCENE)
 	var packed_scene := load(scene_path) as PackedScene
 	if packed_scene == null:
@@ -256,6 +264,59 @@ func _apply_selected_character_model() -> void:
 	_animation_player = _find_animation_player(_character_model)
 	if _animation_player == null:
 		push_warning("Player3D: no AnimationPlayer found in " + scene_path)
+
+func _use_placeholder_character(skin_id: String) -> void:
+	if _character_model != null:
+		_character_model.queue_free()
+	_character_model = null
+	_animation_player = null
+	_active_animation = ""
+	_set_placeholder_visible(true)
+	_apply_placeholder_skin(skin_id)
+
+func _apply_placeholder_skin(skin_id: String) -> void:
+	var body := get_node_or_null("Body") as MeshInstance3D
+	var head := get_node_or_null("Head") as MeshInstance3D
+	if body == null or head == null:
+		return
+
+	body.scale = Vector3.ONE
+	head.scale = Vector3.ONE
+	body.position = Vector3(0.0, 0.9, 0.0)
+	head.position = Vector3(0.0, 1.9, 0.0)
+
+	var body_col := Color(0.20, 0.55, 0.20)
+	var head_col := Color(0.85, 0.68, 0.50)
+	match skin_id:
+		"monkey":
+			body_col = Color(0.48, 0.24, 0.08)
+			head_col = Color(0.88, 0.56, 0.26)
+			body.scale = Vector3(0.78, 0.72, 0.78)
+			head.scale = Vector3(1.08, 0.88, 1.08)
+			head.position = Vector3(0.0, 1.55, 0.0)
+		"robot":
+			body_col = Color(0.52, 0.56, 0.58)
+			head_col = Color(0.18, 0.64, 0.92)
+		"treasure":
+			body_col = Color(0.06, 0.36, 0.16)
+			head_col = Color(0.72, 0.48, 0.28)
+		"tribal":
+			body_col = Color(0.42, 0.18, 0.08)
+			head_col = Color(0.62, 0.34, 0.18)
+		"golden":
+			body_col = Color(0.92, 0.66, 0.12)
+			head_col = Color(1.00, 0.82, 0.26)
+		_:
+			pass
+
+	body.material_override = _placeholder_material(body_col)
+	head.material_override = _placeholder_material(head_col)
+
+func _placeholder_material(color: Color) -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+	mat.albedo_color = color
+	return mat
 
 func _set_placeholder_visible(is_visible: bool) -> void:
 	var body := get_node_or_null("Body") as Node3D

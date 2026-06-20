@@ -76,5 +76,13 @@
     { "gem": true, "lane": 1, "row": 50 },
     { "gem": true, "lane": 0, "row": 50 },
     { "gem": true, "lane": 2, "row": 50 }
+  ],
+  "collectables": [
+    { "type": "sunstone_shard", "lane": 2, "row": 4  },
+    { "type": "relic_key",      "lane": 0, "row": 6  },
+    { "type": "sunstone_shard", "lane": 0, "row": 19 },
+    { "type": "relic_key",      "lane": 2, "row": 24 },
+    { "type": "relic_key",      "lane": 0, "row": 32 },
+    { "type": "sunstone_shard", "lane": 2, "row": 40 }
   ]
 }

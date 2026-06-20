@@ -1,0 +1,59 @@
+{
+  "id": 13,
+  "length": 38,
+  "seed": 149,
+  "name": "The Park Guide",
+  "turns": [
+    { "row": 19, "dir": 1 }
+  ],
+  "obstacles": [
+    { "type": "rock",   "lane": 1, "row": 4  },
+    { "type": "rock",   "lane": 0, "row": 7  },
+    { "type": "branch", "lane": 2, "row": 10 },
+    { "type": "rock",   "lane": 1, "row": 13 },
+    { "type": "branch", "lane": 0, "row": 16 },
+    { "type": "rock",   "lane": 2, "row": 19 },
+    { "type": "rock",   "lane": 1, "row": 22 },
+    { "type": "branch", "lane": 0, "row": 25 },
+    { "type": "rock",   "lane": 2, "row": 28 },
+    { "type": "rock",   "lane": 1, "row": 31 },
+    { "type": "branch", "lane": 2, "row": 34 },
+    { "type": "rock",   "lane": 0, "row": 36 }
+  ],
+  "coins": [
+    { "lane": 0, "row": 2  },
+    { "lane": 2, "row": 2  },
+    { "lane": 1, "row": 3  },
+    { "lane": 2, "row": 5  },
+    { "lane": 0, "row": 6  },
+    { "lane": 1, "row": 8  },
+    { "lane": 2, "row": 9  },
+    { "lane": 0, "row": 11 },
+    { "lane": 1, "row": 12 },
+    { "lane": 2, "row": 14 },
+    { "lane": 0, "row": 15 },
+    { "lane": 1, "row": 17 },
+    { "lane": 2, "row": 18 },
+    { "lane": 0, "row": 20 },
+    { "lane": 1, "row": 21 },
+    { "lane": 2, "row": 23 },
+    { "lane": 0, "row": 24 },
+    { "lane": 1, "row": 26 },
+    { "lane": 2, "row": 27 },
+    { "lane": 0, "row": 29 },
+    { "lane": 1, "row": 30 },
+    { "lane": 2, "row": 32 },
+    { "lane": 0, "row": 33 },
+    { "lane": 1, "row": 35 },
+    { "lane": 2, "row": 37 },
+    { "gem": true, "lane": 1, "row": 38 },
+    { "gem": true, "lane": 2, "row": 38 }
+  ],
+  "collectables": [
+    { "type": "food",         "lane": 2, "row": 4  },
+    { "type": "animal_badge", "lane": 1, "row": 7  },
+    { "type": "food",         "lane": 0, "row": 13 },
+    { "type": "animal_badge", "lane": 1, "row": 19 },
+    { "type": "food",         "lane": 0, "row": 28 }
+  ]
+}

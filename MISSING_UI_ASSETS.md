@@ -1,7 +1,7 @@
 # Missing UI Assets — Jungle Escape: Lost Path
 
-This file tracks every image, icon, and texture asset required by the UI layer that does not yet exist in `res://assets/`.  
-All assets listed here are currently replaced by procedural `ColorRect` / `Label` / `StyleBoxFlat` rendering in GDScript.  
+This file tracks image, icon, and texture assets required by the UI layer, including remaining missing items and newly filled items.
+Unchecked assets are currently replaced by procedural `ColorRect` / `Label` / `StyleBoxFlat` rendering in GDScript.
 Replace them progressively; the procedural fallback remains functional until each asset is imported.
 
 Source shortlist: **Quaternius · Kenney · Poly Pizza · OpenGameArt**  
@@ -11,10 +11,18 @@ License rule: CC0 preferred. CC-BY acceptable with credit in `ASSET_LICENSES.md`
 
 ## Priority 1 — Map Background (HIGH IMPACT)
 
-- [ ] `res://assets/backgrounds/bg_jungle_map.png`  
-  Illustrated jungle expedition map. 720×1280 min, 1440×2560 preferred.  
-  Style: stylized, adventurous, top-down perspective, shows jungle zones from camp to wildlands.  
-  Source: commission, or search OpenGameArt for "jungle map background".
+- [x] `res://assets/backgrounds/bg_jungle_map.png`
+  User-provided illustrated jungle expedition map imported from `C:\Users\dell\Downloads\map.png`.
+  Source dimensions: 941x1672. Used directly by `LevelSelect.gd` as the full-screen reference map art.
+
+## Filled Full-Screen UI Art Plates
+
+- [x] `res://assets/backgrounds/bg_home_building.png`
+  User-provided Build Your Home screen art imported from `C:\Users\dell\Downloads\home.png`.
+  Source dimensions: 941x1672. Used directly by `HomeBuilding.gd` with transparent controls layered above it.
+- [x] `res://assets/backgrounds/bg_choose_explorer.png`
+  User-provided Choose Explorer screen art imported from `C:\Users\dell\Downloads\build.png`.
+  Source dimensions: 941x1672. Used directly by `Shop.gd` with transparent controls layered above it.
 
 ## Priority 2 — Level Markers (HIGH IMPACT)
 
@@ -72,7 +80,7 @@ License rule: CC0 preferred. CC-BY acceptable with credit in `ASSET_LICENSES.md`
 
 | Asset | Format | Target path | Notes |
 | --- | --- | --- | --- |
-| Jungle expedition map background | `.png` 480×854 | `res://assets/backgrounds/bg_jungle_map.png` | Full-screen map art. Should show 5 distinct zones top-to-bottom: warm sandy wildlands (top), temple ruins, river crossing, deep forest, jungle entrance (bottom). Can be illustrated or painted. |
+| Jungle expedition map background | `.png` 941x1672 source | `res://assets/backgrounds/bg_jungle_map.png` | Present. Full-screen user-provided reference art used by `LevelSelect.gd`; procedural map remains fallback if the asset is absent. |
 | Fog/mist overlay | `.png` 480×180 | `res://assets/backgrounds/bg_fog_overlay.png` | Transparent white-grey vignette for the locked wildlands zone at the top of the map. Alpha channel required. |
 | Map paper texture | `.png` | `res://assets/backgrounds/bg_map_paper.png` | Optional aged-parchment texture to sit behind the level map. |
 
@@ -178,7 +186,7 @@ One badge icon per level zone style. Used as background on each level Button nod
 ## Integration Steps
 
 1. Place each asset at the `res://` path listed.
-2. In `LevelSelect.gd`, replace the `_build_zone_backgrounds()` `ColorRect` layers with a single `TextureRect` using `bg_jungle_map.png`.
+2. Done for `bg_jungle_map.png`: `LevelSelect.gd` now loads the art and draws it full-screen, with transparent hit areas over the embedded buttons and markers.
 3. In `_add_marker()`, use `TextureButton` with `normal_texture = marker_[zone].png` instead of `StyleBoxFlat`.
 4. In `_build_camp()` and `_build_temple_icon()`, use `TextureRect` nodes with landmark PNGs.
 5. In `WildlandsUnlock.gd`, swap `_build_background()` `ColorRect` blocks with `bg_wildlands_unlock.png` in a full-screen `TextureRect`.

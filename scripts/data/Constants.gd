@@ -41,13 +41,13 @@ static func world_levels(world: Dictionary) -> Array:
 
 # ── Skins ──────────────────────────────────────────────────────────────────────
 const SKINS := [
-	{ "id": "explorer",      "name": "Kairo",             "cost_coins": 0,   "cost_gems": 0, "unlock_method": "default" },
-	{ "id": "jungle_girl",   "name": "Zuri",              "cost_coins": 0,   "cost_gems": 0, "unlock_method": "default" },
-	{ "id": "monkey",        "name": "Monkey",            "cost_coins": 300, "cost_gems": 0, "unlock_method": "coins" },
-	{ "id": "robot",         "name": "Robot Explorer",    "cost_coins": 0,   "cost_gems": 5, "unlock_method": "gems" },
-	{ "id": "treasure",      "name": "Treasure Hunter",   "cost_coins": 500, "cost_gems": 0, "unlock_method": "coins" },
-	{ "id": "tribal",        "name": "Tribal Adventurer", "cost_coins": 0,   "cost_gems": 8, "unlock_method": "gems" },
-	{ "id": "golden",        "name": "Golden Explorer",   "cost_coins": 0,   "cost_gems": 0, "unlock_method": "stars", "unlock_stars": 60 },
+	{ "id": "explorer",      "name": "Kairo",             "cost_coins": 0,   "cost_gems": 0, "unlock_method": "default", "available_after_level": 0 },
+	{ "id": "jungle_girl",   "name": "Zuri",              "cost_coins": 0,   "cost_gems": 0, "unlock_method": "default", "available_after_level": 0 },
+	{ "id": "monkey",        "name": "Monkey",            "cost_coins": 300, "cost_gems": 0, "unlock_method": "coins",   "available_after_level": 3 },
+	{ "id": "robot",         "name": "Robot Explorer",    "cost_coins": 0,   "cost_gems": 5, "unlock_method": "gems",    "available_after_level": 5 },
+	{ "id": "treasure",      "name": "Treasure Hunter",   "cost_coins": 500, "cost_gems": 0, "unlock_method": "coins",   "available_after_level": 8 },
+	{ "id": "tribal",        "name": "Tribal Adventurer", "cost_coins": 0,   "cost_gems": 8, "unlock_method": "gems",    "available_after_level": 10 },
+	{ "id": "golden",        "name": "Golden Explorer",   "cost_coins": 0,   "cost_gems": 0, "unlock_method": "stars",   "unlock_stars": 60, "available_after_level": 20 },
 ]
 
 # ── Trails ─────────────────────────────────────────────────────────────────────

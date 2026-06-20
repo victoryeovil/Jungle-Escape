@@ -1,5 +1,57 @@
 # CHANGELOG — Jungle Escape: Lost Path
 
+## [Unreleased] - Explorer Shop Preview and Unlock Gates
+
+### Added
+- **Skin level gates in `Constants.SKINS`** - Monkey after Level 3, Robot after Level 5, Treasure Hunter after Level 8, Tribal Adventurer after Level 10, and Golden Explorer after Level 20 plus its existing 60-star requirement.
+- **Preview-before-buy flow in `Shop.gd`** - locked explorers open a preview modal with ability text, cost, level requirement, and explicit Buy/Locked action instead of buying immediately.
+- **Art-plate shop feedback overlays** - selected explorer gets an "Equipped" pill over the static art, and unavailable explorers show level requirement pills.
+- **Gameplay placeholder variants in `Player3D.gd`** - non-GLB shop skins now visibly affect the runner using distinct placeholder body/head colours and sizing until final character GLBs are imported.
+
+### Changed
+- **Equip taps now update saved selected skin and visible shop feedback** in both fallback list mode and the full-screen reference-art mode.
+- **Character row hit areas are larger** in reference-art mode so tapping the card or visible Equip/Buy area triggers the correct action.
+- **Skin purchases now validate level gates, star gates, and currency before unlocking**, then equip the newly unlocked skin on success.
+
+### Validation
+- Ran `git diff --check`; no whitespace errors were reported.
+- Godot scene validation still requires a local Godot executable or editor import pass.
+
+## [Unreleased] - Home and Explorer Reference Art Plates
+
+### Added
+- **`assets/backgrounds/bg_home_building.png`** - user-provided full-screen Build Your Home reference art copied from `C:\Users\dell\Downloads\home.png` at 941x1672 source resolution.
+- **`assets/backgrounds/bg_choose_explorer.png`** - user-provided full-screen Choose Explorer reference art copied from `C:\Users\dell\Downloads\build.png` at 941x1672 source resolution.
+- **Reference-art mode in `HomeBuilding.gd`** - loads the home-building art plate with raw `ImageTexture` fallback before Godot import metadata exists.
+- **Reference-art mode in `Shop.gd`** - loads the character-select art plate with raw `ImageTexture` fallback before Godot import metadata exists.
+
+### Changed
+- **Home Building screen now matches the supplied design when the art file is present** - the procedural home UI remains as fallback, while transparent hit targets preserve back navigation, plus navigation, and stage build attempts.
+- **Choose Explorer screen now matches the supplied design when the art file is present** - the existing scene controls are hidden and transparent hit targets preserve back navigation, visible skin equip/buy buttons, currency plus taps, and the bottom "Let's Explore" action.
+- **Art plates draw directly into the viewport via `_draw()`** instead of using `TextureRect`, preventing the 941x1672 source PNGs from clipping at native size in the 480x854 game window.
+- **`MISSING_UI_ASSETS.md` and `ASSET_LICENSES.md`** now record the two screen plates as user-provided UI assets.
+
+### Validation
+- Confirmed `bg_home_building.png` and `bg_choose_explorer.png` dimensions: 941x1672, `Format24bppRgb`.
+- Godot scene validation still requires a local Godot executable or editor import pass.
+
+## [Unreleased] - Reference Jungle Map Art Plate
+
+### Added
+- **`assets/backgrounds/bg_jungle_map.png`** - user-provided full-screen jungle map reference art copied from `C:\Users\dell\Downloads\map.png` at 941x1672 source resolution.
+- **Reference-art mode in `LevelSelect.gd`** - loads `bg_jungle_map.png` through Godot resources, with a raw `ImageTexture` fallback for local runs before import metadata exists.
+
+### Changed
+- **Map rendering now matches the supplied design when the art file is present** - `LevelSelect.gd` draws the map art full-screen and skips the procedural map, birds, header, labels, and marker overlays.
+- **Interactive controls remain functional over the art plate** - transparent hit areas preserve back navigation, the plus/upgrade-shop button, and level marker taps at positions aligned to the reference image.
+- **Procedural map remains as fallback** if `bg_jungle_map.png` is missing.
+- **`MISSING_UI_ASSETS.md` and `ASSET_LICENSES.md`** now mark the map background as present and record the image as a user-provided project asset.
+
+### Validation
+- Confirmed `bg_jungle_map.png` dimensions: 941x1672, `Format24bppRgb`.
+- Ran `git diff --check`; no whitespace errors were reported.
+- Godot scene validation was not run because no `godot`, `godot4`, or `Godot_v4.6.3-stable_win64_console.exe` command is available on PATH from this shell.
+
 ## [Unreleased] - Generated 3D Asset Fill Pass
 
 ### Added

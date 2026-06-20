@@ -54,11 +54,20 @@ This root ledger summarizes commercial-safety status for all assets. Detailed im
 
 ---
 
+## User-Provided UI Assets
+
+| Asset | Source | License/status | Local files | Usage notes |
+| --- | --- | --- | --- | --- |
+| Jungle map full-screen reference art | User provided `C:\Users\dell\Downloads\map.png` in Codex session | User-provided project asset; confirm rights before store submission if the image source is not original or licensed for this project | `res://assets/backgrounds/bg_jungle_map.png` | Used by `LevelSelect.gd` as the exact map page art plate with transparent gameplay hit targets layered above it. |
+| Build Your Home full-screen reference art | User provided `C:\Users\dell\Downloads\home.png` in Codex session | User-provided project asset; confirm rights before store submission if the image source is not original or licensed for this project | `res://assets/backgrounds/bg_home_building.png` | Used by `HomeBuilding.gd` as the exact home-building screen art plate with transparent controls layered above it. |
+| Choose Explorer full-screen reference art | User provided `C:\Users\dell\Downloads\build.png` in Codex session | User-provided project asset; confirm rights before store submission if the image source is not original or licensed for this project | `res://assets/backgrounds/bg_choose_explorer.png` | Used by `Shop.gd` as the exact character-select screen art plate with transparent controls layered above it. |
+
+---
+
 ## Still Needed (Not Yet Sourced)
 
 | Asset | Purpose | Target path | Priority |
 |-------|---------|-------------|----------|
-| `bg_jungle_map.png` | Illustrated map background 720×1280 | `assets/backgrounds/` | HIGH |
 | `marker_*.png` (5 states) | Level marker images | `assets/ui/map/markers/` | HIGH |
 | `landmark_camp.png` etc. | Camp/river/temple/wildlands | `assets/ui/map/landmarks/` | MED |
 | `icon_sand_shoes.png` | Sand Shoes upgrade icon 64×64 | `assets/ui/upgrades/` | MED |

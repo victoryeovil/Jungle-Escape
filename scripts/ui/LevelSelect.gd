@@ -1,47 +1,121 @@
 extends Control
 
 # ── Level data ────────────────────────────────────────────────────────────────
-const TOTAL_LEVELS := 6
+const TOTAL_LEVELS := 20
+const MAP_ART_PATH := "res://assets/backgrounds/bg_jungle_map.png"
 
 const LEVEL_INFO: Array = [
-	{ "name": "Jungle Trail",      "chapter": "Chapter 1", "area": "Jungle Entrance",
+	# ── Chapter 1: The Lost Path (Levels 1–6) ──
+	{ "name": "Jungle Trail",        "chapter": "Chapter 1", "area": "Jungle Entrance",
 	  "zone": "jungle",    "color": Color(0.18, 0.52, 0.12),
 	  "desc": "Your expedition begins on a bright jungle trail. Collect coins and reach the finish gate.",
 	  "rewards": "Coins  ·  Gems  ·  Map Piece" },
-	{ "name": "Deep Forest",       "chapter": "Chapter 2", "area": "Deep Forest",
+	{ "name": "Deep Forest",         "chapter": "Chapter 2", "area": "Deep Forest",
 	  "zone": "jungle",    "color": Color(0.08, 0.34, 0.08),
 	  "desc": "The trees grow taller. The path bends LEFT into darkness. Monkeys watch from the canopy.",
 	  "rewards": "Coins  ·  Gems  ·  Sunstone Shard" },
-	{ "name": "River of Echoes",   "chapter": "Chapter 3", "area": "River Crossing",
+	{ "name": "River of Echoes",     "chapter": "Chapter 3", "area": "River Crossing",
 	  "zone": "river",     "color": Color(0.10, 0.30, 0.52),
 	  "desc": "The Lost Path reaches a river that guards a Sunstone fragment. Turn RIGHT across the old bridge.",
 	  "rewards": "Coins  ·  Wood  ·  Map Piece  ·  Sunstone Shard" },
-	{ "name": "Ancient Ruins",     "chapter": "Chapter 4", "area": "Ancient Ruins",
+	{ "name": "Ancient Ruins",       "chapter": "Chapter 4", "area": "Ancient Ruins",
 	  "zone": "ruins",     "color": Color(0.34, 0.24, 0.10),
 	  "desc": "Moss-covered pillars rise from the jungle. Ancient traps guard a glowing relic. Turn LEFT.",
 	  "rewards": "Coins  ·  Relic Key  ·  Bricks  ·  Sunstone Shard" },
-	{ "name": "Temple Approach",   "chapter": "Chapter 5", "area": "Temple Gates",
+	{ "name": "Temple Approach",     "chapter": "Chapter 5", "area": "Temple Gates",
 	  "zone": "ruins",     "color": Color(0.55, 0.42, 0.08),
 	  "desc": "The Temple of the First Sun is near. The Sunstone Heart is within reach. Turn RIGHT.",
 	  "rewards": "Coins  ·  Gems  ·  Map Piece  ·  Sunstone Shard" },
-	{ "name": "Wildlands of Peace","chapter": "Chapter 6", "area": "Wildlands",
+	{ "name": "Wildlands of Peace",  "chapter": "Chapter 6", "area": "Wildlands",
 	  "zone": "wildlands", "color": Color(0.68, 0.54, 0.18),
 	  "desc": "A sandy path opens into warm wildlands. Elephants roam in the distance. Sand Shoes required.",
 	  "rewards": "Coins  ·  Wood  ·  Bricks  ·  Food  ·  Sunstone Shard" },
+	# ── Chapter 2: Wildlands Settlement (Levels 7–13) ──
+	{ "name": "First Clearing",      "chapter": "Chapter 7", "area": "Wildlands Edge",
+	  "zone": "wildlands", "color": Color(0.78, 0.58, 0.16),
+	  "desc": "The jungle opens into a warm clearing. Build your first supply cache with wood and bricks.",
+	  "rewards": "Coins  ·  Wood  ·  Bricks  ·  Food" },
+	{ "name": "Foundation Run",      "chapter": "Chapter 8", "area": "Settlement Clearing",
+	  "zone": "wildlands", "color": Color(0.44, 0.30, 0.12),
+	  "desc": "Gather bricks and tools to lay the foundation of the jungle home. Two turns ahead.",
+	  "rewards": "Coins  ·  Bricks  ·  Tools" },
+	{ "name": "Timber Trail",        "chapter": "Chapter 9", "area": "Woodland Path",
+	  "zone": "jungle",    "color": Color(0.32, 0.22, 0.08),
+	  "desc": "A winding woodland path rich with timber. Rope and wood for the walls ahead.",
+	  "rewards": "Coins  ·  Wood  ·  Rope" },
+	{ "name": "The Lost Paw Trail",  "chapter": "Chapter 10", "area": "Mud Trail",
+	  "zone": "jungle",    "color": Color(0.18, 0.30, 0.12),
+	  "desc": "Muddy prints lead through the bush. Keep your medicine pack close on this hidden trail.",
+	  "rewards": "Coins  ·  Food  ·  Medicine Pack  ·  Dog Token" },
+	{ "name": "Rabbit Tracks",       "chapter": "Chapter 11", "area": "Grassland Route",
+	  "zone": "wildlands", "color": Color(0.40, 0.52, 0.22),
+	  "desc": "Spotted grassland paths where rabbits bound ahead. Earn your first animal badge.",
+	  "rewards": "Coins  ·  Animal Badge  ·  Food  ·  Map Piece" },
+	{ "name": "Sandy Supply Route",  "chapter": "Chapter 12", "area": "Sandy Track",
+	  "zone": "wildlands", "color": Color(0.72, 0.62, 0.32),
+	  "desc": "A long sandy route loaded with obstacles. Tools and food for the settlement ahead.",
+	  "rewards": "Coins  ·  Tools  ·  Food  ·  Wood" },
+	{ "name": "The Park Guide",      "chapter": "Chapter 13", "area": "Park Border",
+	  "zone": "wildlands", "color": Color(0.72, 0.54, 0.16),
+	  "desc": "Moyo the park guide shows the way. Collect animal badges to earn his respect.",
+	  "rewards": "Coins  ·  Food  ·  Animal Badges" },
+	# ── Chapter 3: Deep Wildlands (Levels 14–20) ──
+	{ "name": "Warthog Watch",       "chapter": "Chapter 14", "area": "Grassland Post",
+	  "zone": "wildlands", "color": Color(0.70, 0.50, 0.14),
+	  "desc": "Warthogs cross the trail ahead. Collect animal badges and tiles for the home walls.",
+	  "rewards": "Coins  ·  Animal Badge  ·  Bricks  ·  Tiles" },
+	{ "name": "Market Path",         "chapter": "Chapter 15", "area": "Settlement Market",
+	  "zone": "wildlands", "color": Color(0.82, 0.48, 0.14),
+	  "desc": "Tariro the trader sets up market. Gather tiles and windows for the growing home.",
+	  "rewards": "Coins  ·  Windows  ·  Tiles  ·  Food" },
+	{ "name": "Antelope Trail",      "chapter": "Chapter 16", "area": "Open Savanna",
+	  "zone": "wildlands", "color": Color(0.84, 0.70, 0.18),
+	  "desc": "Antelope race across the open savanna. Two sharp turns on this long trail.",
+	  "rewards": "Coins  ·  Animal Badge  ·  Map Piece  ·  Rope" },
+	{ "name": "Window Run",          "chapter": "Chapter 17", "area": "Ruins Outpost",
+	  "zone": "ruins",     "color": Color(0.44, 0.40, 0.34),
+	  "desc": "An ancient outpost guards the route. Salvage windows and tiles from the ruins.",
+	  "rewards": "Coins  ·  Windows  ·  Tiles  ·  Sunstone Shard  ·  Tools" },
+	{ "name": "Hound of the Trail",  "chapter": "Chapter 18", "area": "Misty Hollow",
+	  "zone": "jungle",    "color": Color(0.28, 0.38, 0.32),
+	  "desc": "A loyal hound scouts the misty hollow. Relic keys and map pieces wait in the shadows.",
+	  "rewards": "Coins  ·  Relic Key  ·  Map Piece  ·  Animal Badge" },
+	{ "name": "The Builder's Visit", "chapter": "Chapter 19", "area": "Home Site",
+	  "zone": "wildlands", "color": Color(0.50, 0.34, 0.14),
+	  "desc": "Nyasha the village builder inspects the home site. Gather everything for the final push.",
+	  "rewards": "Coins  ·  Tools  ·  Bricks  ·  Tiles  ·  Wood" },
+	{ "name": "Baobab Treasure",     "chapter": "Chapter 20", "area": "The Ancient Baobab",
+	  "zone": "wildlands", "color": Color(0.92, 0.72, 0.20),
+	  "desc": "Beneath the great baobab tree lies the expedition's greatest treasure. Two turns. Three gemstones.",
+	  "rewards": "Coins  ·  Gems  ·  Sunstone Shard  ·  Relic Key  ·  Animal Badge" },
 ]
 
-const NODE_POS: Array = [
-	Vector2(148, 710), Vector2(318, 582), Vector2(132, 452),
+const NODE_POS_1: Array = [
+	Vector2(220, 710), Vector2(318, 582), Vector2(132, 452),
 	Vector2(322, 328), Vector2(162, 212), Vector2(300, 108),
+]
+const NODE_POS_2: Array = [
+	Vector2(220, 710), Vector2(310, 586), Vector2(148, 466),
+	Vector2(310, 348), Vector2(160, 238), Vector2(306, 140),
+	Vector2(190,  60),
+]
+const NODE_POS_3: Array = [
+	Vector2(220, 710), Vector2(306, 590), Vector2(152, 472),
+	Vector2(310, 356), Vector2(156, 244), Vector2(308, 138),
+	Vector2(200,  60),
+]
+const REFERENCE_NODE_POS: Array = [
+	Vector2(196, 666), Vector2(266, 567), Vector2(215, 478),
+	Vector2(294, 369), Vector2(232, 252), Vector2(252, 156),
 ]
 const CAMP_POS   := Vector2(240, 812)
 const TEMPLE_POS := Vector2(240, 66)
 
-const PATH_PTS: Array = [
-	Vector2(240, 814),
-	Vector2(210, 780), Vector2(174, 748),
-	Vector2(148, 728), Vector2(148, 710),
-	Vector2(168, 672), Vector2(228, 635), Vector2(300, 600),
+const PATH_PTS_1: Array = [
+	Vector2(240, 820),
+	Vector2(236, 786), Vector2(228, 754),
+	Vector2(222, 730), Vector2(220, 710),
+	Vector2(232, 672), Vector2(270, 635), Vector2(300, 600),
 	Vector2(318, 582),
 	Vector2(288, 544), Vector2(224, 510), Vector2(152, 474),
 	Vector2(132, 452),
@@ -51,6 +125,40 @@ const PATH_PTS: Array = [
 	Vector2(162, 212),
 	Vector2(176, 180), Vector2(218, 150), Vector2(268, 124),
 	Vector2(300, 108),
+]
+const PATH_PTS_2: Array = [
+	Vector2(240, 820),
+	Vector2(236, 786), Vector2(228, 754),
+	Vector2(222, 730), Vector2(220, 710),
+	Vector2(240, 668), Vector2(280, 630), Vector2(308, 600),
+	Vector2(310, 586),
+	Vector2(286, 548), Vector2(218, 512), Vector2(162, 482),
+	Vector2(148, 466),
+	Vector2(160, 426), Vector2(226, 390), Vector2(298, 362),
+	Vector2(310, 348),
+	Vector2(284, 308), Vector2(218, 274), Vector2(170, 254),
+	Vector2(160, 238),
+	Vector2(174, 196), Vector2(224, 166), Vector2(282, 148),
+	Vector2(306, 140),
+	Vector2(276, 106), Vector2(230,  78), Vector2(200,  62),
+	Vector2(190,  60),
+]
+const PATH_PTS_3: Array = [
+	Vector2(240, 820),
+	Vector2(236, 786), Vector2(228, 754),
+	Vector2(222, 730), Vector2(220, 710),
+	Vector2(238, 666), Vector2(278, 630), Vector2(304, 604),
+	Vector2(306, 590),
+	Vector2(282, 550), Vector2(214, 516), Vector2(162, 488),
+	Vector2(152, 472),
+	Vector2(162, 430), Vector2(228, 396), Vector2(298, 368),
+	Vector2(310, 356),
+	Vector2(286, 314), Vector2(220, 278), Vector2(166, 258),
+	Vector2(156, 244),
+	Vector2(168, 200), Vector2(226, 168), Vector2(284, 148),
+	Vector2(308, 138),
+	Vector2(280, 104), Vector2(236,  74), Vector2(204,  62),
+	Vector2(200,  60),
 ]
 
 # ── Colour palette ───────────────────────────────────────────────────────────
@@ -104,19 +212,74 @@ var _bird2           : Label   = null
 var _bird1_x         : float   = -28.0
 var _bird2_x         : float   = 510.0
 var _shimmer_t       : float   = 0.0
+var _bg_texture      : Texture2D = null
+var _chapter         : int     = 1  # 1, 2, or 3
+
+# ── Chapter helpers ──────────────────────────────────────────────────────────
+func _ch_start() -> int:
+	match _chapter:
+		2: return 7
+		3: return 14
+		_: return 1
+
+func _ch_count() -> int:
+	match _chapter:
+		2: return 7
+		3: return 7
+		_: return 6
+
+func _ch_pos() -> Array:
+	match _chapter:
+		2: return NODE_POS_2
+		3: return NODE_POS_3
+		_: return NODE_POS_1
+
+func _ch_path() -> Array:
+	match _chapter:
+		2: return PATH_PTS_2
+		3: return PATH_PTS_3
+		_: return PATH_PTS_1
+
+func _ch_name() -> String:
+	match _chapter:
+		2: return "WILDLANDS SETTLEMENT"
+		3: return "DEEP WILDLANDS"
+		_: return "THE LOST PATH"
+
+func _ch_objective() -> String:
+	match _chapter:
+		2: return "✦  Gather resources  •  Build the Jungle Home  ✦"
+		3: return "✦  Reach the Ancient Baobab  •  Claim the Treasure  ✦"
+		_: return "✦  Follow the Lost Path  •  Reach the Temple of the First Sun  ✦"
 
 # ── SETUP ─────────────────────────────────────────────────────────────────────
 func _ready() -> void:
 	_rng.seed = 4419
-	_build_bird_labels()
-	_build_zone_labels()
+	_bg_texture = _load_map_texture()
+	_setup()
+
+func _setup() -> void:
+	if not _using_reference_map():
+		_build_bird_labels()
 	_build_level_markers()
 	_build_ui_overlay()
 	_build_preview_panel()
 	_build_sand_shoes_popup()
 	queue_redraw()
 
+func _switch_chapter(ch: int) -> void:
+	_chapter = ch
+	for child in get_children():
+		child.queue_free()
+	_bird1 = null
+	_bird2 = null
+	_preview_panel = null
+	_sand_popup = null
+	_setup()
+
 func _process(delta: float) -> void:
+	if _using_reference_map():
+		return
 	_shimmer_t += delta * 1.25
 	_bird1_x   += delta * 52.0
 	_bird2_x   -= delta * 40.0
@@ -129,6 +292,9 @@ func _process(delta: float) -> void:
 # ── CUSTOM DRAW ───────────────────────────────────────────────────────────────
 func _draw() -> void:
 	_rng.seed = 4419
+	if _using_reference_map():
+		_draw_reference_map()
+		return
 	_draw_backgrounds()
 	_draw_zone_accents()
 	_draw_jungle_trees()
@@ -143,6 +309,10 @@ func _draw() -> void:
 
 # ── DRAW: backgrounds ─────────────────────────────────────────────────────────
 func _draw_backgrounds() -> void:
+	# Use bg_jungle_map.png when present; procedural fallback otherwise
+	if _bg_texture != null:
+		_draw_reference_map()
+		return
 	# Sky gradient across wildlands/temple top
 	_grad(0,   76,  C_SKY,       C_HORIZON,   10)
 	_grad(66,  168, C_HORIZON,   C_WILDLANDS, 14)
@@ -165,6 +335,9 @@ func _draw_backgrounds() -> void:
 	# Camp earth
 	_grad(800, 854, C_FLOOR_Z, C_EARTH2, 8)
 	draw_rect(Rect2(0, 840, 480, 14), C_EARTH2)
+
+func _draw_reference_map() -> void:
+	draw_texture_rect(_bg_texture, Rect2(0, 0, 480, 854), false)
 
 func _grad(y1: float, y2: float, c1: Color, c2: Color, steps: int) -> void:
 	var h := (y2 - y1) / float(steps)
@@ -432,21 +605,21 @@ func _draw_fog() -> void:
 
 # ── DRAW: lost path ───────────────────────────────────────────────────────────
 func _draw_lost_path() -> void:
-	var pts := PackedVector2Array(PATH_PTS)
+	var pts := PackedVector2Array(_ch_path())
 	# Shadow
 	var shd := PackedVector2Array()
-	for p: Vector2 in pts: shd.append(p + Vector2(4, 4))
-	draw_polyline(shd, C_PATH_SHD, 18.0, false)
+	for p: Vector2 in pts: shd.append(p + Vector2(5, 5))
+	draw_polyline(shd, C_PATH_SHD, 26.0, false)
 	# Outer dark edge
-	draw_polyline(pts, C_PATH_OUT,  17.0, true)
+	draw_polyline(pts, C_PATH_OUT,  24.0, true)
 	# Earthy border
-	draw_polyline(pts, C_PATH_EDGE, 13.0, true)
+	draw_polyline(pts, C_PATH_EDGE, 20.0, true)
 	# Dirt fill
-	draw_polyline(pts, C_PATH_DIRT, 9.0,  true)
+	draw_polyline(pts, C_PATH_DIRT, 14.0, true)
 	# Centre highlight
-	draw_polyline(pts, C_PATH_MID,  4.5,  true)
+	draw_polyline(pts, C_PATH_MID,  7.0,  true)
 	# Shimmer
-	draw_polyline(pts, C_PATH_LITE, 1.8,  true)
+	draw_polyline(pts, C_PATH_LITE, 2.5,  true)
 	# Small stone markers along path edges
 	for i in range(0, pts.size() - 1, 3):
 		var p: Vector2 = pts[i]
@@ -456,16 +629,80 @@ func _draw_lost_path() -> void:
 		draw_circle(p + perp * 8.5, 2.2, C_STONE_M)
 		draw_circle(p - perp * 8.5, 2.0, C_STONE_D)
 
-# ── DRAW: marker halos ────────────────────────────────────────────────────────
+# ── DRAW: medallion nodes + label accents ────────────────────────────────────
 func _draw_marker_halos() -> void:
-	for i in range(TOTAL_LEVELS):
-		if not SaveManager.is_level_unlocked(i + 1): continue
-		var p:   Vector2 = NODE_POS[i]
-		var col: Color   = LEVEL_INFO[i]["color"]
-		draw_circle(p, 50.0, col.darkened(0.60).lerp(Color.TRANSPARENT, 0.55))
-		draw_circle(p, 38.0, col.darkened(0.45).lerp(Color.TRANSPARENT, 0.45))
-		if SaveManager.get_stars(i + 1) == 0:  # current next level — brighter halo
-			draw_circle(p, 52.0, Color(C_GOLD.r, C_GOLD.g, C_GOLD.b, 0.14))
+	var node_pos := _ch_pos()
+	for i in range(_ch_count()):
+		var level_id    := i + _ch_start()
+		var p: Vector2  = node_pos[i]
+		var unlocked    := SaveManager.is_level_unlocked(level_id)
+		var stars       := SaveManager.get_stars(level_id)
+		var needs_shoes := level_id == 6 and unlocked and not SaveManager.has_upgrade("sand_shoes")
+		var col: Color  = LEVEL_INFO[level_id - 1]["color"]
+		const R         := 44.0
+
+		# Animated glow pulse for next playable level
+		if unlocked and stars == 0 and not needs_shoes:
+			var ga: float = 0.15 + 0.11 * absf(sin(_shimmer_t * 1.1))
+			draw_circle(p, R + 22.0, Color(C_GOLD.r, C_GOLD.g, C_GOLD.b, ga))
+			draw_circle(p, R + 14.0, Color(C_GOLD.r, C_GOLD.g, C_GOLD.b, ga * 0.55))
+
+		# Drop shadow
+		draw_circle(p + Vector2(4.0, 5.5), R + 8.0, Color(0.0, 0.0, 0.0, 0.60))
+
+		# Outermost brass / tarnished ring
+		if unlocked:
+			draw_circle(p, R + 7.0, Color(0.50, 0.35, 0.11))
+		else:
+			draw_circle(p, R + 7.0, Color(0.20, 0.15, 0.08))
+
+		# Outer dark groove
+		draw_circle(p, R + 4.5, Color(0.04, 0.03, 0.01))
+
+		# Gold or dim second ring
+		if unlocked:
+			draw_circle(p, R + 2.5, C_GOLD)
+		else:
+			draw_circle(p, R + 2.5, Color(0.28, 0.22, 0.10))
+
+		# Thin dark separator
+		draw_circle(p, R + 0.5, Color(0.06, 0.04, 0.01))
+
+		# Narrow inner accent ring
+		if unlocked:
+			draw_circle(p, R - 1.5, C_GOLD.darkened(0.30))
+		else:
+			draw_circle(p, R - 1.5, Color(0.18, 0.14, 0.07))
+
+		# Inner groove
+		draw_circle(p, R - 3.5, Color(0.05, 0.04, 0.01))
+
+		# Inner fill
+		if not unlocked:
+			draw_circle(p, R - 5.0, Color(0.10, 0.10, 0.10, 0.97))
+		else:
+			draw_circle(p, R - 5.0, col.darkened(0.38))
+			# Subtle specular highlight
+			draw_circle(p + Vector2(-6.0, -8.0), R * 0.38,
+				col.lightened(0.22).lerp(Color.WHITE, 0.20) * Color(1.0, 1.0, 1.0, 0.18))
+
+	# Decorative underline accents beside level name labels
+	for i in range(_ch_count()):
+		var p: Vector2  = node_pos[i]
+		const R         := 44.0
+		var right_side: bool
+		if _chapter == 1:
+			right_side = i in [0, 1, 3, 5]
+		else:
+			right_side = p.x < 248.0
+		var uy          := p.y + 13.0
+		var line_col    := Color(0.65, 0.52, 0.22, 0.68)
+		if right_side:
+			var lx := p.x + R + 16.0
+			draw_line(Vector2(lx, uy), Vector2(lx + 86.0, uy), line_col, 1.0, true)
+		else:
+			var rx := p.x - R - 16.0
+			draw_line(Vector2(rx - 86.0, uy), Vector2(rx, uy), line_col, 1.0, true)
 
 # ── BUILD: bird labels ────────────────────────────────────────────────────────
 func _build_bird_labels() -> void:
@@ -483,210 +720,296 @@ func _mk_bird(pos: Vector2) -> Label:
 	add_child(l)
 	return l
 
-# ── BUILD: zone labels ────────────────────────────────────────────────────────
-func _build_zone_labels() -> void:
-	var zones := [
-		["WILDLANDS OF PEACE", Vector2(0,  148), 9,  Color(0.80, 0.70, 0.36, 0.55), HORIZONTAL_ALIGNMENT_CENTER],
-		["TEMPLE APPROACH",    Vector2(0,  222), 8,  Color(0.72, 0.60, 0.24, 0.44), HORIZONTAL_ALIGNMENT_RIGHT],
-		["ANCIENT RUINS",      Vector2(0,  300), 8,  Color(0.52, 0.40, 0.18, 0.40), HORIZONTAL_ALIGNMENT_RIGHT],
-		["~ River of Echoes ~", Vector2(0,  434), 10, Color(0.60, 0.86, 0.96, 0.72), HORIZONTAL_ALIGNMENT_CENTER],
-		["DEEP FOREST",        Vector2(8,  538), 8,  Color(0.20, 0.48, 0.16, 0.38), HORIZONTAL_ALIGNMENT_LEFT],
-		["JUNGLE TRAIL",       Vector2(0,  644), 8,  Color(0.24, 0.58, 0.18, 0.40), HORIZONTAL_ALIGNMENT_RIGHT],
-		["START CAMP",         Vector2(0,  820), 9,  Color(0.86, 0.74, 0.42, 0.72), HORIZONTAL_ALIGNMENT_CENTER],
-	]
-	for z in zones:
-		var l := Label.new()
-		l.text = z[0]
-		l.horizontal_alignment = z[4]
-		l.add_theme_font_size_override("font_size", z[2])
-		l.add_theme_color_override("font_color", z[3])
-		l.size = Vector2(480, 20)
-		l.position = z[1]
-		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(l)
+# zone labels replaced by per-node labels in _add_marker
 
 # ── BUILD: level markers ──────────────────────────────────────────────────────
 func _build_level_markers() -> void:
-	for i in range(TOTAL_LEVELS):
-		_add_marker(i + 1)
+	for i in range(_ch_count()):
+		_add_marker(i + _ch_start())
 
 func _add_marker(level_id: int) -> void:
 	var info: Dictionary = LEVEL_INFO[level_id - 1]
-	var pos: Vector2     = NODE_POS[level_id - 1]
-	var unlocked   := SaveManager.is_level_unlocked(level_id)
-	var stars      := SaveManager.get_stars(level_id)
-	var is_next    := unlocked and stars == 0
-	var needs_shoes:= level_id == 6 and unlocked and not SaveManager.has_upgrade("sand_shoes")
+	var idx: int         = level_id - _ch_start()
+	var pos: Vector2     = _ch_pos()[idx]
+	var unlocked         := SaveManager.is_level_unlocked(level_id)
+	var stars            := SaveManager.get_stars(level_id)
+	var needs_shoes      := level_id == 6 and unlocked and not SaveManager.has_upgrade("sand_shoes")
+	const R              := 44
 
-	# Outer hit zone (transparent, defines tap area)
+	if _using_reference_map() and _chapter == 1 and idx < REFERENCE_NODE_POS.size():
+		var hit_pos: Vector2 = REFERENCE_NODE_POS[idx]
+		var hit := _reference_button(Rect2(hit_pos - Vector2(46, 46), Vector2(92, 92)))
+		if unlocked:
+			hit.pressed.connect(_on_marker.bind(level_id))
+		return
+
+	# Transparent hit-area button — visual drawn entirely by _draw_marker_halos
 	var btn := Button.new()
-	btn.custom_minimum_size = Vector2(90, 90)
-	btn.size                = Vector2(90, 90)
-	btn.position            = pos - Vector2(45, 45)
+	btn.custom_minimum_size = Vector2(R * 2 + 14, R * 2 + 14)
+	btn.size                = Vector2(R * 2 + 14, R * 2 + 14)
+	btn.position            = pos - Vector2(R + 7.0, R + 7.0)
 	btn.flat                = true
 	btn.focus_mode          = Control.FOCUS_NONE
+	var sf_empty            := StyleBoxEmpty.new()
+	btn.add_theme_stylebox_override("normal",  sf_empty)
+	btn.add_theme_stylebox_override("hover",   sf_empty)
+	btn.add_theme_stylebox_override("pressed", sf_empty)
+	btn.add_theme_stylebox_override("focus",   sf_empty)
 	add_child(btn)
 
-	var sf := StyleBoxFlat.new()
-	sf.corner_radius_top_left    = 45
-	sf.corner_radius_top_right   = 45
-	sf.corner_radius_bottom_left = 45
-	sf.corner_radius_bottom_right= 45
-	sf.border_width_left = 2; sf.border_width_right  = 2
-	sf.border_width_top  = 2; sf.border_width_bottom = 2
-
-	if needs_shoes:
-		sf.bg_color     = Color(0.52, 0.38, 0.12, 0.88)
-		sf.border_color = Color(0.92, 0.74, 0.24)
-	elif not unlocked:
-		sf.bg_color     = Color(0.05, 0.05, 0.05, 0.85)
-		sf.border_color = Color(0.22, 0.22, 0.20, 0.50)
-		sf.border_width_left = 1; sf.border_width_right  = 1
-		sf.border_width_top  = 1; sf.border_width_bottom = 1
-	else:
-		var col: Color = info["color"]
-		sf.bg_color     = col.darkened(0.48)
-		sf.border_color = C_GOLD if is_next else col.lightened(0.28)
-
-	btn.add_theme_stylebox_override("normal",  sf)
-	btn.add_theme_stylebox_override("pressed", sf)
-	var sfh := sf.duplicate() as StyleBoxFlat
-	if unlocked:
-		var sfh_col: Color = info["color"]
-		sfh.bg_color = sfh_col.darkened(0.28)
-	btn.add_theme_stylebox_override("hover", sfh)
-
-	var vb := VBoxContainer.new()
-	vb.set_anchors_preset(Control.PRESET_FULL_RECT)
-	vb.add_theme_constant_override("separation", 0)
-	btn.add_child(vb)
-
-	# Level number or status icon
+	# Centre label — level number or icon
 	var num_lbl := Label.new()
 	if needs_shoes:
 		num_lbl.text = "👟"
-		num_lbl.add_theme_color_override("font_color", Color(0.96, 0.84, 0.32))
+		num_lbl.add_theme_font_size_override("font_size", 24)
+		num_lbl.add_theme_color_override("font_color", Color(0.96, 0.82, 0.28))
 	elif not unlocked:
 		num_lbl.text = "🔒"
-		num_lbl.add_theme_color_override("font_color", Color(0.42, 0.42, 0.38))
+		num_lbl.add_theme_font_size_override("font_size", 22)
+		num_lbl.add_theme_color_override("font_color", Color(0.40, 0.38, 0.32))
 	else:
 		num_lbl.text = str(level_id)
-		var num_col: Color = info["color"]
-		num_lbl.add_theme_color_override("font_color", num_col.lightened(0.72))
+		num_lbl.add_theme_font_size_override("font_size", 28)
+		num_lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 	num_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	num_lbl.add_theme_font_size_override("font_size", 24)
-	num_lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
+	num_lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	num_lbl.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.75))
 	num_lbl.add_theme_constant_override("shadow_offset_x", 1)
-	num_lbl.add_theme_constant_override("shadow_offset_y", 1)
-	vb.add_child(num_lbl)
+	num_lbl.add_theme_constant_override("shadow_offset_y", 2)
+	num_lbl.size         = Vector2(R * 2.0 - 10.0, R * 2.0 - 10.0)
+	num_lbl.position     = pos - Vector2(R - 5.0, R - 5.0)
+	num_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(num_lbl)
 
-	# Stars or state row
-	var star_lbl := Label.new()
-	star_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	if needs_shoes:
-		star_lbl.text = "Shoes"
-		star_lbl.add_theme_color_override("font_color", Color(0.96, 0.80, 0.24))
-		star_lbl.add_theme_font_size_override("font_size", 10)
-	elif not unlocked:
-		star_lbl.text = "— —"
-		star_lbl.add_theme_color_override("font_color", Color(0.34, 0.34, 0.32))
-		star_lbl.add_theme_font_size_override("font_size", 11)
-	elif stars > 0:
-		star_lbl.text = "★".repeat(stars) + "☆".repeat(3 - stars)
-		star_lbl.add_theme_color_override("font_color", Color(1.0, 0.82, 0.18))
-		star_lbl.add_theme_font_size_override("font_size", 16)
-	else:
-		star_lbl.text = "☆ ☆ ☆"
-		star_lbl.add_theme_color_override("font_color", Color(0.55, 0.52, 0.40))
-		star_lbl.add_theme_font_size_override("font_size", 15)
-	vb.add_child(star_lbl)
+	# Stars below the circle (unlocked levels only)
+	if unlocked and not needs_shoes:
+		var star_lbl := Label.new()
+		if stars > 0:
+			star_lbl.text = "★".repeat(stars) + "☆".repeat(3 - stars)
+			star_lbl.add_theme_color_override("font_color", Color(1.0, 0.84, 0.18))
+			star_lbl.add_theme_font_size_override("font_size", 17)
+		else:
+			star_lbl.text = "☆  ☆  ☆"
+			star_lbl.add_theme_color_override("font_color", Color(0.56, 0.52, 0.42))
+			star_lbl.add_theme_font_size_override("font_size", 15)
+		star_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		star_lbl.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.80))
+		star_lbl.add_theme_constant_override("shadow_offset_x", 1)
+		star_lbl.add_theme_constant_override("shadow_offset_y", 1)
+		star_lbl.size         = Vector2(R * 2 + 14, 24)
+		star_lbl.position     = pos + Vector2(-(R + 7.0), R + 7.0)
+		star_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(star_lbl)
 
-	# Level name label below the marker circle
-	var name_lbl := Label.new()
-	name_lbl.text = info["name"]
-	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_lbl.add_theme_font_size_override("font_size", 10)
-	var nc: Color
-	if unlocked:
-		var nc_base: Color = info["color"]
-		nc = nc_base.lightened(0.55)
+	# Level name label — beside node; chapter 1 keeps original sides, others use position
+	var label_right: bool
+	if _chapter == 1:
+		label_right = level_id in [1, 2, 4, 6]
 	else:
-		nc = Color(0.38, 0.36, 0.32)
-	name_lbl.add_theme_color_override("font_color", nc)
-	name_lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.70))
+		label_right = pos.x < 248.0
+	var name_lbl    := Label.new()
+	name_lbl.text   = info["name"].to_upper()
+	name_lbl.add_theme_font_size_override("font_size", 12)
+	name_lbl.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.85))
 	name_lbl.add_theme_constant_override("shadow_offset_x", 1)
 	name_lbl.add_theme_constant_override("shadow_offset_y", 1)
-	name_lbl.size = Vector2(110, 18)
-	name_lbl.position = pos - Vector2(55, -47)
+	if unlocked:
+		name_lbl.add_theme_color_override("font_color", Color(1.0, 0.97, 0.90))
+	else:
+		name_lbl.add_theme_color_override("font_color", Color(0.82, 0.78, 0.70, 0.90))
+	if label_right:
+		name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		name_lbl.size     = Vector2(148, 28)
+		name_lbl.position = pos + Vector2(R + 16.0, -14.0)
+	else:
+		name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		name_lbl.size     = Vector2(138, 28)
+		name_lbl.position = pos + Vector2(-R - 154.0, -14.0)
 	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(name_lbl)
+
+	# Sand Shoes badge for Level 6
+	if level_id == 6:
+		_add_shoes_badge(pos, label_right)
 
 	if unlocked:
 		btn.pressed.connect(_on_marker.bind(level_id))
 
-	if is_next and not needs_shoes:
-		var tw := create_tween().set_loops()
-		tw.tween_property(btn, "modulate", Color(1.40, 1.26, 0.80), 0.78)
-		tw.tween_property(btn, "modulate", Color(1.00, 1.00, 1.00), 0.78)
-
 # ── BUILD: UI overlay ─────────────────────────────────────────────────────────
 func _build_ui_overlay() -> void:
-	# Header background
+	if _using_reference_map():
+		_build_reference_hit_targets()
+		return
+
+	# ── Header ──
 	var hdr := ColorRect.new()
-	hdr.color = Color(0.02, 0.05, 0.02, 0.96)
-	hdr.size = Vector2(480, 62)
+	hdr.color        = Color(0.02, 0.02, 0.02, 0.95)
+	hdr.size         = Vector2(480, 68)
 	hdr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(hdr)
-	# Accent lines
-	var gold_line := ColorRect.new()
-	gold_line.color = Color(0.72, 0.56, 0.18, 0.85)
-	gold_line.size = Vector2(480, 2)
-	gold_line.position = Vector2(0, 62)
-	gold_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(gold_line)
 
-	var title := Label.new()
-	title.text = "✦  JUNGLE MAP  ✦"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 22)
-	title.add_theme_color_override("font_color", Color(0.96, 0.82, 0.28))
-	title.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.60))
-	title.add_theme_constant_override("shadow_offset_x", 2)
-	title.add_theme_constant_override("shadow_offset_y", 2)
-	title.size = Vector2(300, 44); title.position = Vector2(90, 10)
-	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(title)
+	var hdr_line := ColorRect.new()
+	hdr_line.color    = Color(0.70, 0.55, 0.18, 0.90)
+	hdr_line.size     = Vector2(480, 2)
+	hdr_line.position = Vector2(0, 68)
+	hdr_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(hdr_line)
 
+	# Back button — rounded dark box
 	var btn_back := Button.new()
-	btn_back.text = "←"
+	btn_back.text             = "←"
 	btn_back.custom_minimum_size = Vector2(52, 44)
-	btn_back.position = Vector2(6, 10)
+	btn_back.position         = Vector2(8, 12)
+	btn_back.focus_mode       = Control.FOCUS_NONE
 	btn_back.add_theme_font_size_override("font_size", 22)
+	btn_back.add_theme_color_override("font_color", Color(0.92, 0.82, 0.30))
+	var sb_back := StyleBoxFlat.new()
+	sb_back.bg_color             = Color(0.08, 0.07, 0.05, 0.90)
+	sb_back.border_color         = Color(0.50, 0.38, 0.14)
+	sb_back.border_width_left    = 2; sb_back.border_width_right  = 2
+	sb_back.border_width_top     = 2; sb_back.border_width_bottom = 2
+	sb_back.corner_radius_top_left     = 10
+	sb_back.corner_radius_top_right    = 10
+	sb_back.corner_radius_bottom_left  = 10
+	sb_back.corner_radius_bottom_right = 10
+	btn_back.add_theme_stylebox_override("normal",  sb_back)
+	var sb_back_h             := sb_back.duplicate() as StyleBoxFlat
+	sb_back_h.bg_color        = Color(0.14, 0.12, 0.08, 0.95)
+	btn_back.add_theme_stylebox_override("hover",   sb_back_h)
+	btn_back.add_theme_stylebox_override("pressed", sb_back)
 	btn_back.pressed.connect(_on_back)
 	add_child(btn_back)
 
+	# Title — chapter name in gold
+	var title := Label.new()
+	title.text = _ch_name()
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 14)
+	title.add_theme_color_override("font_color", Color(0.96, 0.82, 0.28))
+	title.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.65))
+	title.add_theme_constant_override("shadow_offset_x", 2)
+	title.add_theme_constant_override("shadow_offset_y", 2)
+	title.size         = Vector2(258, 48)
+	title.position     = Vector2(68, 10)
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(title)
+
+	# Coins pill container
+	var coins_bg := Panel.new()
+	coins_bg.position     = Vector2(328, 14)
+	coins_bg.size         = Vector2(96, 40)
+	coins_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb_coin := StyleBoxFlat.new()
+	sb_coin.bg_color            = Color(0.08, 0.06, 0.02, 0.92)
+	sb_coin.border_color        = Color(0.70, 0.55, 0.18, 0.95)
+	sb_coin.border_width_left   = 2; sb_coin.border_width_right  = 2
+	sb_coin.border_width_top    = 2; sb_coin.border_width_bottom = 2
+	sb_coin.corner_radius_top_left     = 20
+	sb_coin.corner_radius_top_right    = 20
+	sb_coin.corner_radius_bottom_left  = 20
+	sb_coin.corner_radius_bottom_right = 20
+	coins_bg.add_theme_stylebox_override("panel", sb_coin)
+	add_child(coins_bg)
+
 	var coins_lbl := Label.new()
 	coins_lbl.text = "🪙 " + str(SaveManager.get_coins())
-	coins_lbl.add_theme_font_size_override("font_size", 13)
+	coins_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	coins_lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	coins_lbl.add_theme_font_size_override("font_size", 14)
 	coins_lbl.add_theme_color_override("font_color", Color(1.0, 0.88, 0.24))
-	coins_lbl.size = Vector2(90, 30); coins_lbl.position = Vector2(384, 16)
+	coins_lbl.size         = Vector2(96, 40)
+	coins_lbl.position     = Vector2(328, 14)
 	coins_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(coins_lbl)
 
-	# Bottom objective strip
+	# "+" add-coins button
+	var btn_plus := Button.new()
+	btn_plus.text             = "+"
+	btn_plus.custom_minimum_size = Vector2(36, 40)
+	btn_plus.position         = Vector2(430, 14)
+	btn_plus.focus_mode       = Control.FOCUS_NONE
+	btn_plus.add_theme_font_size_override("font_size", 22)
+	btn_plus.add_theme_color_override("font_color", Color(0.05, 0.02, 0.01))
+	var sb_plus := StyleBoxFlat.new()
+	sb_plus.bg_color            = Color(0.82, 0.62, 0.14)
+	sb_plus.border_width_left   = 0; sb_plus.border_width_right  = 0
+	sb_plus.border_width_top    = 0; sb_plus.border_width_bottom = 0
+	sb_plus.corner_radius_top_left     = 20
+	sb_plus.corner_radius_top_right    = 20
+	sb_plus.corner_radius_bottom_left  = 20
+	sb_plus.corner_radius_bottom_right = 20
+	btn_plus.add_theme_stylebox_override("normal",  sb_plus)
+	var sb_plus_h        := sb_plus.duplicate() as StyleBoxFlat
+	sb_plus_h.bg_color   = Color(0.96, 0.76, 0.20)
+	btn_plus.add_theme_stylebox_override("hover",   sb_plus_h)
+	btn_plus.add_theme_stylebox_override("pressed", sb_plus)
+	btn_plus.pressed.connect(func() -> void: GameManager.go_to_upgrade_shop())
+	add_child(btn_plus)
+
+	# ── Bottom bar ──
 	var bot := ColorRect.new()
-	bot.color = Color(0.02, 0.05, 0.02, 0.90)
-	bot.size = Vector2(480, 32); bot.position = Vector2(0, 822)
+	bot.color        = Color(0.02, 0.02, 0.02, 0.92)
+	bot.size         = Vector2(480, 36)
+	bot.position     = Vector2(0, 818)
 	bot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bot)
+
+	var bot_line := ColorRect.new()
+	bot_line.color    = Color(0.68, 0.52, 0.18, 0.70)
+	bot_line.size     = Vector2(480, 1)
+	bot_line.position = Vector2(0, 818)
+	bot_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(bot_line)
+
 	var obj := Label.new()
-	obj.text = "Follow the Lost Path  ·  Reach the Temple of the First Sun"
+	obj.text = _ch_objective()
 	obj.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	obj.add_theme_font_size_override("font_size", 10)
-	obj.add_theme_color_override("font_color", Color(0.70, 0.86, 0.58, 0.90))
-	obj.size = Vector2(480, 28); obj.position = Vector2(0, 826)
+	obj.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	obj.add_theme_font_size_override("font_size", 9)
+	obj.add_theme_color_override("font_color", Color(0.76, 0.90, 0.60, 0.92))
+	obj.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.70))
+	obj.add_theme_constant_override("shadow_offset_x", 1)
+	obj.add_theme_constant_override("shadow_offset_y", 1)
+	obj.size         = Vector2(480, 36)
+	obj.position     = Vector2(0, 818)
 	obj.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(obj)
+
+	# ── Chapter navigation ──
+	var _mk_ch_btn: Callable = func(lbl_txt: String, xpos: float) -> Button:
+		var b := Button.new()
+		b.text       = lbl_txt
+		b.custom_minimum_size = Vector2(96, 30)
+		b.position   = Vector2(xpos, 822)
+		b.focus_mode = Control.FOCUS_NONE
+		b.add_theme_font_size_override("font_size", 11)
+		b.add_theme_color_override("font_color", Color(0.92, 0.82, 0.30))
+		var sb := StyleBoxFlat.new()
+		sb.bg_color          = Color(0.10, 0.08, 0.04, 0.90)
+		sb.border_color      = Color(0.50, 0.38, 0.14)
+		sb.border_width_left = 1; sb.border_width_right  = 1
+		sb.border_width_top  = 1; sb.border_width_bottom = 1
+		sb.corner_radius_top_left     = 6; sb.corner_radius_top_right    = 6
+		sb.corner_radius_bottom_left  = 6; sb.corner_radius_bottom_right = 6
+		b.add_theme_stylebox_override("normal", sb)
+		var sbh := sb.duplicate() as StyleBoxFlat
+		sbh.bg_color = Color(0.18, 0.14, 0.06, 0.95)
+		b.add_theme_stylebox_override("hover", sbh)
+		b.add_theme_stylebox_override("pressed", sb)
+		add_child(b)
+		return b
+
+	if _chapter > 1:
+		var bp: Button = _mk_ch_btn.call("◀ CHAPTER %d" % (_chapter - 1), 4.0)
+		bp.pressed.connect(func() -> void:
+			EventBus.play_sfx.emit("button")
+			_switch_chapter(_chapter - 1))
+	if _chapter < 3:
+		var bn: Button = _mk_ch_btn.call("CHAPTER %d ▶" % (_chapter + 1), 380.0)
+		bn.pressed.connect(func() -> void:
+			EventBus.play_sfx.emit("button")
+			_switch_chapter(_chapter + 1))
 
 # ── BUILD: preview panel ──────────────────────────────────────────────────────
 func _build_preview_panel() -> void:
@@ -861,6 +1184,81 @@ func _on_back() -> void:
 	GameManager.go_to_menu()
 
 # ── HELPERS ───────────────────────────────────────────────────────────────────
+func _build_reference_hit_targets() -> void:
+	_reference_button(Rect2(10, 10, 58, 44)).pressed.connect(_on_back)
+	_reference_button(Rect2(428, 12, 42, 44)).pressed.connect(_on_reference_plus)
+
+func _on_reference_plus() -> void:
+	EventBus.play_sfx.emit("button")
+	GameManager.go_to_upgrade_shop()
+
+func _reference_button(rect: Rect2) -> Button:
+	var btn := Button.new()
+	btn.text = ""
+	btn.flat = true
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.position = rect.position
+	btn.size = rect.size
+	btn.custom_minimum_size = rect.size
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var empty := StyleBoxEmpty.new()
+	btn.add_theme_stylebox_override("normal", empty)
+	btn.add_theme_stylebox_override("hover", empty)
+	btn.add_theme_stylebox_override("pressed", empty)
+	btn.add_theme_stylebox_override("focus", empty)
+	add_child(btn)
+	return btn
+
+func _load_map_texture() -> Texture2D:
+	if ResourceLoader.exists(MAP_ART_PATH):
+		var tex := load(MAP_ART_PATH)
+		if tex is Texture2D:
+			return tex as Texture2D
+
+	var img := Image.new()
+	if img.load(MAP_ART_PATH) == OK:
+		return ImageTexture.create_from_image(img)
+	return null
+
+func _using_reference_map() -> bool:
+	return _bg_texture != null
+
+func _add_shoes_badge(node_pos: Vector2, right_side: bool) -> void:
+	const R  := 44
+	const BW := 124.0
+	const BH := 36.0
+	var badge_pos: Vector2
+	if right_side:
+		badge_pos = node_pos + Vector2(R + 16.0, 18.0)
+	else:
+		badge_pos = node_pos + Vector2(-R - BW - 16.0, 18.0)
+
+	var badge := Panel.new()
+	badge.position     = badge_pos
+	badge.size         = Vector2(BW, BH)
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color            = Color(0.06, 0.04, 0.02, 0.92)
+	sb.border_color        = Color(0.68, 0.52, 0.18, 0.88)
+	sb.border_width_left   = 1; sb.border_width_right  = 1
+	sb.border_width_top    = 1; sb.border_width_bottom = 1
+	sb.corner_radius_top_left     = 5
+	sb.corner_radius_top_right    = 5
+	sb.corner_radius_bottom_left  = 5
+	sb.corner_radius_bottom_right = 5
+	badge.add_theme_stylebox_override("panel", sb)
+	add_child(badge)
+
+	var lbl := Label.new()
+	lbl.text = "👟 SAND SHOES\n   REQUIRED"
+	lbl.add_theme_font_size_override("font_size", 8)
+	lbl.add_theme_color_override("font_color", Color(0.96, 0.82, 0.28))
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	lbl.size         = Vector2(BW, BH)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.add_child(lbl)
+
 func _cr(parent: Node, pos: Vector2, size: Vector2, color: Color) -> ColorRect:
 	var r := ColorRect.new()
 	r.position = pos; r.size = size; r.color = color

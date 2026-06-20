@@ -36,6 +36,7 @@ var level_data: Dictionary = {}
 var _coin_count: int = 0
 var _total_coins: int = 0
 var _coin_nodes: Array[Node3D] = []
+var _collectable_nodes: Array[Node3D] = []
 var _butterflies: Array[Dictionary] = []
 var _birds: Array[Dictionary] = []
 var _torch_flames: Array[Node3D] = []
@@ -56,6 +57,7 @@ func build(data: Dictionary) -> void:
 	_total_coins = 0
 	_time = 0.0
 	_coin_nodes.clear()
+	_collectable_nodes.clear()
 	_butterflies.clear()
 	_birds.clear()
 	_torch_flames.clear()
@@ -78,6 +80,7 @@ func build(data: Dictionary) -> void:
 	_spawn_dressing(data)
 	_spawn_obstacles(data)
 	_spawn_coins(data)
+	_spawn_collectables(data)
 	_spawn_wildlife(data)
 	_spawn_level_specific_dressing(data)
 	_spawn_path_variation(data)
@@ -88,6 +91,7 @@ func build(data: Dictionary) -> void:
 func _process(delta: float) -> void:
 	_time += delta
 	_animate_coins(delta)
+	_animate_collectables(delta)
 	_animate_butterflies()
 	_animate_birds()
 	_animate_torches()
@@ -353,14 +357,16 @@ func _spawn_coin(lane: int, row: int, is_gem: bool) -> void:
 	coin.set_meta("base_y", coin.position.y)
 	coin.set_meta("phase", float(row) * 0.35 + float(lane))
 
-	if is_gem:
-		var gem := _add_sphere(coin, "GemMesh", 0.25, Vector3.ZERO, COLOR_GEM)
-		gem.scale = Vector3(0.85, 1.25, 0.85)
-	else:
-		var mesh := _add_cylinder(coin, "CoinMesh", 0.27, 0.27, 0.08, Vector3.ZERO, COLOR_COIN)
-		mesh.rotation_degrees.x = 90.0
-		var inset := _add_cylinder(coin, "CoinInset", 0.16, 0.16, 0.09, Vector3(0.0, 0.0, 0.01), COLOR_DIRT_LIGHT)
-		inset.rotation_degrees.x = 90.0
+	var _glb_key := "gem" if is_gem else "coin"
+	if _place_glb(coin, "res://assets/3d/collectibles/%s.glb" % _glb_key, Vector3.ZERO, Vector3(0.35, 0.35, 0.35)) == null:
+		if is_gem:
+			var gem := _add_sphere(coin, "GemMesh", 0.25, Vector3.ZERO, COLOR_GEM)
+			gem.scale = Vector3(0.85, 1.25, 0.85)
+		else:
+			var mesh := _add_cylinder(coin, "CoinMesh", 0.27, 0.27, 0.08, Vector3.ZERO, COLOR_COIN)
+			mesh.rotation_degrees.x = 90.0
+			var inset := _add_cylinder(coin, "CoinInset", 0.16, 0.16, 0.09, Vector3(0.0, 0.0, 0.01), COLOR_DIRT_LIGHT)
+			inset.rotation_degrees.x = 90.0
 
 	var area := Area3D.new()
 	area.name = "PickupArea"
@@ -386,8 +392,10 @@ func _on_coin_body_entered(body: Node3D, coin_node: Node3D, is_gem: bool) -> voi
 	coin_node.queue_free()
 	_coin_nodes.erase(coin_node)
 	if is_gem:
+		EventBus.play_sfx.emit("gem")
 		GameManager.collect_gem()
 	else:
+		EventBus.play_sfx.emit("coin")
 		GameManager.collect_coin()
 		_coin_count += 1
 		coin_collected.emit(_coin_count)
@@ -650,13 +658,14 @@ func _butterfly(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	root.position = pos
 	_group("Animals").add_child(root)
 
-	var body_color := Color(0.12, 0.10, 0.09)
-	var wing_color := Color(1.0, rng.randf_range(0.35, 0.75), rng.randf_range(0.10, 0.45))
-	_add_box(root, "Body", Vector3(0.04, 0.16, 0.04), Vector3.ZERO, body_color)
-	var left := _add_box(root, "WingLeft", Vector3(0.18, 0.04, 0.11), Vector3(-0.10, 0.05, 0.0), wing_color)
-	left.rotation_degrees.z = 22.0
-	var right := _add_box(root, "WingRight", Vector3(0.18, 0.04, 0.11), Vector3(0.10, 0.05, 0.0), wing_color)
-	right.rotation_degrees.z = -22.0
+	if _place_glb(root, "res://assets/3d/wildlife/butterfly.glb", Vector3.ZERO, Vector3(0.18, 0.18, 0.18)) == null:
+		var body_color := Color(0.12, 0.10, 0.09)
+		var wing_color := Color(1.0, rng.randf_range(0.35, 0.75), rng.randf_range(0.10, 0.45))
+		_add_box(root, "Body", Vector3(0.04, 0.16, 0.04), Vector3.ZERO, body_color)
+		var left := _add_box(root, "WingLeft", Vector3(0.18, 0.04, 0.11), Vector3(-0.10, 0.05, 0.0), wing_color)
+		left.rotation_degrees.z = 22.0
+		var right := _add_box(root, "WingRight", Vector3(0.18, 0.04, 0.11), Vector3(0.10, 0.05, 0.0), wing_color)
+		right.rotation_degrees.z = -22.0
 
 	_butterflies.append({
 		"node": root,
@@ -672,13 +681,14 @@ func _bird(start_pos: Vector3, end_pos: Vector3, rng: RandomNumberGenerator) -> 
 	root.position = start_pos
 	_group("Animals").add_child(root)
 
-	var body := _add_sphere(root, "Body", 0.18, Vector3.ZERO, Color(0.10, 0.48, 0.26))
-	body.scale = Vector3(1.15, 0.80, 1.45)
-	_add_box(root, "Beak", Vector3(0.12, 0.08, 0.18), Vector3(0.0, 0.02, -0.22), Color(1.0, 0.68, 0.08))
-	var left := _add_box(root, "WingLeft", Vector3(0.52, 0.06, 0.18), Vector3(-0.33, 0.0, 0.0), Color(0.10, 0.38, 0.82))
-	left.rotation_degrees.z = 12.0
-	var right := _add_box(root, "WingRight", Vector3(0.52, 0.06, 0.18), Vector3(0.33, 0.0, 0.0), Color(0.10, 0.38, 0.82))
-	right.rotation_degrees.z = -12.0
+	if _place_glb(root, "res://assets/3d/wildlife/bird.glb", Vector3.ZERO, Vector3(0.30, 0.30, 0.30)) == null:
+		var body := _add_sphere(root, "Body", 0.18, Vector3.ZERO, Color(0.10, 0.48, 0.26))
+		body.scale = Vector3(1.15, 0.80, 1.45)
+		_add_box(root, "Beak", Vector3(0.12, 0.08, 0.18), Vector3(0.0, 0.02, -0.22), Color(1.0, 0.68, 0.08))
+		var left := _add_box(root, "WingLeft", Vector3(0.52, 0.06, 0.18), Vector3(-0.33, 0.0, 0.0), Color(0.10, 0.38, 0.82))
+		left.rotation_degrees.z = 12.0
+		var right := _add_box(root, "WingRight", Vector3(0.52, 0.06, 0.18), Vector3(0.33, 0.0, 0.0), Color(0.10, 0.38, 0.82))
+		right.rotation_degrees.z = -12.0
 	root.look_at(end_pos, Vector3.UP)
 
 	_birds.append({
@@ -893,6 +903,135 @@ func _animate_coins(delta: float) -> void:
 		var base_y := float(coin.get_meta("base_y", 0.80))
 		var phase := float(coin.get_meta("phase", 0.0))
 		coin.position.y = base_y + sin(_time * 3.0 + phase) * 0.08
+
+func _spawn_collectables(data: Dictionary) -> void:
+	for item in data.get("collectables", []):
+		_spawn_single_collectable(
+			str(item.get("type", "")),
+			int(item.get("lane", 1)),
+			int(item.get("row", 3))
+		)
+
+func _spawn_single_collectable(res_type: String, lane: int, row: int) -> void:
+	var root := Node3D.new()
+	root.name = "Collectable_" + res_type
+	var base_pos := _world_pos(row, lane)
+	root.position = Vector3(base_pos.x, 0.90, base_pos.z)
+	root.set_meta("base_y", root.position.y)
+	root.set_meta("phase", float(row) * 0.47 + float(lane) * 1.3)
+
+	const _GLB_NAME := { "bricks": "brick", "tiles": "tile" }
+	var glb_id: String = _GLB_NAME.get(res_type, res_type)
+	if _place_glb(root, "res://assets/3d/collectibles/%s.glb" % glb_id, Vector3.ZERO, Vector3(0.45, 0.45, 0.45)) == null:
+		match res_type:
+			"sunstone_shard":
+				var s := _add_sphere(root, "Stone", 0.22, Vector3.ZERO, Color(1.0, 0.60, 0.08))
+				s.scale = Vector3(0.75, 1.80, 0.75)
+				_add_sphere(root, "StoneCore", 0.12, Vector3(0.0, 0.08, 0.0), Color(1.0, 0.88, 0.30))
+			"relic_key":
+				_add_cylinder(root, "KeyShaft", 0.06, 0.06, 0.44, Vector3(0.0, 0.0, 0.0), Color(0.92, 0.78, 0.18))
+				_add_cylinder(root, "KeyBow",   0.16, 0.16, 0.06, Vector3(0.0, 0.24, 0.0), Color(0.92, 0.78, 0.18))
+				_add_cylinder(root, "KeyHole",  0.08, 0.08, 0.07, Vector3(0.0, 0.24, 0.0), Color(0.30, 0.22, 0.05))
+				_add_box(root, "Tooth1", Vector3(0.10, 0.08, 0.10), Vector3(0.09, -0.14, 0.0), Color(0.92, 0.78, 0.18))
+				_add_box(root, "Tooth2", Vector3(0.10, 0.08, 0.10), Vector3(0.09, -0.26, 0.0), Color(0.92, 0.78, 0.18))
+			"map_piece":
+				_add_box(root, "Scroll",       Vector3(0.42, 0.04, 0.32), Vector3.ZERO,            Color(0.86, 0.74, 0.44))
+				_add_box(root, "ScrollAccent", Vector3(0.38, 0.05, 0.04), Vector3(0.0, 0.0, 0.12), Color(0.72, 0.52, 0.14))
+			"bricks":
+				_add_box(root, "Brick1", Vector3(0.36, 0.12, 0.18), Vector3(0.0, 0.06, 0.0), Color(0.58, 0.24, 0.14))
+				_add_box(root, "Brick2", Vector3(0.36, 0.12, 0.18), Vector3(0.0, 0.20, 0.0), Color(0.64, 0.28, 0.16))
+				_add_box(root, "Brick3", Vector3(0.36, 0.12, 0.18), Vector3(0.0, 0.34, 0.0), Color(0.58, 0.24, 0.14))
+			"wood":
+				var log := _add_cylinder(root, "WoodLog", 0.18, 0.20, 0.40, Vector3.ZERO, Color(0.42, 0.27, 0.12))
+				log.rotation_degrees.z = 90.0
+				_add_cylinder(root, "WoodEnd", 0.18, 0.18, 0.04, Vector3(0.22, 0.0, 0.0), Color(0.56, 0.38, 0.18))
+			"food":
+				_add_sphere(root, "Fruit", 0.22, Vector3.ZERO, Color(0.96, 0.44, 0.10))
+				_add_cylinder(root, "Stem", 0.02, 0.02, 0.10, Vector3(0.0, 0.25, 0.0), Color(0.18, 0.52, 0.12))
+			"tools":
+				_add_cylinder(root, "Handle", 0.05, 0.05, 0.38, Vector3.ZERO, Color(0.56, 0.50, 0.46))
+				_add_box(root, "Head", Vector3(0.24, 0.10, 0.10), Vector3(0.0, 0.22, 0.0), Color(0.48, 0.44, 0.42))
+			"tiles":
+				_add_box(root, "Tile1", Vector3(0.30, 0.04, 0.30), Vector3(0.0, 0.02, 0.0), Color(0.60, 0.52, 0.40))
+				_add_box(root, "Tile2", Vector3(0.30, 0.04, 0.30), Vector3(0.0, 0.09, 0.0), Color(0.68, 0.58, 0.44))
+				_add_box(root, "Tile3", Vector3(0.30, 0.04, 0.30), Vector3(0.0, 0.16, 0.0), Color(0.60, 0.52, 0.40))
+			"rope":
+				var coil := _add_cylinder(root, "Coil", 0.18, 0.18, 0.06, Vector3.ZERO, Color(0.54, 0.36, 0.18))
+				coil.rotation_degrees.x = 90.0
+				_add_cylinder(root, "CoilInner", 0.10, 0.10, 0.08, Vector3.ZERO, Color(0.38, 0.24, 0.10))
+				var tail := _add_cylinder(root, "Tail", 0.04, 0.04, 0.22, Vector3(0.18, 0.06, 0.0), Color(0.54, 0.36, 0.18))
+				tail.rotation_degrees.z = 30.0
+			"medicine_pack":
+				_add_box(root, "Pack", Vector3(0.28, 0.22, 0.14), Vector3.ZERO, Color(0.92, 0.94, 0.90))
+				_add_box(root, "CrossH", Vector3(0.18, 0.05, 0.06), Vector3(0.0, 0.0, 0.08), Color(0.82, 0.16, 0.14))
+				_add_box(root, "CrossV", Vector3(0.06, 0.18, 0.06), Vector3(0.0, 0.0, 0.09), Color(0.82, 0.16, 0.14))
+			"dog_token":
+				_add_sphere(root, "BoneEnd1", 0.10, Vector3(-0.18, 0.0, 0.0), Color(0.88, 0.80, 0.64))
+				_add_sphere(root, "BoneEnd2", 0.10, Vector3( 0.18, 0.0, 0.0), Color(0.88, 0.80, 0.64))
+				var shaft := _add_cylinder(root, "BoneShaft", 0.04, 0.04, 0.36, Vector3.ZERO, Color(0.88, 0.80, 0.64))
+				shaft.rotation_degrees.z = 90.0
+			"animal_badge":
+				var badge := _add_cylinder(root, "Badge", 0.20, 0.20, 0.04, Vector3.ZERO, Color(0.96, 0.82, 0.18))
+				badge.rotation_degrees.x = 90.0
+				_add_box(root, "StarH", Vector3(0.04, 0.18, 0.06), Vector3(0.0, 0.0, 0.0), Color(0.90, 0.70, 0.10))
+				_add_box(root, "StarV", Vector3(0.18, 0.04, 0.06), Vector3(0.0, 0.0, 0.0), Color(0.90, 0.70, 0.10))
+			"windows":
+				_add_box(root, "Frame",  Vector3(0.40, 0.40, 0.04), Vector3.ZERO,            Color(0.66, 0.56, 0.32))
+				_add_box(root, "Glass",  Vector3(0.30, 0.30, 0.06), Vector3.ZERO,            Color(0.50, 0.70, 0.86))
+				_add_box(root, "PaneH",  Vector3(0.30, 0.04, 0.07), Vector3.ZERO,            Color(0.66, 0.56, 0.32))
+				_add_box(root, "PaneV",  Vector3(0.04, 0.30, 0.07), Vector3.ZERO,            Color(0.66, 0.56, 0.32))
+			"trade_token":
+				var tok := _add_cylinder(root, "Token", 0.22, 0.22, 0.06, Vector3.ZERO, Color(0.88, 0.70, 0.20))
+				tok.rotation_degrees.x = 90.0
+				_add_cylinder(root, "TokenInset", 0.14, 0.14, 0.07, Vector3.ZERO, Color(0.76, 0.58, 0.12))
+			"wildlife_notes":
+				_add_box(root, "Cover", Vector3(0.32, 0.40, 0.06), Vector3.ZERO, Color(0.26, 0.56, 0.32))
+				_add_box(root, "Page",  Vector3(0.26, 0.34, 0.07), Vector3(0.0, 0.0, 0.02), Color(0.95, 0.93, 0.84))
+				_add_box(root, "Line1", Vector3(0.18, 0.02, 0.08), Vector3(0.0,  0.08, 0.0), Color(0.68, 0.78, 0.70))
+				_add_box(root, "Line2", Vector3(0.18, 0.02, 0.08), Vector3(0.0,  0.0,  0.0), Color(0.68, 0.78, 0.70))
+				_add_box(root, "Line3", Vector3(0.18, 0.02, 0.08), Vector3(0.0, -0.08, 0.0), Color(0.68, 0.78, 0.70))
+			_:
+				_add_sphere(root, "Unknown", 0.20, Vector3.ZERO, Color(0.75, 0.75, 0.75))
+
+	var area := Area3D.new()
+	area.name = "PickupArea"
+	var col := CollisionShape3D.new()
+	col.shape = SphereShape3D.new()
+	(col.shape as SphereShape3D).radius = 0.44
+	area.add_child(col)
+	area.body_entered.connect(_on_collectable_body_entered.bind(root, res_type))
+	root.add_child(area)
+
+	_collectable_nodes.append(root)
+	_group("Collectibles").add_child(root)
+
+func _on_collectable_body_entered(body: Node3D, coll_node: Node3D, res_type: String) -> void:
+	if not (body is CharacterBody3D):
+		return
+	if not is_instance_valid(coll_node):
+		return
+	if body.has_method("play_collect"):
+		body.call("play_collect")
+	coll_node.queue_free()
+	_collectable_nodes.erase(coll_node)
+	match res_type:
+		"relic_key":
+			EventBus.play_sfx.emit("key")
+		"sunstone_shard":
+			EventBus.play_sfx.emit("gem")
+		_:
+			EventBus.play_sfx.emit("coin")
+	GameManager.collect_resource(res_type, 1)
+
+func _animate_collectables(delta: float) -> void:
+	for item in _collectable_nodes.duplicate():
+		if not is_instance_valid(item):
+			_collectable_nodes.erase(item)
+			continue
+		item.rotate_y(delta * 2.2)
+		var base_y := float(item.get_meta("base_y", 0.90))
+		var phase  := float(item.get_meta("phase", 0.0))
+		item.position.y = base_y + sin(_time * 2.4 + phase) * 0.10
 
 func _animate_butterflies() -> void:
 	for item in _butterflies:
@@ -1264,22 +1403,43 @@ func _spawn_wildlands_dressing(data: Dictionary, rng: RandomNumberGenerator) -> 
 			if row % 3 == 0 and rng.randf() < 0.40:
 				_acacia_tree(Vector3(far_x, 0.0, z), rng)
 
+func _wildlife_glb(animal: String, pos: Vector3, s: Vector3, rot_y: float = 0.0) -> void:
+	var root := Node3D.new()
+	root.name = animal.capitalize()
+	root.position = pos
+	root.rotation_degrees.y = rot_y
+	_group("Animals").add_child(root)
+	if _place_glb(root, "res://assets/3d/wildlife/%s.glb" % animal, Vector3.ZERO, s) == null:
+		if animal == "elephant":
+			var rng2 := RandomNumberGenerator.new()
+			_elephant_silhouette(pos, rng2)
+			root.queue_free()
+
 func _spawn_wildlands_wildlife(data: Dictionary, rng: RandomNumberGenerator) -> void:
 	var length: int = data.get("length", 30)
-	# Birds crossing the sky
+	var mid_z  := -float(length / 2) * TILE_Z
+	var end_z  := -float(length - 6) * TILE_Z
+	var near_z := -float(6) * TILE_Z
+
+	# Birds arcing across the sky
 	for i in range(2):
 		var row := 5 + i * 9
 		_bird(
 			Vector3(-6.2, rng.randf_range(3.2, 4.4), -float(row) * TILE_Z),
-			Vector3(6.2, rng.randf_range(3.4, 4.8), -float(row + 3) * TILE_Z),
+			Vector3(6.2,  rng.randf_range(3.4, 4.8), -float(row + 3) * TILE_Z),
 			rng
 		)
-	# Background elephant at end of level
-	if length > 15:
-		_elephant_silhouette(
-			Vector3(rng.randf_range(3.5, 5.5), 0.0, -float(length - 8) * TILE_Z - 3.0),
-			rng
-		)
+
+	# Background wildlife — all placed at |x| > 4.0, never in the gameplay lanes
+	_wildlife_glb("elephant",    Vector3(rng.randf_range(4.5, 6.0),  0.0, end_z),          Vector3(1.6, 1.6, 1.6), 180.0)
+	_wildlife_glb("giraffe",     Vector3(-rng.randf_range(5.5, 7.0), 0.0, end_z + 8.0),    Vector3(1.2, 1.2, 1.2), 90.0)
+	_wildlife_glb("zebra",       Vector3(rng.randf_range(4.0, 5.5),  0.0, mid_z),           Vector3(1.0, 1.0, 1.0), 200.0)
+	_wildlife_glb("lion",        Vector3(-rng.randf_range(4.5, 5.5), 0.0, mid_z - 10.0),   Vector3(0.9, 0.9, 0.9), 160.0)
+	_wildlife_glb("cape_buffalo",Vector3(rng.randf_range(4.0, 5.5),  0.0, mid_z + 10.0),   Vector3(1.1, 1.1, 1.1), 220.0)
+	_wildlife_glb("rhino",       Vector3(-rng.randf_range(5.0, 6.0), 0.0, near_z + 4.0),   Vector3(1.2, 1.2, 1.2), 140.0)
+	_wildlife_glb("warthog",     Vector3(rng.randf_range(4.2, 5.0),  0.0, near_z),          Vector3(0.7, 0.7, 0.7), 100.0)
+	if length > 25:
+		_wildlife_glb("leopard", Vector3(-rng.randf_range(4.5, 5.5), 0.0, end_z + 16.0),   Vector3(0.8, 0.8, 0.8), 250.0)
 
 func _dry_grass_tuft(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	var root := Node3D.new()
@@ -1379,6 +1539,20 @@ func _warthog_silhouette(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	# Tail (upright when running)
 	var tail := _add_box(root, "Tail", Vector3(0.04, 0.18, 0.04), Vector3(-0.28, 0.34, 0.0), c)
 	tail.rotation_degrees.z = 15.0
+
+func _place_glb(parent: Node3D, path: String, offset: Vector3, s: Vector3) -> Node3D:
+	if not ResourceLoader.exists(path):
+		return null
+	var packed := load(path) as PackedScene
+	if packed == null:
+		return null
+	var inst := packed.instantiate() as Node3D
+	if inst == null:
+		return null
+	inst.position = offset
+	inst.scale    = s
+	parent.add_child(inst)
+	return inst
 
 func _add_box(parent: Node3D, node_name: String, size: Vector3, pos: Vector3, color: Color) -> MeshInstance3D:
 	var mesh := MeshInstance3D.new()

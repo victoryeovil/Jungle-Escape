@@ -66,5 +66,11 @@
     { "gem": true, "lane": 0, "row": 25 },
     { "gem": true, "lane": 2, "row": 44 },
     { "gem": true, "lane": 1, "row": 45 }
+  ],
+  "collectables": [
+    { "type": "relic_key", "lane": 2, "row": 2  },
+    { "type": "bricks",    "lane": 2, "row": 6  },
+    { "type": "relic_key", "lane": 2, "row": 16 },
+    { "type": "bricks",    "lane": 0, "row": 33 }
   ]
 }
