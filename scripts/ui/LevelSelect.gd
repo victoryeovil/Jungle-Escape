@@ -90,75 +90,68 @@ const LEVEL_INFO: Array = [
 	  "rewards": "Coins  ·  Gems  ·  Sunstone Shard  ·  Relic Key  ·  Animal Badge" },
 ]
 
-const NODE_POS_1: Array = [
-	Vector2(220, 710), Vector2(318, 582), Vector2(132, 452),
-	Vector2(322, 328), Vector2(162, 212), Vector2(300, 108),
-]
-const NODE_POS_2: Array = [
-	Vector2(220, 710), Vector2(310, 586), Vector2(148, 466),
-	Vector2(310, 348), Vector2(160, 238), Vector2(306, 140),
-	Vector2(190,  60),
-]
-const NODE_POS_3: Array = [
-	Vector2(220, 710), Vector2(306, 590), Vector2(152, 472),
-	Vector2(310, 356), Vector2(156, 244), Vector2(308, 138),
-	Vector2(200,  60),
-]
-const REFERENCE_NODE_POS: Array = [
-	Vector2(196, 666), Vector2(266, 567), Vector2(215, 478),
-	Vector2(294, 369), Vector2(232, 252), Vector2(252, 156),
-]
-const CAMP_POS   := Vector2(240, 812)
-const TEMPLE_POS := Vector2(240, 66)
+const CANVAS_H  : float = 2460.0
+const SCROLL_MAX: float = 1708.0   # CANVAS_H - 752 (usable scroll height)
 
-const PATH_PTS_1: Array = [
-	Vector2(240, 820),
-	Vector2(236, 786), Vector2(228, 754),
-	Vector2(222, 730), Vector2(220, 710),
-	Vector2(232, 672), Vector2(270, 635), Vector2(300, 600),
-	Vector2(318, 582),
-	Vector2(288, 544), Vector2(224, 510), Vector2(152, 474),
-	Vector2(132, 452),
-	Vector2(148, 414), Vector2(210, 376), Vector2(298, 344),
-	Vector2(322, 328),
-	Vector2(286, 292), Vector2(224, 258), Vector2(178, 230),
-	Vector2(162, 212),
-	Vector2(176, 180), Vector2(218, 150), Vector2(268, 124),
-	Vector2(300, 108),
+# All 20 node positions in unified 2460 px canvas
+# Ch1 y += 1640, Ch2 y += 820, Ch3 y += 0
+const NODE_POS_ALL: Array = [
+	Vector2(220, 2350), Vector2(318, 2222), Vector2(132, 2092),
+	Vector2(322, 1968), Vector2(162, 1852), Vector2(300, 1748),
+	Vector2(220, 1530), Vector2(310, 1406), Vector2(148, 1286),
+	Vector2(310, 1168), Vector2(160, 1058), Vector2(306,  960),
+	Vector2(190,  880),
+	Vector2(220,  710), Vector2(306,  590), Vector2(152,  472),
+	Vector2(310,  356), Vector2(156,  244), Vector2(308,  138),
+	Vector2(200,   60),
 ]
-const PATH_PTS_2: Array = [
-	Vector2(240, 820),
-	Vector2(236, 786), Vector2(228, 754),
-	Vector2(222, 730), Vector2(220, 710),
-	Vector2(240, 668), Vector2(280, 630), Vector2(308, 600),
-	Vector2(310, 586),
-	Vector2(286, 548), Vector2(218, 512), Vector2(162, 482),
-	Vector2(148, 466),
-	Vector2(160, 426), Vector2(226, 390), Vector2(298, 362),
-	Vector2(310, 348),
-	Vector2(284, 308), Vector2(218, 274), Vector2(170, 254),
-	Vector2(160, 238),
-	Vector2(174, 196), Vector2(224, 166), Vector2(282, 148),
-	Vector2(306, 140),
-	Vector2(276, 106), Vector2(230,  78), Vector2(200,  62),
-	Vector2(190,  60),
-]
-const PATH_PTS_3: Array = [
-	Vector2(240, 820),
-	Vector2(236, 786), Vector2(228, 754),
-	Vector2(222, 730), Vector2(220, 710),
-	Vector2(238, 666), Vector2(278, 630), Vector2(304, 604),
-	Vector2(306, 590),
-	Vector2(282, 550), Vector2(214, 516), Vector2(162, 488),
-	Vector2(152, 472),
-	Vector2(162, 430), Vector2(228, 396), Vector2(298, 368),
-	Vector2(310, 356),
-	Vector2(286, 314), Vector2(220, 278), Vector2(166, 258),
-	Vector2(156, 244),
-	Vector2(168, 200), Vector2(226, 168), Vector2(284, 148),
-	Vector2(308, 138),
-	Vector2(280, 104), Vector2(236,  74), Vector2(204,  62),
-	Vector2(200,  60),
+
+const CAMP_POS   := Vector2(240, 812)   # local within ch1 section
+const TEMPLE_POS := Vector2(240, 66)    # local within ch3 section
+
+# Unified path through all 20 levels (canvas coordinates)
+const PATH_PTS_ALL: Array = [
+	Vector2(240, 2460),
+	Vector2(236, 2426), Vector2(228, 2394), Vector2(222, 2370),
+	Vector2(220, 2350),
+	Vector2(232, 2312), Vector2(270, 2275), Vector2(300, 2240),
+	Vector2(318, 2222),
+	Vector2(288, 2184), Vector2(224, 2150), Vector2(152, 2114),
+	Vector2(132, 2092),
+	Vector2(148, 2054), Vector2(210, 2016), Vector2(298, 1984),
+	Vector2(322, 1968),
+	Vector2(286, 1932), Vector2(224, 1898), Vector2(178, 1870),
+	Vector2(162, 1852),
+	Vector2(176, 1820), Vector2(218, 1790), Vector2(268, 1764),
+	Vector2(300, 1748),
+	Vector2(280, 1690), Vector2(250, 1640), Vector2(225, 1590),
+	Vector2(220, 1530),
+	Vector2(240, 1488), Vector2(280, 1450), Vector2(308, 1420),
+	Vector2(310, 1406),
+	Vector2(286, 1368), Vector2(218, 1332), Vector2(162, 1302),
+	Vector2(148, 1286),
+	Vector2(160, 1246), Vector2(226, 1210), Vector2(298, 1182),
+	Vector2(310, 1168),
+	Vector2(284, 1128), Vector2(218, 1094), Vector2(170, 1074),
+	Vector2(160, 1058),
+	Vector2(174, 1016), Vector2(224,  986), Vector2(282,  968),
+	Vector2(306,  960),
+	Vector2(276,  926), Vector2(230,  898), Vector2(200,  882),
+	Vector2(190,  880),
+	Vector2(200,  820), Vector2(212,  760),
+	Vector2(220,  710),
+	Vector2(238,  666), Vector2(278,  630), Vector2(304,  604),
+	Vector2(306,  590),
+	Vector2(282,  550), Vector2(214,  516), Vector2(162,  488),
+	Vector2(152,  472),
+	Vector2(162,  430), Vector2(228,  396), Vector2(298,  368),
+	Vector2(310,  356),
+	Vector2(286,  314), Vector2(220,  278), Vector2(166,  258),
+	Vector2(156,  244),
+	Vector2(168,  200), Vector2(226,  168), Vector2(284,  148),
+	Vector2(308,  138),
+	Vector2(280,  104), Vector2(236,   74), Vector2(204,   62),
+	Vector2(200,   60),
 ]
 
 # ── Colour palette ───────────────────────────────────────────────────────────
@@ -213,73 +206,32 @@ var _bird1_x         : float   = -28.0
 var _bird2_x         : float   = 510.0
 var _shimmer_t       : float   = 0.0
 var _bg_texture      : Texture2D = null
-var _chapter         : int     = 1  # 1, 2, or 3
-
-# ── Chapter helpers ──────────────────────────────────────────────────────────
-func _ch_start() -> int:
-	match _chapter:
-		2: return 7
-		3: return 14
-		_: return 1
-
-func _ch_count() -> int:
-	match _chapter:
-		2: return 7
-		3: return 7
-		_: return 6
-
-func _ch_pos() -> Array:
-	match _chapter:
-		2: return NODE_POS_2
-		3: return NODE_POS_3
-		_: return NODE_POS_1
-
-func _ch_path() -> Array:
-	match _chapter:
-		2: return PATH_PTS_2
-		3: return PATH_PTS_3
-		_: return PATH_PTS_1
-
-func _ch_name() -> String:
-	match _chapter:
-		2: return "WILDLANDS SETTLEMENT"
-		3: return "DEEP WILDLANDS"
-		_: return "THE LOST PATH"
-
-func _ch_objective() -> String:
-	match _chapter:
-		2: return "✦  Gather resources  •  Build the Jungle Home  ✦"
-		3: return "✦  Reach the Ancient Baobab  •  Claim the Treasure  ✦"
-		_: return "✦  Follow the Lost Path  •  Reach the Temple of the First Sun  ✦"
+var _scroll_y        : float   = SCROLL_MAX  # start showing chapter 1 at bottom
+var _is_dragging     : bool    = false
+var _drag_start_y    : float   = 0.0
+var _drag_start_scroll: float  = 0.0
+var _marker_layer    : Control = null
 
 # ── SETUP ─────────────────────────────────────────────────────────────────────
 func _ready() -> void:
 	_rng.seed = 4419
-	_bg_texture = _load_map_texture()
+	_bg_texture = null  # scrollable 2460-px canvas always uses procedural drawing
 	_setup()
 
 func _setup() -> void:
-	if not _using_reference_map():
-		_build_bird_labels()
+	_marker_layer = Control.new()
+	_marker_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_marker_layer.size = Vector2(480, CANVAS_H)
+	_marker_layer.position = Vector2(0.0, 68.0 - _scroll_y)
+	add_child(_marker_layer)
+	_build_bird_labels()
 	_build_level_markers()
 	_build_ui_overlay()
 	_build_preview_panel()
 	_build_sand_shoes_popup()
 	queue_redraw()
 
-func _switch_chapter(ch: int) -> void:
-	_chapter = ch
-	for child in get_children():
-		child.queue_free()
-	_bird1 = null
-	_bird2 = null
-	_preview_panel = null
-	_sand_popup = null
-	_setup()
-
 func _process(delta: float) -> void:
-	if _using_reference_map():
-		return
 	_shimmer_t += delta * 1.25
 	_bird1_x   += delta * 52.0
 	_bird2_x   -= delta * 40.0
@@ -287,25 +239,52 @@ func _process(delta: float) -> void:
 	if _bird2_x < -28.0:  _bird2_x =  528.0
 	if _bird1 != null: _bird1.position.x = _bird1_x
 	if _bird2 != null: _bird2.position.x = _bird2_x
+	if _marker_layer != null:
+		_marker_layer.position.y = 68.0 - _scroll_y
 	queue_redraw()
 
 # ── CUSTOM DRAW ───────────────────────────────────────────────────────────────
 func _draw() -> void:
+	# Chapter 1 section — canvas y 1640–2460 (jungle / ruins / river / camp)
+	var t1 := 1640.0 - _scroll_y + 68.0
+	draw_set_transform(Vector2(0.0, t1))
 	_rng.seed = 4419
-	if _using_reference_map():
-		_draw_reference_map()
-		return
+	_draw_backgrounds()
+	_draw_zone_accents()
+	_draw_jungle_trees()
+	_draw_ruins_deco()
+	_draw_river_art()
+	_draw_camp_art()
+	_draw_fog()
+
+	# Chapter 2 section — canvas y 820–1640 (wildlands settlement)
+	var t2 := 820.0 - _scroll_y + 68.0
+	draw_set_transform(Vector2(0.0, t2))
+	_rng.seed = 5311
 	_draw_backgrounds()
 	_draw_zone_accents()
 	_draw_jungle_trees()
 	_draw_wildlands_deco()
-	_draw_ruins_deco()
-	_draw_river_art()
-	_draw_camp_art()
+	_draw_fog()
+
+	# Chapter 3 section — canvas y 0–820 (deep wildlands / baobab)
+	var t3 := -_scroll_y + 68.0
+	draw_set_transform(Vector2(0.0, t3))
+	_rng.seed = 6173
+	_draw_backgrounds()
+	_draw_zone_accents()
+	_draw_jungle_trees()
+	_draw_wildlands_deco()
 	_draw_temple_art()
 	_draw_fog()
+
+	# Unified path + markers in full canvas coordinates
+	draw_set_transform(Vector2(0.0, -_scroll_y + 68.0))
 	_draw_lost_path()
 	_draw_marker_halos()
+
+	draw_set_transform(Vector2.ZERO)
+	_draw_scrollbar()
 
 # ── DRAW: backgrounds ─────────────────────────────────────────────────────────
 func _draw_backgrounds() -> void:
@@ -605,7 +584,7 @@ func _draw_fog() -> void:
 
 # ── DRAW: lost path ───────────────────────────────────────────────────────────
 func _draw_lost_path() -> void:
-	var pts := PackedVector2Array(_ch_path())
+	var pts := PackedVector2Array(PATH_PTS_ALL)
 	# Shadow
 	var shd := PackedVector2Array()
 	for p: Vector2 in pts: shd.append(p + Vector2(5, 5))
@@ -631,10 +610,9 @@ func _draw_lost_path() -> void:
 
 # ── DRAW: medallion nodes + label accents ────────────────────────────────────
 func _draw_marker_halos() -> void:
-	var node_pos := _ch_pos()
-	for i in range(_ch_count()):
-		var level_id    := i + _ch_start()
-		var p: Vector2  = node_pos[i]
+	for i in range(TOTAL_LEVELS):
+		var level_id    := i + 1
+		var p: Vector2  = NODE_POS_ALL[i]
 		var unlocked    := SaveManager.is_level_unlocked(level_id)
 		var stars       := SaveManager.get_stars(level_id)
 		var needs_shoes := level_id == 6 and unlocked and not SaveManager.has_upgrade("sand_shoes")
@@ -682,19 +660,14 @@ func _draw_marker_halos() -> void:
 			draw_circle(p, R - 5.0, Color(0.10, 0.10, 0.10, 0.97))
 		else:
 			draw_circle(p, R - 5.0, col.darkened(0.38))
-			# Subtle specular highlight
 			draw_circle(p + Vector2(-6.0, -8.0), R * 0.38,
 				col.lightened(0.22).lerp(Color.WHITE, 0.20) * Color(1.0, 1.0, 1.0, 0.18))
 
 	# Decorative underline accents beside level name labels
-	for i in range(_ch_count()):
-		var p: Vector2  = node_pos[i]
+	for i in range(TOTAL_LEVELS):
+		var p: Vector2  = NODE_POS_ALL[i]
 		const R         := 44.0
-		var right_side: bool
-		if _chapter == 1:
-			right_side = i in [0, 1, 3, 5]
-		else:
-			right_side = p.x < 248.0
+		var right_side  := p.x < 248.0
 		var uy          := p.y + 13.0
 		var line_col    := Color(0.65, 0.52, 0.22, 0.68)
 		if right_side:
@@ -724,24 +697,16 @@ func _mk_bird(pos: Vector2) -> Label:
 
 # ── BUILD: level markers ──────────────────────────────────────────────────────
 func _build_level_markers() -> void:
-	for i in range(_ch_count()):
-		_add_marker(i + _ch_start())
+	for i in range(TOTAL_LEVELS):
+		_add_marker(i + 1)
 
 func _add_marker(level_id: int) -> void:
 	var info: Dictionary = LEVEL_INFO[level_id - 1]
-	var idx: int         = level_id - _ch_start()
-	var pos: Vector2     = _ch_pos()[idx]
+	var pos: Vector2     = NODE_POS_ALL[level_id - 1]
 	var unlocked         := SaveManager.is_level_unlocked(level_id)
 	var stars            := SaveManager.get_stars(level_id)
 	var needs_shoes      := level_id == 6 and unlocked and not SaveManager.has_upgrade("sand_shoes")
 	const R              := 44
-
-	if _using_reference_map() and _chapter == 1 and idx < REFERENCE_NODE_POS.size():
-		var hit_pos: Vector2 = REFERENCE_NODE_POS[idx]
-		var hit := _reference_button(Rect2(hit_pos - Vector2(46, 46), Vector2(92, 92)))
-		if unlocked:
-			hit.pressed.connect(_on_marker.bind(level_id))
-		return
 
 	# Transparent hit-area button — visual drawn entirely by _draw_marker_halos
 	var btn := Button.new()
@@ -755,7 +720,7 @@ func _add_marker(level_id: int) -> void:
 	btn.add_theme_stylebox_override("hover",   sf_empty)
 	btn.add_theme_stylebox_override("pressed", sf_empty)
 	btn.add_theme_stylebox_override("focus",   sf_empty)
-	add_child(btn)
+	_marker_layer.add_child(btn)
 
 	# Centre label — level number or icon
 	var num_lbl := Label.new()
@@ -779,7 +744,7 @@ func _add_marker(level_id: int) -> void:
 	num_lbl.size         = Vector2(R * 2.0 - 10.0, R * 2.0 - 10.0)
 	num_lbl.position     = pos - Vector2(R - 5.0, R - 5.0)
 	num_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(num_lbl)
+	_marker_layer.add_child(num_lbl)
 
 	# Stars below the circle (unlocked levels only)
 	if unlocked and not needs_shoes:
@@ -799,14 +764,10 @@ func _add_marker(level_id: int) -> void:
 		star_lbl.size         = Vector2(R * 2 + 14, 24)
 		star_lbl.position     = pos + Vector2(-(R + 7.0), R + 7.0)
 		star_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(star_lbl)
+		_marker_layer.add_child(star_lbl)
 
-	# Level name label — beside node; chapter 1 keeps original sides, others use position
-	var label_right: bool
-	if _chapter == 1:
-		label_right = level_id in [1, 2, 4, 6]
-	else:
-		label_right = pos.x < 248.0
+	# Level name label — beside node; left side when node is on right half of screen
+	var label_right := pos.x < 248.0
 	var name_lbl    := Label.new()
 	name_lbl.text   = info["name"].to_upper()
 	name_lbl.add_theme_font_size_override("font_size", 12)
@@ -826,20 +787,17 @@ func _add_marker(level_id: int) -> void:
 		name_lbl.size     = Vector2(138, 28)
 		name_lbl.position = pos + Vector2(-R - 154.0, -14.0)
 	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(name_lbl)
+	_marker_layer.add_child(name_lbl)
 
 	# Sand Shoes badge for Level 6
 	if level_id == 6:
-		_add_shoes_badge(pos, label_right)
+		_add_shoes_badge(pos, label_right, _marker_layer)
 
 	if unlocked:
 		btn.pressed.connect(_on_marker.bind(level_id))
 
 # ── BUILD: UI overlay ─────────────────────────────────────────────────────────
 func _build_ui_overlay() -> void:
-	if _using_reference_map():
-		_build_reference_hit_targets()
-		return
 
 	# ── Header ──
 	var hdr := ColorRect.new()
@@ -880,9 +838,9 @@ func _build_ui_overlay() -> void:
 	btn_back.pressed.connect(_on_back)
 	add_child(btn_back)
 
-	# Title — chapter name in gold
+	# Title
 	var title := Label.new()
-	title.text = _ch_name()
+	title.text = "THE EXPEDITION  ·  20 LEVELS"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 14)
@@ -963,7 +921,7 @@ func _build_ui_overlay() -> void:
 	add_child(bot_line)
 
 	var obj := Label.new()
-	obj.text = _ch_objective()
+	obj.text = "✦  Swipe up to explore  •  Tap a level to begin the expedition  ✦"
 	obj.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	obj.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
 	obj.add_theme_font_size_override("font_size", 9)
@@ -976,40 +934,6 @@ func _build_ui_overlay() -> void:
 	obj.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(obj)
 
-	# ── Chapter navigation ──
-	var _mk_ch_btn: Callable = func(lbl_txt: String, xpos: float) -> Button:
-		var b := Button.new()
-		b.text       = lbl_txt
-		b.custom_minimum_size = Vector2(96, 30)
-		b.position   = Vector2(xpos, 822)
-		b.focus_mode = Control.FOCUS_NONE
-		b.add_theme_font_size_override("font_size", 11)
-		b.add_theme_color_override("font_color", Color(0.92, 0.82, 0.30))
-		var sb := StyleBoxFlat.new()
-		sb.bg_color          = Color(0.10, 0.08, 0.04, 0.90)
-		sb.border_color      = Color(0.50, 0.38, 0.14)
-		sb.border_width_left = 1; sb.border_width_right  = 1
-		sb.border_width_top  = 1; sb.border_width_bottom = 1
-		sb.corner_radius_top_left     = 6; sb.corner_radius_top_right    = 6
-		sb.corner_radius_bottom_left  = 6; sb.corner_radius_bottom_right = 6
-		b.add_theme_stylebox_override("normal", sb)
-		var sbh := sb.duplicate() as StyleBoxFlat
-		sbh.bg_color = Color(0.18, 0.14, 0.06, 0.95)
-		b.add_theme_stylebox_override("hover", sbh)
-		b.add_theme_stylebox_override("pressed", sb)
-		add_child(b)
-		return b
-
-	if _chapter > 1:
-		var bp: Button = _mk_ch_btn.call("◀ CHAPTER %d" % (_chapter - 1), 4.0)
-		bp.pressed.connect(func() -> void:
-			EventBus.play_sfx.emit("button")
-			_switch_chapter(_chapter - 1))
-	if _chapter < 3:
-		var bn: Button = _mk_ch_btn.call("CHAPTER %d ▶" % (_chapter + 1), 380.0)
-		bn.pressed.connect(func() -> void:
-			EventBus.play_sfx.emit("button")
-			_switch_chapter(_chapter + 1))
 
 # ── BUILD: preview panel ──────────────────────────────────────────────────────
 func _build_preview_panel() -> void:
@@ -1221,9 +1145,9 @@ func _load_map_texture() -> Texture2D:
 	return null
 
 func _using_reference_map() -> bool:
-	return _bg_texture != null
+	return false  # full 2460-px scrollable canvas always uses procedural drawing
 
-func _add_shoes_badge(node_pos: Vector2, right_side: bool) -> void:
+func _add_shoes_badge(node_pos: Vector2, right_side: bool, parent: Node) -> void:
 	const R  := 44
 	const BW := 124.0
 	const BH := 36.0
@@ -1247,7 +1171,7 @@ func _add_shoes_badge(node_pos: Vector2, right_side: bool) -> void:
 	sb.corner_radius_bottom_left  = 5
 	sb.corner_radius_bottom_right = 5
 	badge.add_theme_stylebox_override("panel", sb)
-	add_child(badge)
+	parent.add_child(badge)
 
 	var lbl := Label.new()
 	lbl.text = "👟 SAND SHOES\n   REQUIRED"
@@ -1278,3 +1202,54 @@ func _anchor(world_pos: Vector2, size: Vector2) -> Control:
 	var c := Control.new()
 	c.size = size; c.position = world_pos - size * 0.5
 	add_child(c); return c
+
+# ── SCROLL ────────────────────────────────────────────────────────────────────
+func _unhandled_input(event: InputEvent) -> void:
+	if _preview_panel != null and _preview_panel.visible: return
+	if _sand_popup    != null and _sand_popup.visible:    return
+	if event is InputEventScreenDrag:
+		_scroll_by(-(event as InputEventScreenDrag).relative.y)
+	elif event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
+			_scroll_by(-80.0)
+		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed:
+			_scroll_by(80.0)
+		elif mb.button_index == MOUSE_BUTTON_LEFT:
+			if mb.pressed and mb.position.y > 68.0 and mb.position.y < 820.0:
+				_is_dragging = true
+				_drag_start_y      = mb.position.y
+				_drag_start_scroll = _scroll_y
+			else:
+				_is_dragging = false
+	elif event is InputEventMouseMotion and _is_dragging:
+		var mm := event as InputEventMouseMotion
+		_scroll_y = _drag_start_scroll - (mm.position.y - _drag_start_y)
+		_clamp_scroll()
+		_update_scroll()
+
+func _scroll_by(delta: float) -> void:
+	_scroll_y += delta
+	_clamp_scroll()
+	_update_scroll()
+
+func _clamp_scroll() -> void:
+	_scroll_y = clamp(_scroll_y, 0.0, SCROLL_MAX)
+
+func _update_scroll() -> void:
+	if _marker_layer != null:
+		_marker_layer.position.y = 68.0 - _scroll_y
+	queue_redraw()
+
+# ── DRAW: scrollbar indicator ─────────────────────────────────────────────────
+func _draw_scrollbar() -> void:
+	const TRACK_X  := 472.0
+	const TRACK_Y1 := 74.0
+	const TRACK_H  := 740.0
+	const THUMB_H  := 80.0
+	# Track
+	draw_rect(Rect2(TRACK_X, TRACK_Y1, 4.0, TRACK_H), Color(0.0, 0.0, 0.0, 0.30))
+	# Thumb — position proportional to scroll
+	var thumb_y := TRACK_Y1 + (TRACK_H - THUMB_H) * (_scroll_y / SCROLL_MAX)
+	draw_rect(Rect2(TRACK_X, thumb_y, 4.0, THUMB_H), Color(0.70, 0.55, 0.18, 0.70))
+	draw_rect(Rect2(TRACK_X + 1.0, thumb_y + 2.0, 2.0, THUMB_H - 4.0), Color(0.90, 0.76, 0.30, 0.50))

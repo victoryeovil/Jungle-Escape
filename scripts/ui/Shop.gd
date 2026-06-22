@@ -204,7 +204,7 @@ func _equip_skin(skin_id: String) -> void:
 		return
 	SaveManager.set_selected_skin(skin_id)
 	var skin := _find_skin(skin_id)
-	var skin_name := skin.get("name", skin_id) if not skin.is_empty() else skin_id
+	var skin_name: String = str(skin.get("name", skin_id)) if not skin.is_empty() else skin_id
 	_show_status(str(skin_name) + " equipped.")
 	_refresh_shop_state()
 
@@ -263,10 +263,7 @@ func _on_art_skin_pressed(skin_id: String) -> void:
 	var skin := _find_skin(skin_id)
 	if skin.is_empty():
 		return
-	if SaveManager.is_skin_unlocked(skin_id):
-		_equip_skin(skin_id)
-	else:
-		_show_skin_preview(skin)
+	_show_skin_preview(skin)
 
 func _show_skin_preview(skin: Dictionary) -> void:
 	if skin.is_empty():
@@ -275,70 +272,105 @@ func _show_skin_preview(skin: Dictionary) -> void:
 		_build_preview_panel()
 	_preview_skin_id = skin.get("id", "")
 	var unlocked := SaveManager.is_skin_unlocked(_preview_skin_id)
-	var title := _preview_panel.get_node("Title") as Label
-	var desc := _preview_panel.get_node("Desc") as Label
-	var req := _preview_panel.get_node("Req") as Label
-	var action := _preview_panel.get_node("BtnAction") as Button
+	var title  := _preview_panel.get_node("Title")       as Label
+	var desc   := _preview_panel.get_node("Desc")        as Label
+	var req    := _preview_panel.get_node("Req")         as Label
+	var action := _preview_panel.get_node("BtnAction")   as Button
 
-	title.text = skin.get("name", "Explorer")
-	desc.text = _skin_preview_desc(_preview_skin_id)
+	# Load and display the large character portrait
+	var portrait := _preview_panel.get_node("CharPortrait") as TextureRect
+	if portrait != null:
+		var tex_path := "res://assets/sprites/characters/%s.png" % _preview_skin_id
+		var tex: Texture2D = null
+		if ResourceLoader.exists(tex_path):
+			tex = load(tex_path) as Texture2D
+		else:
+			var img := Image.new()
+			if img.load(tex_path) == OK:
+				tex = ImageTexture.create_from_image(img)
+		portrait.texture = tex
+
+	title.text = str(skin.get("name", "Explorer"))
+	desc.text  = _skin_preview_desc(_preview_skin_id)
 	if unlocked:
-		req.text = "Unlocked and ready."
-		action.text = "Equip"
+		req.text    = "✓  Unlocked and ready"
+		action.text = "▶  Equip"
 	elif not _meets_level_requirement(skin):
-		req.text = _level_requirement_text(skin)
-		action.text = "Locked"
+		req.text    = _level_requirement_text(skin)
+		action.text = "🔒  Locked"
 	elif skin.get("unlock_method", "") == "stars" and SaveManager.get_total_stars() < int(skin.get("unlock_stars", 0)):
-		req.text = str(skin.get("unlock_stars", 0)) + " stars needed."
-		action.text = "Locked"
+		req.text    = str(skin.get("unlock_stars", 0)) + " stars needed"
+		action.text = "🔒  Locked"
 	else:
-		req.text = "Cost: " + _cost_text(skin)
-		action.text = "Buy"
+		req.text    = "Cost: " + _cost_text(skin)
+		action.text = "Buy  ▶"
 	_preview_panel.visible = true
 
 func _build_preview_panel() -> void:
 	_preview_panel = Panel.new()
 	_preview_panel.name = "SkinPreview"
-	_preview_panel.position = Vector2(42, 252)
-	_preview_panel.size = Vector2(396, 278)
+	_preview_panel.position = Vector2(16, 80)
+	_preview_panel.size     = Vector2(448, 560)
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.03, 0.08, 0.04, 0.96)
-	sb.border_color = Color(0.82, 0.62, 0.18, 0.96)
-	sb.border_width_left = 2; sb.border_width_right = 2
-	sb.border_width_top = 2; sb.border_width_bottom = 2
-	sb.corner_radius_top_left = 8
-	sb.corner_radius_top_right = 8
-	sb.corner_radius_bottom_left = 8
-	sb.corner_radius_bottom_right = 8
+	sb.bg_color             = Color(0.02, 0.06, 0.03, 0.97)
+	sb.border_color         = Color(0.82, 0.62, 0.18, 0.96)
+	sb.border_width_left    = 2; sb.border_width_right  = 2
+	sb.border_width_top     = 2; sb.border_width_bottom = 2
+	sb.corner_radius_top_left     = 10; sb.corner_radius_top_right    = 10
+	sb.corner_radius_bottom_left  = 10; sb.corner_radius_bottom_right = 10
 	_preview_panel.add_theme_stylebox_override("panel", sb)
 	add_child(_preview_panel)
 
-	var title := _preview_label("Title", Vector2(20, 18), Vector2(356, 38), 26, Color(0.98, 0.86, 0.45))
+	# Large character portrait
+	var portrait := TextureRect.new()
+	portrait.name              = "CharPortrait"
+	portrait.position          = Vector2(10, 10)
+	portrait.size              = Vector2(428, 356)
+	portrait.custom_minimum_size = Vector2(428, 356)
+	portrait.stretch_mode      = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait.mouse_filter      = Control.MOUSE_FILTER_IGNORE
+	_preview_panel.add_child(portrait)
+
+	# Dark gradient behind the name label overlaid on portrait bottom
+	var grad := ColorRect.new()
+	grad.color        = Color(0.02, 0.04, 0.02, 0.82)
+	grad.position     = Vector2(10, 308)
+	grad.size         = Vector2(428, 58)
+	grad.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_preview_panel.add_child(grad)
+
+	# Explorer name on top of gradient
+	var title := _preview_label("Title", Vector2(20, 316), Vector2(408, 42), 26, Color(0.98, 0.86, 0.45))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var desc := _preview_label("Desc", Vector2(24, 70), Vector2(348, 72), 15, Color(0.90, 0.84, 0.64))
-	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	var req := _preview_label("Req", Vector2(24, 152), Vector2(348, 38), 15, Color(0.70, 0.92, 0.58))
+
+	# Requirement / cost
+	var req := _preview_label("Req", Vector2(20, 376), Vector2(408, 30), 14, Color(0.70, 0.92, 0.58))
 	req.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
+	# Short description
+	var desc := _preview_label("Desc", Vector2(20, 410), Vector2(408, 76), 13, Color(0.88, 0.82, 0.62))
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+	# Action + Close buttons
 	var action := Button.new()
-	action.name = "BtnAction"
-	action.position = Vector2(40, 208)
-	action.size = Vector2(150, 48)
-	action.custom_minimum_size = Vector2(150, 48)
+	action.name                  = "BtnAction"
+	action.position              = Vector2(20, 496)
+	action.size                  = Vector2(195, 52)
+	action.custom_minimum_size   = Vector2(195, 52)
 	action.add_theme_font_size_override("font_size", 17)
 	action.pressed.connect(_on_preview_action)
 	_style_preview_button(action, Color(0.10, 0.42, 0.18))
 	_preview_panel.add_child(action)
 
 	var close := Button.new()
-	close.name = "BtnClose"
-	close.text = "Close"
-	close.position = Vector2(212, 208)
-	close.size = Vector2(144, 48)
-	close.custom_minimum_size = Vector2(144, 48)
+	close.name                   = "BtnClose"
+	close.text                   = "✕  Close"
+	close.position               = Vector2(228, 496)
+	close.size                   = Vector2(200, 52)
+	close.custom_minimum_size    = Vector2(200, 52)
 	close.add_theme_font_size_override("font_size", 17)
 	close.pressed.connect(_hide_skin_preview)
-	_style_preview_button(close, Color(0.30, 0.20, 0.08))
+	_style_preview_button(close, Color(0.28, 0.18, 0.06))
 	_preview_panel.add_child(close)
 	_preview_panel.visible = false
 
