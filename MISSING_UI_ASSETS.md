@@ -4,6 +4,15 @@ This file tracks image, icon, and texture assets required by the UI layer, inclu
 Unchecked assets are currently replaced by procedural `ColorRect` / `Label` / `StyleBoxFlat` rendering in GDScript.
 Replace them progressively; the procedural fallback remains functional until each asset is imported.
 
+## Lives System
+
+- [ ] Heart/life icon
+- [ ] Empty heart icon
+- [ ] Lives refill popup background
+- [ ] Revive popup background
+- [ ] Life timer icon
+- [ ] Rewarded ad life icon
+
 Source shortlist: **Quaternius · Kenney · Poly Pizza · OpenGameArt**  
 License rule: CC0 preferred. CC-BY acceptable with credit in `ASSET_LICENSES.md`. No GPL or SA.
 

@@ -1,58 +1,253 @@
 {
-  "id": 9,
-  "length": 36,
-  "seed": 124,
-  "name": "Timber Trail",
-  "turns": [
-    { "row": 18, "dir": 1 }
-  ],
-  "obstacles": [
-    { "type": "log",    "lane": 1, "row": 4  },
-    { "type": "branch", "lane": 2, "row": 6  },
-    { "type": "rock",   "lane": 0, "row": 8  },
-    { "type": "log",    "lane": 1, "row": 12 },
-    { "type": "rock",   "lane": 2, "row": 15 },
-    { "type": "branch", "lane": 1, "row": 17 },
-    { "type": "log",    "lane": 0, "row": 21 },
-    { "type": "rock",   "lane": 1, "row": 24 },
-    { "type": "branch", "lane": 2, "row": 27 },
-    { "type": "log",    "lane": 0, "row": 30 },
-    { "type": "rock",   "lane": 1, "row": 33 },
-    { "type": "branch", "lane": 2, "row": 35 }
-  ],
-  "coins": [
-    { "lane": 1, "row": 2  },
-    { "lane": 0, "row": 3  },
-    { "lane": 2, "row": 3  },
-    { "lane": 0, "row": 5  },
-    { "lane": 2, "row": 7  },
-    { "lane": 1, "row": 9  },
-    { "lane": 0, "row": 10 },
-    { "lane": 2, "row": 11 },
-    { "lane": 0, "row": 13 },
-    { "lane": 2, "row": 14 },
-    { "lane": 0, "row": 16 },
-    { "lane": 2, "row": 18 },
-    { "lane": 1, "row": 19 },
-    { "lane": 0, "row": 20 },
-    { "lane": 2, "row": 22 },
-    { "lane": 1, "row": 23 },
-    { "lane": 0, "row": 25 },
-    { "lane": 2, "row": 26 },
-    { "lane": 1, "row": 28 },
-    { "lane": 0, "row": 29 },
-    { "lane": 2, "row": 31 },
-    { "lane": 1, "row": 32 },
-    { "lane": 2, "row": 34 },
-    { "gem": true, "lane": 0, "row": 35 },
-    { "gem": true, "lane": 1, "row": 36 }
-  ],
-  "collectables": [
-    { "type": "wood", "lane": 2, "row": 4  },
-    { "type": "rope", "lane": 1, "row": 7  },
-    { "type": "wood", "lane": 2, "row": 13 },
-    { "type": "wood", "lane": 1, "row": 22 },
-    { "type": "rope", "lane": 2, "row": 29 },
-    { "type": "wood", "lane": 0, "row": 33 }
-  ]
+    "id":  9,
+    "length":  36,
+    "seed":  124,
+    "name":  "Timber Trail",
+    "turns":  [
+                  {
+                      "row":  18,
+                      "dir":  1
+                  }
+              ],
+    "obstacles":  [
+                      {
+                          "type":  "log",
+                          "lane":  1,
+                          "row":  4
+                      },
+                      {
+                          "type":  "branch",
+                          "lane":  2,
+                          "row":  6
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  0,
+                          "row":  8
+                      },
+                      {
+                          "type":  "log",
+                          "lane":  1,
+                          "row":  12
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  2,
+                          "row":  15
+                      },
+                      {
+                          "type":  "branch",
+                          "lane":  1,
+                          "row":  17
+                      },
+                      {
+                          "type":  "log",
+                          "lane":  0,
+                          "row":  21
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  1,
+                          "row":  24
+                      },
+                      {
+                          "type":  "branch",
+                          "lane":  2,
+                          "row":  27
+                      },
+                      {
+                          "type":  "log",
+                          "lane":  0,
+                          "row":  30
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  1,
+                          "row":  33
+                      },
+                      {
+                          "type":  "branch",
+                          "lane":  2,
+                          "row":  35
+                      }
+                  ],
+    "coins":  [
+                  {
+                      "lane":  1,
+                      "row":  2
+                  },
+                  {
+                      "lane":  0,
+                      "row":  3
+                  },
+                  {
+                      "lane":  2,
+                      "row":  3
+                  },
+                  {
+                      "lane":  0,
+                      "row":  5
+                  },
+                  {
+                      "lane":  2,
+                      "row":  7
+                  },
+                  {
+                      "lane":  1,
+                      "row":  9
+                  },
+                  {
+                      "lane":  0,
+                      "row":  10
+                  },
+                  {
+                      "lane":  2,
+                      "row":  11
+                  },
+                  {
+                      "lane":  0,
+                      "row":  13
+                  },
+                  {
+                      "lane":  2,
+                      "row":  14
+                  },
+                  {
+                      "lane":  0,
+                      "row":  16
+                  },
+                  {
+                      "lane":  2,
+                      "row":  18
+                  },
+                  {
+                      "lane":  1,
+                      "row":  19
+                  },
+                  {
+                      "lane":  0,
+                      "row":  20
+                  },
+                  {
+                      "lane":  2,
+                      "row":  22
+                  },
+                  {
+                      "lane":  1,
+                      "row":  23
+                  },
+                  {
+                      "lane":  0,
+                      "row":  25
+                  },
+                  {
+                      "lane":  2,
+                      "row":  26
+                  },
+                  {
+                      "lane":  1,
+                      "row":  28
+                  },
+                  {
+                      "lane":  0,
+                      "row":  29
+                  },
+                  {
+                      "lane":  2,
+                      "row":  31
+                  },
+                  {
+                      "lane":  1,
+                      "row":  32
+                  },
+                  {
+                      "lane":  2,
+                      "row":  34
+                  },
+                  {
+                      "gem":  true,
+                      "lane":  0,
+                      "row":  35
+                  },
+                  {
+                      "gem":  true,
+                      "lane":  1,
+                      "row":  36
+                  }
+              ],
+    "collectables":  [
+                         {
+                             "type":  "wood",
+                             "lane":  2,
+                             "row":  4
+                         },
+                         {
+                             "type":  "rope",
+                             "lane":  1,
+                             "row":  7
+                         },
+                         {
+                             "type":  "wood",
+                             "lane":  2,
+                             "row":  13
+                         },
+                         {
+                             "type":  "wood",
+                             "lane":  1,
+                             "row":  22
+                         },
+                         {
+                             "type":  "rope",
+                             "lane":  2,
+                             "row":  29
+                         },
+                         {
+                             "type":  "wood",
+                             "lane":  0,
+                             "row":  33
+                         }
+                     ],
+    "difficulty":  "Medium-Hard",
+    "gameplay_modes":  [
+                           "runner",
+                           "forest"
+                       ],
+    "path_modules":  [
+                         {
+                             "type":  "s_curve",
+                             "rows":  10,
+                             "width":  "normal",
+                             "surface":  "dirt",
+                             "mode":  "run"
+                         },
+                         {
+                             "type":  "narrow_passage",
+                             "rows":  6,
+                             "width":  "narrow",
+                             "surface":  "wood",
+                             "mode":  "run"
+                         },
+                         {
+                             "type":  "tree_root_jump_section",
+                             "rows":  6,
+                             "width":  "narrow",
+                             "surface":  "wood",
+                             "mode":  "run"
+                         },
+                         {
+                             "type":  "wide_curve_left",
+                             "rows":  8,
+                             "width":  "wide",
+                             "surface":  "dirt",
+                             "mode":  "run"
+                         },
+                         {
+                             "type":  "finish_gate_approach",
+                             "rows":  6,
+                             "width":  "normal",
+                             "surface":  "stone",
+                             "mode":  "run"
+                         }
+                     ],
+    "path_identity":  "Timber Trail uses runner, forest"
 }

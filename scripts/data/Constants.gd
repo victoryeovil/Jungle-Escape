@@ -85,6 +85,11 @@ const RESOURCES: Array = [
 	{ "id": "relic_keys",      "name": "Relic Keys",       "icon": "🗝" },
 	{ "id": "sunstone_shards", "name": "Sunstone Shards",  "icon": "✦" },
 	{ "id": "map_pieces",      "name": "Map Pieces",       "icon": "🗺" },
+	{ "id": "water_token",     "name": "Water Tokens",     "icon": "~" },
+	{ "id": "fish_token",      "name": "Fish Tokens",      "icon": "><>" },
+	{ "id": "river_relic",     "name": "River Relics",     "icon": "R" },
+	{ "id": "animal_badge",    "name": "Animal Badges",    "icon": "*" },
+	{ "id": "trade_token",     "name": "Trade Tokens",     "icon": "o" },
 ]
 
 # ── Upgrades ────────────────────────────────────────────────────────────────

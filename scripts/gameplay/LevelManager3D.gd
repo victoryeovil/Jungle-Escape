@@ -31,6 +31,9 @@ signal finish_reached
 signal coin_collected(total: int)
 signal turn_zone_entered(required_dir: int, corner_pos: Vector3)
 signal turn_zone_exited
+signal path_segment_entered(row: int, center: Vector3, fwd: Vector3, right: Vector3, surface: String, mode: String, width: float)
+signal junction_entered(junction_id: String, routes: Array)
+signal junction_exited(junction_id: String)
 
 var level_data: Dictionary = {}
 var _coin_count: int = 0
@@ -49,7 +52,13 @@ var _theme: Dictionary = {}
 var _seg_pos: Dictionary = {}
 var _seg_fwd: Dictionary = {}
 var _seg_right: Dictionary = {}
+var _seg_width: Dictionary = {}
+var _seg_surface: Dictionary = {}
+var _seg_mode: Dictionary = {}
+var _seg_module: Dictionary = {}
 var _turn_rows: Dictionary = {}
+var _junction_rows: Dictionary = {}
+var _junction_defs: Dictionary = {}
 
 func build(data: Dictionary) -> void:
 	level_data = data
@@ -67,7 +76,13 @@ func build(data: Dictionary) -> void:
 	_seg_pos.clear()
 	_seg_fwd.clear()
 	_seg_right.clear()
+	_seg_width.clear()
+	_seg_surface.clear()
+	_seg_mode.clear()
+	_seg_module.clear()
 	_turn_rows.clear()
+	_junction_rows.clear()
+	_junction_defs.clear()
 
 	for child in get_children():
 		remove_child(child)
@@ -84,6 +99,8 @@ func build(data: Dictionary) -> void:
 	_spawn_wildlife(data)
 	_spawn_level_specific_dressing(data)
 	_spawn_path_variation(data)
+	_spawn_module_landmarks(data)
+	_spawn_junction_zones(data)
 	_spawn_turn_zones(data)
 	_spawn_finish(data)
 	_count_total_coins(data)
@@ -108,6 +125,8 @@ func _create_level_groups() -> void:
 		"Collectibles",
 		"Animals",
 		"Ruins",
+		"RouteSigns",
+		"ModeEffects",
 		"FinishGate"
 	]:
 		var group := Node3D.new()
@@ -119,6 +138,11 @@ func _group(name: String) -> Node3D:
 	return _groups.get(name, self) as Node3D
 
 func _parse_turns(data: Dictionary) -> void:
+	var modules: Array = data.get("path_modules", [])
+	if not modules.is_empty():
+		_parse_path_modules(data, modules)
+		return
+
 	for t in data.get("turns", []):
 		_turn_rows[int(t.get("row", 0))] = int(t.get("dir", 1))
 
@@ -131,17 +155,207 @@ func _parse_turns(data: Dictionary) -> void:
 		_seg_pos[i] = cursor
 		_seg_fwd[i] = fwd
 		_seg_right[i] = right
+		_seg_width[i] = PATH_WIDTH
+		_seg_surface[i] = _theme.get("surface", "dirt")
+		_seg_mode[i] = "run"
+		_seg_module[i] = "legacy_straight"
 		if _turn_rows.has(i):
 			var d: int = _turn_rows[i]
 			fwd = fwd.rotated(Vector3.UP, -float(d) * PI * 0.5).normalized()
 			right = right.rotated(Vector3.UP, -float(d) * PI * 0.5).normalized()
 		cursor += fwd * TILE_Z
 
+func _parse_path_modules(data: Dictionary, modules: Array) -> void:
+	var cursor := Vector3.ZERO
+	var fwd := Vector3(0.0, 0.0, -1.0)
+	var right := Vector3(1.0, 0.0, 0.0)
+	var row := 0
+	var module_index := 0
+
+	for raw_module in modules:
+		if not (raw_module is Dictionary):
+			continue
+		var module: Dictionary = raw_module
+		var kind := str(module.get("type", "straight_short"))
+		var rows: int = max(1, int(module.get("rows", _default_module_rows(kind))))
+		var width_name := str(module.get("width", _default_width_name(kind)))
+		var width := float(module.get("path_width", _width_for_type(width_name)))
+		var surface := str(module.get("surface", _default_surface_for_module(kind)))
+		var mode := str(module.get("mode", _default_mode_for_module(kind)))
+		var curve_degrees := float(module.get("curve_degrees", _default_curve_degrees(kind)))
+		var curve_step := deg_to_rad(curve_degrees) / float(rows)
+		var junction_row: int = row + max(1, int(rows / 2))
+
+		for local_i in range(rows):
+			_seg_pos[row] = cursor
+			_seg_fwd[row] = fwd
+			_seg_right[row] = right
+			_seg_width[row] = width
+			_seg_surface[row] = surface
+			_seg_mode[row] = mode
+			_seg_module[row] = kind
+
+			if (kind == "junction_two_way" or kind == "junction_three_way") and row == junction_row:
+				var junction_id := str(module.get("id", "junction_%02d_%02d" % [_level_id, module_index]))
+				var routes: Array = module.get("routes", _default_routes_for_junction(kind))
+				_junction_rows[row] = junction_id
+				_junction_defs[junction_id] = {
+					"id": junction_id,
+					"row": row,
+					"type": kind,
+					"routes": routes,
+				}
+
+			var actual_curve_step := curve_step
+			if kind == "s_curve":
+				var half_rows: int = max(1, int(rows / 2))
+				var s_degrees := float(module.get("curve_degrees", 36.0))
+				actual_curve_step = deg_to_rad(s_degrees) / float(half_rows)
+				if local_i >= half_rows:
+					actual_curve_step = -actual_curve_step
+			if absf(actual_curve_step) > 0.0001:
+				fwd = fwd.rotated(Vector3.UP, actual_curve_step).normalized()
+				right = right.rotated(Vector3.UP, actual_curve_step).normalized()
+			cursor += fwd * TILE_Z
+			row += 1
+
+		module_index += 1
+
+	for tail in range(6):
+		_seg_pos[row + tail] = cursor + fwd * TILE_Z * float(tail)
+		_seg_fwd[row + tail] = fwd
+		_seg_right[row + tail] = right
+		_seg_width[row + tail] = PATH_WIDTH
+		_seg_surface[row + tail] = _theme.get("surface", "dirt")
+		_seg_mode[row + tail] = "run"
+		_seg_module[row + tail] = "finish_tail"
+
+	data["length"] = row
+
+func _default_module_rows(kind: String) -> int:
+	match kind:
+		"straight_long":
+			return 8
+		"gentle_curve_left", "gentle_curve_right":
+			return 8
+		"wide_curve_left", "wide_curve_right", "s_curve":
+			return 10
+		"narrow_passage", "ruins_corridor", "bridge_crossing":
+			return 5
+		"water_slide_entry", "boat_entry_dock":
+			return 4
+		"water_slide_curve", "boat_river_curve", "boat_rapids":
+			return 8
+		"junction_two_way", "junction_three_way":
+			return 5
+		"finish_gate_approach":
+			return 4
+		_:
+			return 5
+
+func _default_curve_degrees(kind: String) -> float:
+	match kind:
+		"gentle_curve_left", "wide_curve_left", "sand_dune_curve":
+			return 24.0
+		"gentle_curve_right", "wide_curve_right":
+			return -24.0
+		"s_curve":
+			return 0.0
+		"water_slide_curve", "boat_river_curve":
+			return 32.0
+		_:
+			return 0.0
+
+func _default_width_name(kind: String) -> String:
+	match kind:
+		"narrow_passage", "ruins_corridor", "tree_root_jump_section":
+			return "narrow"
+		"bridge_crossing":
+			return "bridge"
+		"wide_curve_left", "wide_curve_right", "animal_chase_lane", "animal_escape_section", "junction_two_way", "junction_three_way":
+			return "wide"
+		"water_slide_entry", "water_slide_curve", "water_slide_drop":
+			return "slide"
+		"boat_entry_dock", "boat_river_straight", "boat_river_curve", "boat_rapids":
+			return "boat"
+		_:
+			return "normal"
+
+func _width_for_type(width_name: String) -> float:
+	match width_name:
+		"narrow":
+			return LANE_W * 2.35
+		"bridge":
+			return LANE_W * 2.05
+		"wide":
+			return LANE_W * 4.10
+		"slide":
+			return LANE_W * 2.55
+		"boat":
+			return LANE_W * 4.35
+		_:
+			return PATH_WIDTH
+
+func _default_surface_for_module(kind: String) -> String:
+	match kind:
+		"bridge_crossing", "tree_root_jump_section":
+			return "wood"
+		"water_slide_entry", "water_slide_curve", "water_slide_drop":
+			return "water_slide"
+		"boat_entry_dock", "boat_river_straight", "boat_river_curve", "boat_rapids":
+			return "boat"
+		"ruins_corridor", "finish_gate_approach":
+			return "stone"
+		"sand_dune_curve":
+			return "sand"
+		"mud_path":
+			return "mud"
+		_:
+			return _theme.get("surface", "dirt")
+
+func _default_mode_for_module(kind: String) -> String:
+	match kind:
+		"water_slide_entry", "water_slide_curve", "water_slide_drop":
+			return "water_slide"
+		"boat_entry_dock", "boat_river_straight", "boat_river_curve", "boat_rapids":
+			return "boat"
+		"animal_chase_lane":
+			return "chase"
+		"animal_escape_section":
+			return "escape"
+		"mud_path":
+			return "tracking"
+		_:
+			return "run"
+
+func _default_routes_for_junction(kind: String) -> Array:
+	if kind == "junction_three_way":
+		return [
+			{ "direction": "left", "label": "Treasure Route", "reward": "coins" },
+			{ "direction": "up", "label": "Safe Route", "reward": "coins" },
+			{ "direction": "right", "label": "Animal Tracks", "reward": "animal_badge" },
+		]
+	return [
+		{ "direction": "left", "label": "Safe Route", "reward": "coins" },
+		{ "direction": "right", "label": "Reward Route", "reward": "map_piece" },
+	]
+
 func _world_pos(row: int, lane: int) -> Vector3:
 	var sp: Vector3 = _seg_pos.get(row, Vector3(0.0, 0.0, -float(row) * TILE_Z))
 	var sf: Vector3 = _seg_fwd.get(row, Vector3(0.0, 0.0, -1.0))
 	var sr: Vector3 = _seg_right.get(row, Vector3(1.0, 0.0, 0.0))
 	return sp + sf * (TILE_Z * 0.5) + sr * _lane_x(lane)
+
+func _row_center(row: int) -> Vector3:
+	var sp: Vector3 = _seg_pos.get(row, Vector3(0.0, 0.0, -float(row) * TILE_Z))
+	var sf: Vector3 = _seg_fwd.get(row, Vector3(0.0, 0.0, -1.0))
+	return sp + sf * (TILE_Z * 0.5)
+
+func _row_local(row: int, x: float, y: float, z: float = 0.0) -> Vector3:
+	var center := _row_center(row)
+	var sf: Vector3 = _seg_fwd.get(row, Vector3(0.0, 0.0, -1.0))
+	var sr: Vector3 = _seg_right.get(row, Vector3(1.0, 0.0, 0.0))
+	return center + sr * x + sf * z + Vector3(0.0, y, 0.0)
 
 func _spawn_ground(data: Dictionary) -> void:
 	var length: int = data.get("length", 30)
@@ -152,6 +366,10 @@ func _spawn_ground(data: Dictionary) -> void:
 		var seg_p: Vector3 = _seg_pos.get(i, Vector3(0.0, 0.0, -float(i) * TILE_Z))
 		var seg_f: Vector3 = _seg_fwd.get(i, Vector3(0.0, 0.0, -1.0))
 		var heading_y := atan2(seg_f.x, -seg_f.z)
+		var path_width: float = _seg_width.get(i, PATH_WIDTH)
+		var surface := str(_seg_surface.get(i, _theme.get("surface", "dirt")))
+		var mode := str(_seg_mode.get(i, "run"))
+		var module_kind := str(_seg_module.get(i, "straight_short"))
 
 		var segment := Node3D.new()
 		segment.name = "PathSegment_%02d" % i
@@ -160,45 +378,110 @@ func _spawn_ground(data: Dictionary) -> void:
 		_group("JunglePath").add_child(segment)
 		_path_tiles[i] = segment
 
-		var dirt_d: Color = _theme.get("dirt_dark", COLOR_DIRT)
-		var dirt_l: Color = _theme.get("dirt_light", COLOR_DIRT_LIGHT)
+		var path_col := _surface_path_color(surface, module_kind, rng)
 		_add_box(segment, "DirtPath",
-			Vector3(PATH_WIDTH, 0.16, TILE_Z + 0.08),
+			Vector3(path_width, 0.16, TILE_Z + 0.08),
 			Vector3(0.0, -0.08, 0.0),
-			dirt_d.lerp(dirt_l, rng.randf_range(0.0, 0.35))
+			path_col
 		)
 		_add_static_box(segment, "PathCollision",
-			Vector3(PATH_WIDTH, 0.16, TILE_Z + 0.08),
+			Vector3(path_width, 0.16, TILE_Z + 0.08),
 			Vector3(0.0, -0.08, 0.0),
-			{"surface": _theme.get("surface", "dirt")}
+			{"surface": surface}
 		)
+		_add_path_guide(segment, i, path_width, surface, mode)
+
+		if surface == "water_slide" or surface == "boat":
+			_add_box(segment, "WaterShimmerA",
+				Vector3(path_width * 0.55, 0.025, TILE_Z * 0.18),
+				Vector3(-path_width * 0.08, 0.015, -TILE_Z * 0.16),
+				Color(0.42, 0.86, 1.0, 0.75)
+			)
+			_add_box(segment, "WaterShimmerB",
+				Vector3(path_width * 0.38, 0.025, TILE_Z * 0.15),
+				Vector3(path_width * 0.10, 0.02, TILE_Z * 0.18),
+				Color(0.78, 0.96, 1.0, 0.55)
+			)
+		elif surface == "wood":
+			for plank_i in range(3):
+				_add_box(segment, "BridgePlank%d" % plank_i,
+					Vector3(path_width * 0.92, 0.05, 0.08),
+					Vector3(0.0, 0.03, -0.8 + float(plank_i) * 0.8),
+					COLOR_LOG.lerp(Color(0.58, 0.38, 0.18), 0.35)
+				)
+
 		# Grass tiles as children so they rotate with path direction
+		var side_offset := path_width * 0.5 + SIDE_GROUND_WIDTH * 0.5
 		_add_box(segment, "GrassLeft",
 			Vector3(SIDE_GROUND_WIDTH, 0.12, TILE_Z + 0.08),
-			Vector3(-4.75, -0.12, 0.0), _grass_color(rng))
+			Vector3(-side_offset, -0.12, 0.0), _grass_color(rng))
 		_add_box(segment, "GrassRight",
 			Vector3(SIDE_GROUND_WIDTH, 0.12, TILE_Z + 0.08),
-			Vector3(4.75, -0.12, 0.0), _grass_color(rng))
+			Vector3(side_offset, -0.12, 0.0), _grass_color(rng))
 
 		if i % 2 == 0:
-			_spawn_path_edge_details(seg_p.z, rng)
+			_spawn_path_edge_details(i, rng)
 
-func _spawn_path_edge_details(z: float, rng: RandomNumberGenerator) -> void:
+func _surface_path_color(surface: String, module_kind: String, rng: RandomNumberGenerator) -> Color:
+	match surface:
+		"water_slide":
+			return Color(0.05, 0.42, 0.62).lerp(Color(0.16, 0.70, 0.92), rng.randf_range(0.0, 0.35))
+		"boat":
+			return Color(0.04, 0.22, 0.32).lerp(Color(0.05, 0.44, 0.62), rng.randf_range(0.0, 0.28))
+		"stone":
+			return Color(0.36, 0.35, 0.30).lerp(_theme.get("stone", COLOR_STONE), rng.randf_range(0.0, 0.35))
+		"wood":
+			return COLOR_LOG.lerp(Color(0.58, 0.36, 0.14), rng.randf_range(0.0, 0.40))
+		"sand":
+			return Color(0.74, 0.60, 0.34).lerp(Color(0.92, 0.76, 0.46), rng.randf_range(0.0, 0.35))
+		"mud":
+			return COLOR_MUD.lerp(Color(0.42, 0.27, 0.12), rng.randf_range(0.0, 0.25))
+		_:
+			var dirt_d: Color = _theme.get("dirt_dark", COLOR_DIRT)
+			var dirt_l: Color = _theme.get("dirt_light", COLOR_DIRT_LIGHT)
+			var tint := 0.18 if module_kind == "narrow_passage" else 0.35
+			return dirt_d.lerp(dirt_l, rng.randf_range(0.0, tint))
+
+func _add_path_guide(segment: Node3D, row: int, path_width: float, surface: String, mode: String) -> void:
+	var area := Area3D.new()
+	area.name = "PathGuide"
+	area.monitoring = true
+	area.monitorable = false
+	var col := CollisionShape3D.new()
+	col.shape = BoxShape3D.new()
+	(col.shape as BoxShape3D).size = Vector3(path_width + 0.5, 2.4, TILE_Z + 0.12)
+	col.position = Vector3(0.0, 1.05, 0.0)
+	area.add_child(col)
+	area.body_entered.connect(_on_path_segment_body_entered.bind(row, surface, mode, path_width))
+	segment.add_child(area)
+
+func _on_path_segment_body_entered(body: Node3D, row: int, surface: String, mode: String, path_width: float) -> void:
+	if not (body is CharacterBody3D):
+		return
+	var center := _row_center(row)
+	var fwd: Vector3 = _seg_fwd.get(row, Vector3(0.0, 0.0, -1.0))
+	var right: Vector3 = _seg_right.get(row, Vector3(1.0, 0.0, 0.0))
+	path_segment_entered.emit(row, center, fwd, right, surface, mode, path_width)
+
+func _spawn_path_edge_details(row: int, rng: RandomNumberGenerator) -> void:
 	var parent := _group("GrassAndPlants")
+	var path_width: float = _seg_width.get(row, PATH_WIDTH)
+	var edge_base := path_width * 0.5 + 0.30
 	for side_value in [-1.0, 1.0]:
 		var side := float(side_value)
 		for j in range(2):
-			var x: float = side * rng.randf_range(2.60, 3.10)
-			var detail_z: float = z + rng.randf_range(-1.25, 1.25)
+			var x: float = side * rng.randf_range(edge_base, edge_base + 0.55)
+			var detail_z: float = rng.randf_range(-1.25, 1.25)
+			var detail_pos := _row_local(row, x, 0.0, detail_z)
 			if rng.randf() < 0.55:
-				_grass_clump(Vector3(x, 0.0, detail_z), rng)
+				_grass_clump(detail_pos, rng)
 			else:
-				_fern(Vector3(x, 0.0, detail_z), rng)
+				_fern(detail_pos, rng)
 
 		if rng.randf() < 0.55:
-			_pebble_cluster(parent, Vector3(side * rng.randf_range(2.15, 2.75), 0.02, z + rng.randf_range(-1.2, 1.2)), rng)
+			_pebble_cluster(parent, _row_local(row, side * rng.randf_range(path_width * 0.5 - 0.15, path_width * 0.5 + 0.45), 0.02, rng.randf_range(-1.2, 1.2)), rng)
 		if rng.randf() < 0.30:
-			_root_strip(parent, Vector3(0.0, 0.02, z + rng.randf_range(-1.1, 1.1)), rng)
+			_root_strip(parent, _row_local(row, 0.0, 0.02, rng.randf_range(-1.1, 1.1)), rng)
 
 func _spawn_obstacles(data: Dictionary) -> void:
 	var obstacles: Array = data.get("obstacles", [])
@@ -228,8 +511,22 @@ func _spawn_obstacle(kind: String, lane: int, row: int) -> void:
 			_obstacle_rock(lane_pos + Vector3(0.0, 0.42, 0.0))
 		"spike":
 			_obstacle_spikes(lane_pos + Vector3(0.0, 0.38, 0.0))
+		"thorn", "thorn_bush":
+			_obstacle_thorn_bush(lane_pos + Vector3(0.0, 0.38, 0.0))
+		"water_rock", "river_rock":
+			_obstacle_water_rock(lane_pos + Vector3(0.0, 0.35, 0.0))
+		"floating_log":
+			_obstacle_floating_log(base + Vector3(0.0, 0.20, 0.0), heading_y)
+		"crocodile_zone":
+			_obstacle_crocodile_zone(lane_pos + Vector3(0.0, 0.12, 0.0), heading_y)
+		"whirlpool":
+			_obstacle_whirlpool(lane_pos + Vector3(0.0, 0.08, 0.0))
+		"crate":
+			_obstacle_crate(lane_pos + Vector3(0.0, 0.38, 0.0))
+		"broken_plank", "falling_plank":
+			_obstacle_broken_planks(lane_pos + Vector3(0.0, 0.24, 0.0), heading_y)
 		"mud":
-			_area_slow(Vector3(PATH_WIDTH, 0.05, TILE_Z), COLOR_MUD, base + Vector3(0.0, 0.03, 0.0))
+			_area_slow(Vector3(_seg_width.get(row, PATH_WIDTH), 0.05, TILE_Z), COLOR_MUD, base + Vector3(0.0, 0.03, 0.0))
 		"gap":
 			_remove_ground_at(row)
 		_:
@@ -296,6 +593,84 @@ func _obstacle_spikes(pos: Vector3) -> void:
 		var spike := _add_cylinder(root, "Stake", 0.0, 0.15, 0.76, Vector3(-0.28 + float(i) * 0.28, 0.0, 0.0), COLOR_SPIKE)
 		spike.rotation_degrees.z = -7.0 + float(i) * 7.0
 	_add_static_box(root, "SpikeCollision", Vector3(0.95, 0.70, 0.78), Vector3(0.0, 0.0, 0.0), {"obstacle": true})
+
+func _obstacle_thorn_bush(pos: Vector3) -> void:
+	var root := Node3D.new()
+	root.name = "ThornBush"
+	root.position = pos
+	_group("Obstacles").add_child(root)
+	for i in range(4):
+		var leaf := _add_sphere(root, "Bramble%d" % i, 0.28, Vector3(-0.32 + float(i) * 0.20, 0.02 + float(i % 2) * 0.10, randf_range(-0.16, 0.16)), Color(0.10, 0.28, 0.08))
+		leaf.scale = Vector3(1.15, 0.68, 0.92)
+	for t in range(6):
+		var thorn := _add_cylinder(root, "Thorn%d" % t, 0.0, 0.045, 0.26, Vector3(randf_range(-0.42, 0.42), 0.18, randf_range(-0.22, 0.22)), Color(0.72, 0.18, 0.10))
+		thorn.rotation_degrees.z = randf_range(-34.0, 34.0)
+	_add_static_box(root, "ThornCollision", Vector3(1.05, 0.78, 0.92), Vector3.ZERO, {"obstacle": true})
+
+func _obstacle_water_rock(pos: Vector3) -> void:
+	var root := Node3D.new()
+	root.name = "WaterRock"
+	root.position = pos
+	_group("Obstacles").add_child(root)
+	var rock := _add_sphere(root, "SlickRock", 0.44, Vector3.ZERO, Color(0.26, 0.36, 0.40))
+	rock.scale = Vector3(1.15, 0.52, 0.85)
+	_add_box(root, "WetHighlight", Vector3(0.46, 0.035, 0.20), Vector3(0.02, 0.24, -0.03), Color(0.72, 0.92, 0.96, 0.75))
+	_add_static_box(root, "WaterRockCollision", Vector3(0.95, 0.62, 0.86), Vector3.ZERO, {"obstacle": true})
+
+func _obstacle_floating_log(pos: Vector3, heading_y: float) -> void:
+	var root := Node3D.new()
+	root.name = "FloatingLog"
+	root.position = pos
+	root.rotation.y = heading_y
+	_group("Obstacles").add_child(root)
+	var log := _add_cylinder(root, "Log", 0.18, 0.20, PATH_WIDTH * 0.75, Vector3.ZERO, COLOR_LOG)
+	log.rotation_degrees.z = 90.0
+	_add_static_box(root, "FloatingLogCollision", Vector3(PATH_WIDTH * 0.72, 0.45, 0.48), Vector3.ZERO, {"obstacle": true})
+
+func _obstacle_crocodile_zone(pos: Vector3, heading_y: float) -> void:
+	var root := Node3D.new()
+	root.name = "CrocodileDangerZone"
+	root.position = pos
+	root.rotation.y = heading_y
+	_group("Obstacles").add_child(root)
+	_add_box(root, "RedWarningWater", Vector3(1.1, 0.035, 1.1), Vector3.ZERO, Color(0.50, 0.05, 0.04, 0.65))
+	var body := _add_box(root, "CrocodileBack", Vector3(0.76, 0.16, 0.24), Vector3(0.0, 0.12, 0.0), Color(0.10, 0.28, 0.10))
+	body.rotation_degrees.y = 10.0
+	for i in range(4):
+		_add_box(root, "BackRidge%d" % i, Vector3(0.08, 0.09, 0.08), Vector3(-0.24 + float(i) * 0.16, 0.25, 0.0), Color(0.05, 0.16, 0.05))
+	_add_static_box(root, "CrocodileCollision", Vector3(1.0, 0.70, 1.0), Vector3.ZERO, {"obstacle": true})
+
+func _obstacle_whirlpool(pos: Vector3) -> void:
+	var root := Node3D.new()
+	root.name = "Whirlpool"
+	root.position = pos
+	_group("Obstacles").add_child(root)
+	for i in range(3):
+		var ring := _add_cylinder(root, "Ring%d" % i, 0.26 + float(i) * 0.16, 0.26 + float(i) * 0.16, 0.035, Vector3(0.0, 0.01 + float(i) * 0.01, 0.0), Color(0.70, 0.92, 1.0, 0.55))
+		ring.rotation_degrees.x = 90.0
+		ring.scale.y = 0.32
+	_add_static_box(root, "WhirlpoolCollision", Vector3(1.1, 0.70, 1.1), Vector3.ZERO, {"obstacle": true})
+
+func _obstacle_crate(pos: Vector3) -> void:
+	var root := Node3D.new()
+	root.name = "SupplyCrate"
+	root.position = pos
+	_group("Obstacles").add_child(root)
+	_add_box(root, "Crate", Vector3(0.72, 0.72, 0.72), Vector3.ZERO, Color(0.46, 0.28, 0.12))
+	_add_box(root, "CrateBandA", Vector3(0.78, 0.08, 0.78), Vector3(0.0, 0.18, 0.0), Color(0.64, 0.44, 0.20))
+	_add_box(root, "CrateBandB", Vector3(0.08, 0.78, 0.78), Vector3(0.0, 0.0, 0.0), Color(0.64, 0.44, 0.20))
+	_add_static_box(root, "CrateCollision", Vector3(0.76, 0.82, 0.76), Vector3.ZERO, {"obstacle": true})
+
+func _obstacle_broken_planks(pos: Vector3, heading_y: float) -> void:
+	var root := Node3D.new()
+	root.name = "BrokenPlanks"
+	root.position = pos
+	root.rotation.y = heading_y
+	_group("Obstacles").add_child(root)
+	for i in range(3):
+		var plank := _add_box(root, "Plank%d" % i, Vector3(0.22, 0.08, 0.92), Vector3(-0.30 + float(i) * 0.30, 0.0, randf_range(-0.12, 0.12)), COLOR_LOG)
+		plank.rotation_degrees.y = randf_range(-18.0, 18.0)
+	_add_static_box(root, "BrokenPlankCollision", Vector3(1.0, 0.55, 0.90), Vector3.ZERO, {"obstacle": true})
 
 func _area_slow(size: Vector3, color: Color, pos: Vector3) -> void:
 	var root := Node3D.new()
@@ -699,6 +1074,338 @@ func _bird(start_pos: Vector3, end_pos: Vector3, rng: RandomNumberGenerator) -> 
 		"speed": rng.randf_range(0.035, 0.055)
 	})
 
+func _spawn_module_landmarks(data: Dictionary) -> void:
+	var length: int = data.get("length", 30)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(data.get("seed", 42)) + 6161
+	var last_module := ""
+	var spawned_chase := false
+	var spawned_escape := false
+	var spawned_boat := false
+	var spawned_slide := false
+
+	for row in range(1, length):
+		var kind := str(_seg_module.get(row, ""))
+		var mode := str(_seg_mode.get(row, "run"))
+		if kind != "" and kind != last_module:
+			_spawn_module_start_marker(row, kind)
+			last_module = kind
+
+		if mode == "tracking" and row % 3 == 0:
+			_spawn_footprints(row, row % 3, Color(0.18, 0.12, 0.06))
+		elif mode == "chase":
+			if row % 3 == 0:
+				_spawn_footprints(row, int(row / 3) % 3, Color(0.32, 0.20, 0.06))
+			if not spawned_chase:
+				_spawn_simple_animal(_level_chase_animal(), min(length - 3, row + 5), 1, true)
+				spawned_chase = true
+		elif mode == "escape" and not spawned_escape:
+			_spawn_simple_animal("boar", max(1, row - 2), 1, false)
+			_spawn_warning_marker(row + 1, "RUN TO SAFETY")
+			spawned_escape = true
+		elif mode == "water_slide":
+			if row % 2 == 0:
+				_spawn_splash(row, rng)
+			if not spawned_slide:
+				_spawn_warning_marker(row, "WATER SLIDE")
+				spawned_slide = true
+		elif mode == "boat":
+			if row % 3 == 0:
+				_spawn_river_reeds(row, rng)
+			if not spawned_boat:
+				_spawn_dock_marker(row)
+				spawned_boat = true
+
+		match kind:
+			"bridge_crossing":
+				if row % 2 == 0:
+					_spawn_bridge_posts(row)
+			"ruins_corridor":
+				if row % 2 == 0:
+					_spawn_ruins_wall(row, rng)
+			"sand_dune_curve":
+				if row % 2 == 0:
+					_spawn_sand_ridges(row, rng)
+
+func _spawn_module_start_marker(row: int, kind: String) -> void:
+	var label := _module_label(kind)
+	if label.is_empty():
+		return
+	var path_width: float = _seg_width.get(row, PATH_WIDTH)
+	var side := -1.0 if row % 2 == 0 else 1.0
+	_spawn_signpost(row, side * (path_width * 0.5 + 0.75), label, Color(0.90, 0.68, 0.22))
+
+func _module_label(kind: String) -> String:
+	match kind:
+		"narrow_passage":
+			return "NARROW TRAIL"
+		"bridge_crossing":
+			return "BRIDGE"
+		"water_slide_entry", "water_slide_curve", "water_slide_drop":
+			return "WATER SLIDE"
+		"boat_entry_dock", "boat_river_straight", "boat_river_curve", "boat_rapids":
+			return "RIVER RUN"
+		"animal_chase_lane":
+			return "ANIMAL TRACKS"
+		"animal_escape_section":
+			return "DANGER BEHIND"
+		"junction_two_way", "junction_three_way":
+			return "CHOOSE TRAIL"
+		"ruins_corridor":
+			return "RUINS"
+		"sand_dune_curve":
+			return "SAND DUNES"
+		"mud_path":
+			return "TRACK PRINTS"
+		_:
+			return ""
+
+func _spawn_junction_zones(_data: Dictionary) -> void:
+	for junction_id in _junction_defs.keys():
+		var def: Dictionary = _junction_defs[junction_id]
+		var row := int(def.get("row", 0))
+		var routes: Array = def.get("routes", [])
+		_spawn_junction_visual(row, routes)
+
+		var root := Node3D.new()
+		root.name = "JunctionTrigger_" + str(junction_id)
+		root.position = _row_center(max(0, row - 1))
+		root.rotation.y = _row_heading_y(row)
+		_group("RouteSigns").add_child(root)
+
+		var area := Area3D.new()
+		area.name = "Area"
+		area.monitoring = true
+		area.monitorable = false
+		var col := CollisionShape3D.new()
+		col.shape = BoxShape3D.new()
+		(col.shape as BoxShape3D).size = Vector3(_seg_width.get(row, PATH_WIDTH) + 1.0, 2.6, TILE_Z * 3.2)
+		col.position = Vector3(0.0, 1.15, 0.0)
+		area.add_child(col)
+		area.body_entered.connect(_on_junction_body_entered.bind(str(junction_id), routes))
+		area.body_exited.connect(_on_junction_body_exited.bind(str(junction_id)))
+		root.add_child(area)
+
+func _spawn_junction_visual(row: int, routes: Array) -> void:
+	var path_width: float = _seg_width.get(row, PATH_WIDTH)
+	_spawn_warning_marker(max(1, row - 2), "TRAIL SPLIT")
+	for raw_route in routes:
+		if not (raw_route is Dictionary):
+			continue
+		var route: Dictionary = raw_route
+		var direction := str(route.get("direction", "right"))
+		var label := str(route.get("label", "Route"))
+		var x := 0.0
+		var rot := 0.0
+		var color := Color(0.92, 0.72, 0.22)
+		match direction:
+			"left":
+				x = -path_width * 0.43
+				rot = 24.0
+				color = Color(0.70, 0.95, 0.36)
+			"right":
+				x = path_width * 0.43
+				rot = -24.0
+				color = Color(0.96, 0.54, 0.22)
+			_:
+				x = 0.0
+				rot = 0.0
+				color = Color(0.56, 0.82, 1.0)
+		_spawn_route_arrow(row, x, rot, color)
+		_spawn_signpost(max(1, row - 1), x, label, color)
+
+func _spawn_route_arrow(row: int, x: float, rot_y_degrees: float, color: Color) -> void:
+	var root := Node3D.new()
+	root.name = "RouteArrow"
+	root.position = _row_local(row, x, 0.05, -0.45)
+	root.rotation.y = _row_heading_y(row) + deg_to_rad(rot_y_degrees)
+	_group("RouteSigns").add_child(root)
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.emission_enabled = true
+	mat.emission = color
+	mat.emission_energy_multiplier = 0.75
+	var shaft := _add_box(root, "Shaft", Vector3(0.22, 0.05, 0.92), Vector3(0.0, 0.0, 0.0), color)
+	shaft.material_override = mat
+	var head := _add_box(root, "Head", Vector3(0.64, 0.06, 0.36), Vector3(0.0, 0.0, -0.56), color)
+	head.rotation_degrees.y = 45.0
+	head.material_override = mat
+
+func _on_junction_body_entered(body: Node3D, junction_id: String, routes: Array) -> void:
+	if body is CharacterBody3D:
+		junction_entered.emit(junction_id, routes)
+
+func _on_junction_body_exited(body: Node3D, junction_id: String) -> void:
+	if body is CharacterBody3D:
+		junction_exited.emit(junction_id)
+
+func apply_junction_choice(junction_id: String, direction: String, route: Dictionary) -> void:
+	if not _junction_defs.has(junction_id):
+		return
+	var def: Dictionary = _junction_defs[junction_id]
+	var row := int(def.get("row", 0))
+	var lane := 1
+	match direction:
+		"left":
+			lane = 0
+		"right":
+			lane = 2
+		_:
+			lane = 1
+	var reward := str(route.get("reward", "coins"))
+	var label := str(route.get("label", "Chosen Route"))
+	_spawn_signpost(row + 1, _lane_x(lane), "TRAIL CHOSEN: " + label.to_upper(), Color(0.95, 0.84, 0.34))
+	for step in range(2, 7):
+		_spawn_coin(lane, row + step, false)
+		_total_coins += 1
+	if reward != "coins":
+		_spawn_single_collectable(reward, lane, row + 7)
+
+func _spawn_signpost(row: int, x: float, text: String, color: Color) -> void:
+	var root := Node3D.new()
+	root.name = "Signpost"
+	root.position = _row_local(row, x, 0.0, 0.0)
+	root.rotation.y = _row_heading_y(row)
+	_group("RouteSigns").add_child(root)
+	_add_cylinder(root, "Post", 0.045, 0.06, 0.92, Vector3(0.0, 0.46, 0.0), COLOR_LOG)
+	_add_box(root, "Board", Vector3(1.38, 0.34, 0.08), Vector3(0.0, 0.96, 0.0), Color(0.34, 0.20, 0.08))
+	var lbl := Label3D.new()
+	lbl.name = "Text"
+	lbl.text = text
+	lbl.font_size = 34
+	lbl.modulate = color
+	lbl.outline_modulate = Color(0.02, 0.01, 0.0)
+	lbl.outline_size = 8
+	lbl.position = Vector3(0.0, 0.98, -0.055)
+	lbl.scale = Vector3(0.018, 0.018, 0.018)
+	root.add_child(lbl)
+
+func _spawn_warning_marker(row: int, text: String) -> void:
+	_spawn_signpost(row, 0.0, text, Color(1.0, 0.34, 0.12))
+
+func _spawn_footprints(row: int, lane: int, color: Color) -> void:
+	var root := Node3D.new()
+	root.name = "Footprints"
+	root.position = _world_pos(row, lane)
+	root.rotation.y = _row_heading_y(row)
+	_group("ModeEffects").add_child(root)
+	for i in range(2):
+		var print_mesh := _add_box(root, "Print%d" % i, Vector3(0.16, 0.025, 0.26), Vector3((-0.12 if i == 0 else 0.12), 0.035, -0.18 + float(i) * 0.36), color)
+		print_mesh.rotation_degrees.y = -8.0 if i == 0 else 8.0
+
+func _spawn_simple_animal(animal: String, row: int, lane: int, ahead: bool) -> void:
+	var root := Node3D.new()
+	root.name = animal.capitalize() + "Encounter"
+	root.position = _world_pos(row, lane)
+	root.rotation.y = _row_heading_y(row) + (0.0 if ahead else PI)
+	_group("Animals").add_child(root)
+	var body_col := Color(0.48, 0.30, 0.12)
+	var scale := Vector3.ONE
+	match animal:
+		"rabbit":
+			body_col = Color(0.78, 0.72, 0.58)
+			scale = Vector3(0.55, 0.55, 0.55)
+		"antelope":
+			body_col = Color(0.62, 0.38, 0.16)
+			scale = Vector3(0.85, 0.85, 0.85)
+		"monkey":
+			body_col = Color(0.40, 0.20, 0.08)
+			scale = Vector3(0.62, 0.62, 0.62)
+		"boar":
+			body_col = Color(0.28, 0.18, 0.10)
+			scale = Vector3(1.05, 1.05, 1.05)
+		_:
+			pass
+	root.scale = scale
+	_add_sphere(root, "Body", 0.45, Vector3(0.0, 0.45, 0.0), body_col).scale = Vector3(1.35, 0.78, 0.70)
+	_add_sphere(root, "Head", 0.24, Vector3(0.48, 0.62, 0.0), body_col.lerp(Color(0.92, 0.78, 0.48), 0.15))
+	for i in range(4):
+		_add_box(root, "Leg%d" % i, Vector3(0.08, 0.38, 0.08), Vector3(-0.26 + float(i % 2) * 0.52, 0.18, -0.16 + float(i / 2) * 0.32), body_col)
+	if animal == "rabbit":
+		_add_box(root, "EarA", Vector3(0.06, 0.38, 0.06), Vector3(0.52, 0.94, -0.08), body_col)
+		_add_box(root, "EarB", Vector3(0.06, 0.38, 0.06), Vector3(0.52, 0.94, 0.08), body_col)
+	elif animal == "boar":
+		_add_box(root, "TuskA", Vector3(0.20, 0.04, 0.04), Vector3(0.70, 0.54, -0.10), Color(0.88, 0.82, 0.66))
+		_add_box(root, "TuskB", Vector3(0.20, 0.04, 0.04), Vector3(0.70, 0.54, 0.10), Color(0.88, 0.82, 0.66))
+
+func _level_chase_animal() -> String:
+	match _level_id:
+		11:
+			return "rabbit"
+		16:
+			return "antelope"
+		20:
+			return "rabbit"
+		_:
+			return "monkey"
+
+func _spawn_splash(row: int, rng: RandomNumberGenerator) -> void:
+	for side_value in [-1.0, 1.0]:
+		var side := float(side_value)
+		var root := Node3D.new()
+		root.name = "SlideSplash"
+		root.position = _row_local(row, side * (_seg_width.get(row, PATH_WIDTH) * 0.45), 0.08, rng.randf_range(-0.9, 0.9))
+		_group("ModeEffects").add_child(root)
+		for i in range(3):
+			var spray := _add_sphere(root, "Drop%d" % i, rng.randf_range(0.05, 0.10), Vector3(rng.randf_range(-0.18, 0.18), rng.randf_range(0.18, 0.55), rng.randf_range(-0.16, 0.16)), Color(0.72, 0.92, 1.0, 0.70))
+			spray.scale.y = rng.randf_range(1.2, 2.0)
+
+func _spawn_river_reeds(row: int, rng: RandomNumberGenerator) -> void:
+	for side_value in [-1.0, 1.0]:
+		var side := float(side_value)
+		var root := Node3D.new()
+		root.name = "RiverReeds"
+		root.position = _row_local(row, side * (_seg_width.get(row, PATH_WIDTH) * 0.5 + 0.35), 0.0, rng.randf_range(-0.6, 0.6))
+		_group("GrassAndPlants").add_child(root)
+		for i in range(4):
+			var reed := _add_box(root, "Reed%d" % i, Vector3(0.045, rng.randf_range(0.55, 0.95), 0.045), Vector3(rng.randf_range(-0.15, 0.15), 0.28, rng.randf_range(-0.12, 0.12)), Color(0.28, 0.44, 0.18))
+			reed.rotation_degrees.z = rng.randf_range(-10.0, 10.0)
+
+func _spawn_dock_marker(row: int) -> void:
+	var root := Node3D.new()
+	root.name = "BoatDock"
+	root.position = _row_center(row)
+	root.rotation.y = _row_heading_y(row)
+	_group("ModeEffects").add_child(root)
+	_add_box(root, "DockDeck", Vector3(_seg_width.get(row, PATH_WIDTH) * 0.82, 0.16, 0.90), Vector3(0.0, 0.08, 0.0), COLOR_LOG)
+	for side_value in [-1.0, 1.0]:
+		_add_cylinder(root, "DockPost", 0.07, 0.09, 0.86, Vector3(float(side_value) * _seg_width.get(row, PATH_WIDTH) * 0.46, 0.43, 0.0), COLOR_LOG)
+
+func _spawn_bridge_posts(row: int) -> void:
+	var root := Node3D.new()
+	root.name = "BridgePosts"
+	root.position = _row_center(row)
+	root.rotation.y = _row_heading_y(row)
+	_group("ModeEffects").add_child(root)
+	for side_value in [-1.0, 1.0]:
+		var side := float(side_value)
+		for z in [-1.05, 1.05]:
+			_add_cylinder(root, "Post", 0.06, 0.08, 0.72, Vector3(side * _seg_width.get(row, PATH_WIDTH) * 0.50, 0.36, z), COLOR_LOG)
+
+func _spawn_ruins_wall(row: int, rng: RandomNumberGenerator) -> void:
+	for side_value in [-1.0, 1.0]:
+		var side := float(side_value)
+		var root := Node3D.new()
+		root.name = "RuinsWall"
+		root.position = _row_local(row, side * (_seg_width.get(row, PATH_WIDTH) * 0.5 + 0.25), 0.0, rng.randf_range(-0.6, 0.6))
+		root.rotation.y = _row_heading_y(row)
+		_group("Ruins").add_child(root)
+		_add_box(root, "Wall", Vector3(0.28, rng.randf_range(0.80, 1.35), 1.15), Vector3(0.0, 0.45, 0.0), _theme.get("stone", COLOR_STONE))
+
+func _spawn_sand_ridges(row: int, rng: RandomNumberGenerator) -> void:
+	var root := Node3D.new()
+	root.name = "SandRidges"
+	root.position = _row_center(row)
+	root.rotation.y = _row_heading_y(row)
+	_group("ModeEffects").add_child(root)
+	for i in range(3):
+		var ridge := _add_box(root, "Ridge%d" % i, Vector3(_seg_width.get(row, PATH_WIDTH) * rng.randf_range(0.35, 0.70), 0.045, 0.08), Vector3(rng.randf_range(-0.6, 0.6), 0.04, -0.8 + float(i) * 0.75), Color(0.92, 0.76, 0.42, 0.65))
+		ridge.rotation_degrees.y = rng.randf_range(-10.0, 10.0)
+
+func _row_heading_y(row: int) -> float:
+	var fwd: Vector3 = _seg_fwd.get(row, Vector3(0.0, 0.0, -1.0))
+	return atan2(fwd.x, -fwd.z)
+
 func _spawn_turn_zones(data: Dictionary) -> void:
 	for row in _turn_rows.keys():
 		var dir: int = _turn_rows[row]
@@ -980,6 +1687,19 @@ func _spawn_single_collectable(res_type: String, lane: int, row: int) -> void:
 				_add_box(root, "Glass",  Vector3(0.30, 0.30, 0.06), Vector3.ZERO,            Color(0.50, 0.70, 0.86))
 				_add_box(root, "PaneH",  Vector3(0.30, 0.04, 0.07), Vector3.ZERO,            Color(0.66, 0.56, 0.32))
 				_add_box(root, "PaneV",  Vector3(0.04, 0.30, 0.07), Vector3.ZERO,            Color(0.66, 0.56, 0.32))
+			"water_token":
+				var drop := _add_sphere(root, "WaterDrop", 0.22, Vector3(0.0, 0.03, 0.0), Color(0.18, 0.74, 1.0))
+				drop.scale = Vector3(0.82, 1.30, 0.82)
+				_add_sphere(root, "DropGlow", 0.10, Vector3(0.04, 0.14, 0.04), Color(0.82, 0.96, 1.0, 0.75))
+			"fish_token":
+				_add_sphere(root, "FishBody", 0.18, Vector3.ZERO, Color(0.22, 0.76, 0.78)).scale = Vector3(1.35, 0.62, 0.72)
+				_add_box(root, "Tail", Vector3(0.18, 0.16, 0.06), Vector3(-0.25, 0.0, 0.0), Color(0.12, 0.52, 0.58))
+				_add_sphere(root, "Eye", 0.035, Vector3(0.17, 0.05, 0.11), Color(0.02, 0.02, 0.02))
+			"river_relic":
+				var relic := _add_cylinder(root, "RiverRelic", 0.20, 0.20, 0.12, Vector3.ZERO, Color(0.14, 0.62, 0.76))
+				relic.rotation_degrees.x = 90.0
+				_add_cylinder(root, "GoldRim", 0.23, 0.23, 0.035, Vector3(0.0, 0.0, 0.02), Color(0.92, 0.72, 0.18))
+				_add_sphere(root, "RelicCore", 0.09, Vector3(0.0, 0.0, 0.07), Color(0.70, 0.95, 1.0))
 			"trade_token":
 				var tok := _add_cylinder(root, "Token", 0.22, 0.22, 0.06, Vector3.ZERO, Color(0.88, 0.70, 0.20))
 				tok.rotation_degrees.x = 90.0

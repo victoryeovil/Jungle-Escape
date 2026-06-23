@@ -200,6 +200,7 @@ var _rng             := RandomNumberGenerator.new()
 var _preview_panel   : Control = null
 var _current_preview : int     = 0
 var _sand_popup      : Control = null
+var _lives_popup     : Control = null
 var _bird1           : Label   = null
 var _bird2           : Label   = null
 var _bird1_x         : float   = -28.0
@@ -215,7 +216,7 @@ var _marker_layer    : Control = null
 # ── SETUP ─────────────────────────────────────────────────────────────────────
 func _ready() -> void:
 	_rng.seed = 4419
-	_bg_texture = null  # scrollable 2460-px canvas always uses procedural drawing
+	_bg_texture = _load_map_texture()
 	_setup()
 
 func _setup() -> void:
@@ -224,11 +225,13 @@ func _setup() -> void:
 	_marker_layer.size = Vector2(480, CANVAS_H)
 	_marker_layer.position = Vector2(0.0, 68.0 - _scroll_y)
 	add_child(_marker_layer)
-	_build_bird_labels()
+	if _bg_texture == null:
+		_build_bird_labels()
 	_build_level_markers()
 	_build_ui_overlay()
 	_build_preview_panel()
 	_build_sand_shoes_popup()
+	_build_lives_popup()
 	queue_redraw()
 
 func _process(delta: float) -> void:
@@ -245,6 +248,16 @@ func _process(delta: float) -> void:
 
 # ── CUSTOM DRAW ───────────────────────────────────────────────────────────────
 func _draw() -> void:
+	if _bg_texture != null:
+		_draw_reference_scroll_canvas()
+		draw_set_transform(Vector2(0.0, -_scroll_y + 68.0))
+		_draw_reference_map_life()
+		_draw_progress_landmarks()
+		_draw_marker_halos()
+		draw_set_transform(Vector2.ZERO)
+		_draw_scrollbar()
+		return
+
 	# Chapter 1 section — canvas y 1640–2460 (jungle / ruins / river / camp)
 	var t1 := 1640.0 - _scroll_y + 68.0
 	draw_set_transform(Vector2(0.0, t1))
@@ -280,6 +293,7 @@ func _draw() -> void:
 
 	# Unified path + markers in full canvas coordinates
 	draw_set_transform(Vector2(0.0, -_scroll_y + 68.0))
+	_draw_route_mode_art()
 	_draw_lost_path()
 	_draw_marker_halos()
 
@@ -287,6 +301,202 @@ func _draw() -> void:
 	_draw_scrollbar()
 
 # ── DRAW: backgrounds ─────────────────────────────────────────────────────────
+func _draw_reference_scroll_canvas() -> void:
+	draw_set_transform(Vector2(0.0, -_scroll_y + 68.0))
+	const SECTION_H := 820.0
+	var tex_size := _bg_texture.get_size()
+	var src_top := tex_size.y * 0.072
+	var src_bottom_pad := tex_size.y * 0.047
+	var src_rect := Rect2(0.0, src_top, tex_size.x, tex_size.y - src_top - src_bottom_pad)
+	for i in range(3):
+		var y := float(i) * SECTION_H
+		draw_texture_rect_region(_bg_texture, Rect2(0.0, y, 480.0, SECTION_H + 1.0), src_rect)
+		if i == 0:
+			draw_rect(Rect2(0.0, y, 480.0, SECTION_H), Color(0.03, 0.05, 0.02, 0.10))
+		elif i == 1:
+			draw_rect(Rect2(0.0, y, 480.0, SECTION_H), Color(0.10, 0.07, 0.02, 0.07))
+		else:
+			draw_rect(Rect2(0.0, y, 480.0, SECTION_H), Color(0.02, 0.08, 0.03, 0.05))
+	draw_rect(Rect2(0.0, 0.0, 480.0, CANVAS_H), Color(0.0, 0.0, 0.0, 0.08))
+	draw_set_transform(Vector2.ZERO)
+
+func _draw_reference_map_life() -> void:
+	_draw_moving_birds()
+	_draw_moving_elephant(Vector2(64.0, 1698.0), 0.0)
+	_draw_moving_elephant(Vector2(348.0, 894.0), 1.4, 0.78)
+	_draw_moving_rabbit(Vector2(132.0, 1086.0), 2.1)
+	_draw_moving_antelope(Vector2(96.0, 480.0), 0.7)
+	_draw_moving_boar(Vector2(318.0, 172.0), 1.2)
+	_draw_moving_monkey(Vector2(380.0, 2194.0), 0.4)
+
+func _draw_progress_landmarks() -> void:
+	_draw_home_progress_site(Vector2(96.0, 1500.0), clamp(SaveManager.get_home_stage(), 0, 6))
+	_draw_temple_progress_site(Vector2(244.0, 126.0), _temple_progress_stage())
+
+func _draw_moving_birds() -> void:
+	for i in range(5):
+		var y := 106.0 + float(i % 3) * 38.0 + float(i / 3) * 840.0
+		var x := fposmod(_shimmer_t * (28.0 + float(i) * 7.0) + float(i) * 92.0, 560.0) - 40.0
+		_draw_bird_shape(Vector2(x, y), 0.68 + float(i % 2) * 0.18)
+
+func _draw_bird_shape(p: Vector2, scale: float = 1.0) -> void:
+	var c := Color(0.04, 0.03, 0.02, 0.72)
+	var wing := 10.0 * scale
+	draw_line(p, p + Vector2(-wing, -5.0 * scale), c, 2.0, true)
+	draw_line(p, p + Vector2(wing, -5.0 * scale), c, 2.0, true)
+	draw_circle(p, 1.5 * scale, c)
+
+func _draw_moving_elephant(base: Vector2, phase: float, scale: float = 1.0) -> void:
+	var p := base + Vector2(sin(_shimmer_t * 0.55 + phase) * 18.0, sin(_shimmer_t * 1.2 + phase) * 1.5)
+	var c := Color(0.24, 0.22, 0.18, 0.76)
+	var hi := Color(0.44, 0.40, 0.30, 0.50)
+	draw_circle(p + Vector2(0, 2) * scale, 18.0 * scale, c)
+	draw_circle(p + Vector2(19, -4) * scale, 11.0 * scale, c)
+	draw_rect(Rect2(p.x + 23.0 * scale, p.y - 1.0 * scale, 5.0 * scale, 20.0 * scale), c)
+	draw_circle(p + Vector2(13, -7) * scale, 7.0 * scale, hi)
+	for i in range(4):
+		draw_rect(Rect2(p.x - 13.0 * scale + float(i) * 8.0 * scale, p.y + 14.0 * scale, 4.0 * scale, 16.0 * scale), c.darkened(0.10))
+	draw_line(p + Vector2(-18, -4) * scale, p + Vector2(-29, -11) * scale, c, 3.0 * scale, true)
+
+func _draw_moving_rabbit(base: Vector2, phase: float) -> void:
+	var hop := absf(sin(_shimmer_t * 2.6 + phase))
+	var p := base + Vector2(sin(_shimmer_t * 0.9 + phase) * 24.0, -hop * 7.0)
+	var c := Color(0.82, 0.74, 0.56, 0.86)
+	draw_circle(p, 8.0, c)
+	draw_circle(p + Vector2(9, -3), 5.0, c.lightened(0.08))
+	draw_line(p + Vector2(10, -8), p + Vector2(14, -20), c, 3.0, true)
+	draw_line(p + Vector2(6, -8), p + Vector2(5, -20), c, 3.0, true)
+	draw_circle(p + Vector2(-8, 1), 4.0, Color(1.0, 0.96, 0.78, 0.72))
+
+func _draw_moving_antelope(base: Vector2, phase: float) -> void:
+	var stride := sin(_shimmer_t * 2.2 + phase)
+	var p := base + Vector2(sin(_shimmer_t * 0.7 + phase) * 30.0, 0.0)
+	var c := Color(0.74, 0.48, 0.20, 0.82)
+	draw_rect(Rect2(p.x - 16, p.y - 7, 28, 12), c)
+	draw_circle(p + Vector2(15, -9), 7.0, c.lightened(0.08))
+	draw_line(p + Vector2(17, -16), p + Vector2(12, -27), Color(0.16, 0.10, 0.04, 0.78), 2.0, true)
+	draw_line(p + Vector2(20, -15), p + Vector2(24, -27), Color(0.16, 0.10, 0.04, 0.78), 2.0, true)
+	draw_line(p + Vector2(-8, 4), p + Vector2(-12, 21 + stride * 3.0), c.darkened(0.14), 3.0, true)
+	draw_line(p + Vector2(7, 4), p + Vector2(11, 20 - stride * 3.0), c.darkened(0.14), 3.0, true)
+
+func _draw_moving_boar(base: Vector2, phase: float) -> void:
+	var p := base + Vector2(sin(_shimmer_t * 1.35 + phase) * 20.0, sin(_shimmer_t * 2.0 + phase) * 2.0)
+	var c := Color(0.30, 0.18, 0.09, 0.86)
+	draw_circle(p, 15.0, c)
+	draw_circle(p + Vector2(15, -3), 8.0, c.darkened(0.08))
+	draw_polygon(PackedVector2Array([p + Vector2(15, -11), p + Vector2(19, -22), p + Vector2(22, -9)]), PackedColorArray([c, c, c]))
+	draw_line(p + Vector2(20, -1), p + Vector2(31, -5), Color(0.92, 0.84, 0.62, 0.72), 2.0, true)
+	draw_line(p + Vector2(-11, 10), p + Vector2(-14, 22), c.darkened(0.14), 3.0, true)
+	draw_line(p + Vector2(7, 10), p + Vector2(10, 21), c.darkened(0.14), 3.0, true)
+
+func _draw_moving_monkey(base: Vector2, phase: float) -> void:
+	var swing := sin(_shimmer_t * 1.8 + phase)
+	var p := base + Vector2(swing * 22.0, cos(_shimmer_t * 1.8 + phase) * 6.0)
+	var c := Color(0.46, 0.26, 0.10, 0.86)
+	draw_line(base + Vector2(-22, -36), p + Vector2(0, -14), Color(0.18, 0.10, 0.04, 0.70), 2.0, true)
+	draw_circle(p, 9.0, c)
+	draw_circle(p + Vector2(0, -12), 7.0, c.lightened(0.12))
+	draw_circle(p + Vector2(-7, -13), 3.0, c.lightened(0.06))
+	draw_circle(p + Vector2(7, -13), 3.0, c.lightened(0.06))
+	draw_arc(p + Vector2(-9, 3), 13.0, -0.6, 1.45, 12, c, 3.0, true)
+
+func _draw_home_progress_site(pos: Vector2, stage: int) -> void:
+	draw_circle(pos + Vector2(0, 20), 46.0, Color(0.0, 0.0, 0.0, 0.30))
+	draw_rect(Rect2(pos.x - 54, pos.y + 22, 108, 10), Color(0.24, 0.15, 0.07, 0.88))
+	for i in range(5):
+		draw_rect(Rect2(pos.x - 45 + float(i) * 22.0, pos.y + 18, 4, 22), Color(0.58, 0.38, 0.16, 0.90))
+	if stage <= 0:
+		_draw_build_label(pos + Vector2(-52, -34), "HOME SITE")
+		_draw_signpost(pos + Vector2(-22, 5), "LAND")
+		return
+	if stage >= 1:
+		draw_rect(Rect2(pos.x - 38, pos.y + 5, 76, 14), Color(0.48, 0.34, 0.16, 0.92))
+	if stage >= 2:
+		draw_rect(Rect2(pos.x - 34, pos.y - 8, 68, 16), Color(0.42, 0.32, 0.22, 0.94))
+		for i in range(5):
+			draw_rect(Rect2(pos.x - 32 + float(i) * 14.0, pos.y - 7, 11, 6), Color(0.62, 0.50, 0.34, 0.90))
+	if stage >= 3:
+		draw_rect(Rect2(pos.x - 30, pos.y - 34, 60, 30), Color(0.42, 0.23, 0.10, 0.94))
+		draw_rect(Rect2(pos.x - 7, pos.y - 20, 14, 16), Color(0.12, 0.08, 0.04, 0.92))
+	if stage >= 4:
+		draw_polygon(PackedVector2Array([
+			pos + Vector2(-38, -34),
+			pos + Vector2(0, -62),
+			pos + Vector2(38, -34),
+		]), PackedColorArray([
+			Color(0.08, 0.28, 0.20, 0.96),
+			Color(0.14, 0.42, 0.30, 0.96),
+			Color(0.06, 0.20, 0.15, 0.96),
+		]))
+	if stage >= 5:
+		draw_rect(Rect2(pos.x - 25, pos.y - 27, 12, 11), Color(1.0, 0.72, 0.20, 0.86))
+		draw_rect(Rect2(pos.x + 13, pos.y - 27, 12, 11), Color(1.0, 0.72, 0.20, 0.86))
+	if stage >= 6:
+		draw_circle(pos + Vector2(0, -24), 54.0, Color(C_GOLD.r, C_GOLD.g, C_GOLD.b, 0.10))
+		draw_rect(Rect2(pos.x - 2, pos.y - 72, 4, 16), C_GOLD)
+	_draw_build_label(pos + Vector2(-58, -82), "HOME " + str(stage) + "/6")
+
+func _draw_temple_progress_site(pos: Vector2, stage: int) -> void:
+	draw_circle(pos + Vector2(0, 10), 58.0, Color(C_GOLD.r, C_GOLD.g, C_GOLD.b, 0.10 + float(stage) * 0.018))
+	draw_rect(Rect2(pos.x - 52, pos.y + 24, 104, 9), Color(0.22, 0.16, 0.09, 0.90))
+	if stage <= 0:
+		for i in range(5):
+			draw_rect(Rect2(pos.x - 42 + float(i) * 18.0, pos.y + 10 + float(i % 2) * 5.0, 15, 8), C_STONE_D)
+		_draw_build_label(pos + Vector2(-58, -54), "TEMPLE RUINS")
+		return
+	if stage >= 1:
+		for i in range(4):
+			draw_rect(Rect2(pos.x - 42 + float(i) * 28.0, pos.y - 5, 18, 30), C_STONE_M)
+	if stage >= 2:
+		draw_rect(Rect2(pos.x - 50, pos.y - 16, 100, 12), C_STONE_L)
+		draw_rect(Rect2(pos.x - 38, pos.y - 28, 76, 12), C_STONE_M)
+	if stage >= 3:
+		draw_polygon(PackedVector2Array([
+			pos + Vector2(-46, -28),
+			pos + Vector2(0, -62),
+			pos + Vector2(46, -28),
+		]), PackedColorArray([C_STONE_M, C_GOLD.darkened(0.12), C_STONE_M]))
+	if stage >= 4:
+		draw_circle(pos + Vector2(0, -22), 14.0, C_GOLD)
+		for i in range(8):
+			var a := float(i) * TAU / 8.0
+			draw_line(pos + Vector2(0, -22) + Vector2(cos(a), sin(a)) * 17.0,
+				pos + Vector2(0, -22) + Vector2(cos(a), sin(a)) * 25.0,
+				C_GOLD, 2.0, true)
+	if stage >= 5:
+		draw_circle(pos + Vector2(0, -22), 38.0, Color(1.0, 0.82, 0.28, 0.16))
+		draw_rect(Rect2(pos.x - 6, pos.y + 2, 12, 22), Color(1.0, 0.82, 0.28, 0.52))
+	_draw_build_label(pos + Vector2(-58, -76), "TEMPLE " + str(stage) + "/5")
+
+func _temple_progress_stage() -> int:
+	if SaveManager.is_level_completed(20):
+		return 5
+	if SaveManager.is_level_completed(17):
+		return 4
+	if SaveManager.is_level_completed(12):
+		return 3
+	if SaveManager.is_level_completed(6):
+		return 2
+	if SaveManager.is_level_completed(5):
+		return 1
+	return 0
+
+func _draw_signpost(pos: Vector2, text: String) -> void:
+	draw_rect(Rect2(pos.x - 2, pos.y - 16, 4, 34), Color(0.24, 0.14, 0.05, 0.94))
+	draw_rect(Rect2(pos.x - 22, pos.y - 28, 44, 15), Color(0.50, 0.30, 0.11, 0.94))
+	var font := get_theme_default_font()
+	if font != null:
+		draw_string(font, pos + Vector2(-17, -17), text, HORIZONTAL_ALIGNMENT_CENTER, 34.0, 7,
+			Color(1.0, 0.86, 0.46, 0.92))
+
+func _draw_build_label(pos: Vector2, text: String) -> void:
+	draw_rect(Rect2(pos, Vector2(116, 20)), Color(0.03, 0.02, 0.01, 0.76))
+	draw_rect(Rect2(pos, Vector2(116, 2)), Color(C_GOLD.r, C_GOLD.g, C_GOLD.b, 0.70))
+	var font := get_theme_default_font()
+	if font != null:
+		draw_string(font, pos + Vector2(0, 14), text, HORIZONTAL_ALIGNMENT_CENTER, 116.0, 9,
+			Color(1.0, 0.88, 0.48, 0.96))
+
 func _draw_backgrounds() -> void:
 	# Use bg_jungle_map.png when present; procedural fallback otherwise
 	if _bg_texture != null:
@@ -609,6 +819,178 @@ func _draw_lost_path() -> void:
 		draw_circle(p - perp * 8.5, 2.0, C_STONE_D)
 
 # ── DRAW: medallion nodes + label accents ────────────────────────────────────
+func _draw_route_mode_art() -> void:
+	_draw_canvas_region_label(Vector2(26, 2288), "LOST PATH", Color(0.20, 0.48, 0.12, 0.72))
+	_draw_canvas_region_label(Vector2(260, 1508), "SETTLEMENT TRAIL", Color(0.65, 0.44, 0.12, 0.76))
+	_draw_canvas_region_label(Vector2(34, 696), "DEEP WILDLANDS", Color(0.62, 0.38, 0.10, 0.74))
+	_draw_canvas_region_label(Vector2(248, 32), "ANCIENT BAOBAB", Color(0.78, 0.55, 0.14, 0.78))
+
+	_draw_tracking_trail(10, Color(0.66, 0.48, 0.24, 0.72))
+	_draw_chase_trail(11, Color(0.85, 0.62, 0.18, 0.58))
+	_draw_water_slide_trail(12)
+	_draw_guide_post(_node_pos(13) + Vector2(54, -22), "GUIDE")
+	_draw_tracking_trail(14, Color(0.68, 0.52, 0.22, 0.56))
+	_draw_dock_trail(15)
+	_draw_chase_trail(16, Color(0.92, 0.72, 0.16, 0.56))
+	_draw_boat_trail(17)
+	_draw_tracking_trail(18, Color(0.50, 0.66, 0.52, 0.58))
+	_draw_escape_trail(19)
+	_draw_final_baobab()
+
+func _draw_canvas_region_label(pos: Vector2, text: String, col: Color) -> void:
+	draw_rect(Rect2(pos + Vector2(3, 3), Vector2(142, 22)), Color(0.0, 0.0, 0.0, 0.28))
+	draw_rect(Rect2(pos, Vector2(142, 22)), Color(0.05, 0.04, 0.02, 0.68))
+	draw_rect(Rect2(pos, Vector2(142, 2)), col.lightened(0.24))
+	draw_rect(Rect2(pos.x, pos.y + 20, 142, 2), col.darkened(0.12))
+	_draw_leaf_pair(pos + Vector2(12, 11), col.lightened(0.15))
+	_draw_leaf_pair(pos + Vector2(130, 11), col.lightened(0.15), true)
+	var font := get_theme_default_font()
+	if font != null:
+		draw_string(font, pos + Vector2(25, 15), text, HORIZONTAL_ALIGNMENT_LEFT, 104.0, 9,
+			Color(0.96, 0.88, 0.58, 0.92))
+
+func _draw_water_slide_trail(level_id: int) -> void:
+	var pts := _segment_points(level_id, -34.0, 14)
+	_draw_water_ribbon(pts, 50.0, Color(0.05, 0.32, 0.54, 0.72), Color(0.18, 0.62, 0.82, 0.82))
+	for i in range(2, pts.size(), 3):
+		var p: Vector2 = pts[i]
+		draw_circle(p + Vector2(0, 5), 7.0, Color(0.50, 0.86, 0.96, 0.22))
+		draw_rect(Rect2(p.x - 13, p.y - 2, 26, 3), Color(0.70, 0.94, 1.0, 0.36))
+	var exit_pos := _node_pos(level_id) + Vector2(-32, -30)
+	draw_polygon(PackedVector2Array([
+		exit_pos + Vector2(-18, -4),
+		exit_pos + Vector2(0, 14),
+		exit_pos + Vector2(18, -4),
+	]), PackedColorArray([
+		Color(0.65, 0.92, 1.0, 0.48),
+		Color(0.16, 0.60, 0.86, 0.50),
+		Color(0.65, 0.92, 1.0, 0.48),
+	]))
+
+func _draw_dock_trail(level_id: int) -> void:
+	var pts := _segment_points(level_id, 28.0, 12)
+	_draw_water_ribbon(pts, 42.0, Color(0.06, 0.24, 0.36, 0.62), Color(0.16, 0.46, 0.60, 0.72))
+	var p := _node_pos(level_id) + Vector2(-58, -4)
+	draw_rect(Rect2(p, Vector2(92, 16)), Color(0.18, 0.11, 0.05, 0.88))
+	for i in range(7):
+		draw_rect(Rect2(p.x + 5.0 + float(i) * 12.0, p.y + 2.0, 7.0, 12.0),
+			Color(0.46, 0.28, 0.10, 0.92))
+	draw_rect(Rect2(p.x - 4.0, p.y - 5.0, 6.0, 28.0), Color(0.10, 0.07, 0.03, 0.96))
+	draw_rect(Rect2(p.x + 86.0, p.y - 5.0, 6.0, 28.0), Color(0.10, 0.07, 0.03, 0.96))
+
+func _draw_boat_trail(level_id: int) -> void:
+	var pts := _segment_points(level_id, -30.0, 14)
+	_draw_water_ribbon(pts, 56.0, Color(0.04, 0.18, 0.34, 0.78), Color(0.12, 0.42, 0.62, 0.84))
+	for i in range(1, pts.size(), 3):
+		var p: Vector2 = pts[i]
+		draw_rect(Rect2(p.x - 20, p.y - 1, 40, 3), Color(0.72, 0.92, 1.0, 0.32))
+		draw_rect(Rect2(p.x - 6, p.y + 8, 12, 3), Color(0.84, 0.96, 1.0, 0.42))
+	var boat_pos := _node_pos(level_id) + Vector2(-42, 24)
+	draw_polygon(PackedVector2Array([
+		boat_pos + Vector2(-20, -7),
+		boat_pos + Vector2(19, -7),
+		boat_pos + Vector2(10, 8),
+		boat_pos + Vector2(-12, 8),
+	]), PackedColorArray([
+		Color(0.32, 0.18, 0.07, 0.94),
+		Color(0.32, 0.18, 0.07, 0.94),
+		Color(0.62, 0.38, 0.14, 0.94),
+		Color(0.62, 0.38, 0.14, 0.94),
+	]))
+	draw_line(boat_pos + Vector2(-22, -10), boat_pos + Vector2(22, 11), Color(0.78, 0.60, 0.30), 3.0, true)
+
+func _draw_chase_trail(level_id: int, col: Color) -> void:
+	var pts := _segment_points(level_id, 24.0, 12)
+	draw_polyline(pts, Color(col.r, col.g, col.b, 0.18), 44.0, true)
+	draw_polyline(pts, Color(col.r, col.g, col.b, 0.36), 5.0, true)
+	for i in range(1, pts.size(), 2):
+		var p: Vector2 = pts[i]
+		draw_circle(p + Vector2(-7, -3), 3.3, col.lightened(0.12))
+		draw_circle(p + Vector2(7, 4), 3.0, col.lightened(0.08))
+		draw_rect(Rect2(p.x - 12, p.y + 9, 24, 2), Color(col.r, col.g, col.b, 0.25))
+
+func _draw_tracking_trail(level_id: int, col: Color) -> void:
+	var pts := _segment_points(level_id, -18.0, 10)
+	for i in range(1, pts.size(), 2):
+		var p: Vector2 = pts[i]
+		_draw_paw_print(p + Vector2(-10, 4), col)
+		_draw_paw_print(p + Vector2(10, -4), col.darkened(0.08))
+
+func _draw_escape_trail(level_id: int) -> void:
+	var pts := _segment_points(level_id, 22.0, 12)
+	draw_polyline(pts, Color(0.44, 0.10, 0.04, 0.22), 52.0, true)
+	draw_polyline(pts, Color(0.88, 0.34, 0.08, 0.44), 6.0, true)
+	for i in range(1, pts.size(), 2):
+		var p: Vector2 = pts[i]
+		draw_line(p + Vector2(-23, -8), p + Vector2(-8, 7), Color(0.66, 0.26, 0.08, 0.72), 3.0, true)
+		draw_line(p + Vector2(21, -8), p + Vector2(7, 8), Color(0.66, 0.26, 0.08, 0.72), 3.0, true)
+		draw_circle(p + Vector2(0, -14), 5.0, Color(0.96, 0.58, 0.10, 0.48))
+
+func _draw_final_baobab() -> void:
+	var p := _node_pos(20) + Vector2(54, -6)
+	draw_circle(p + Vector2(0, -44), 44.0, Color(0.10, 0.24, 0.07, 0.74))
+	draw_circle(p + Vector2(-30, -38), 29.0, Color(0.08, 0.20, 0.06, 0.78))
+	draw_circle(p + Vector2(30, -36), 30.0, Color(0.08, 0.20, 0.06, 0.78))
+	draw_rect(Rect2(p.x - 13, p.y - 50, 26, 72), Color(0.38, 0.22, 0.10, 0.90))
+	draw_rect(Rect2(p.x - 5, p.y - 52, 10, 70), Color(0.58, 0.34, 0.14, 0.70))
+	draw_circle(p + Vector2(0, 20), 18.0, Color(C_GOLD.r, C_GOLD.g, C_GOLD.b, 0.18))
+	draw_rect(Rect2(p.x - 18, p.y + 12, 36, 18), Color(0.50, 0.28, 0.10, 0.92))
+	draw_rect(Rect2(p.x - 14, p.y + 8, 28, 7), Color(0.86, 0.62, 0.18, 0.92))
+
+func _draw_water_ribbon(pts: PackedVector2Array, width: float, dark: Color, light: Color) -> void:
+	var shadow := PackedVector2Array()
+	for p: Vector2 in pts:
+		shadow.append(p + Vector2(4, 5))
+	draw_polyline(shadow, Color(0.0, 0.0, 0.0, 0.28), width + 8.0, true)
+	draw_polyline(pts, dark, width, true)
+	draw_polyline(pts, light, width * 0.58, true)
+	draw_polyline(pts, Color(0.78, 0.94, 1.0, 0.34), 3.0, true)
+
+func _segment_points(level_id: int, bend: float, count: int) -> PackedVector2Array:
+	var a: Vector2 = Vector2(240.0, CANVAS_H)
+	if level_id > 1:
+		a = NODE_POS_ALL[level_id - 2]
+	var b: Vector2 = NODE_POS_ALL[level_id - 1]
+	var pts := PackedVector2Array()
+	for i in range(count):
+		var t: float = float(i) / max(1.0, float(count - 1))
+		var p: Vector2 = a.lerp(b, t)
+		p.x += sin(t * PI) * bend
+		pts.append(p)
+	return pts
+
+func _node_pos(level_id: int) -> Vector2:
+	return NODE_POS_ALL[level_id - 1]
+
+func _draw_paw_print(p: Vector2, col: Color) -> void:
+	draw_circle(p, 3.8, col)
+	draw_circle(p + Vector2(-4, -4), 1.9, col)
+	draw_circle(p + Vector2(0, -5), 2.0, col.lightened(0.08))
+	draw_circle(p + Vector2(4, -4), 1.9, col)
+
+func _draw_guide_post(p: Vector2, text: String) -> void:
+	draw_rect(Rect2(p.x - 2, p.y - 2, 4, 34), Color(0.28, 0.16, 0.06, 0.92))
+	draw_rect(Rect2(p.x - 26, p.y - 20, 52, 18), Color(0.42, 0.25, 0.08, 0.92))
+	draw_rect(Rect2(p.x - 24, p.y - 18, 48, 14), Color(0.72, 0.50, 0.18, 0.72))
+	draw_rect(Rect2(p.x - 28, p.y - 22, 56, 3), Color(C_GOLD.r, C_GOLD.g, C_GOLD.b, 0.66))
+	var font := get_theme_default_font()
+	if font != null:
+		draw_string(font, p + Vector2(-20, -8), text, HORIZONTAL_ALIGNMENT_CENTER, 40.0, 8,
+			Color(0.08, 0.04, 0.01, 0.90))
+
+func _draw_leaf_pair(p: Vector2, col: Color, flip: bool = false) -> void:
+	var sx := -1.0 if flip else 1.0
+	draw_polygon(PackedVector2Array([
+		p,
+		p + Vector2(12.0 * sx, -7.0),
+		p + Vector2(6.0 * sx, 3.0),
+	]), PackedColorArray([col, col.lightened(0.10), col.darkened(0.10)]))
+	draw_polygon(PackedVector2Array([
+		p + Vector2(2.0 * sx, 1.0),
+		p + Vector2(13.0 * sx, 6.0),
+		p + Vector2(5.0 * sx, 8.0),
+	]), PackedColorArray([col.darkened(0.06), col.lightened(0.08), col.darkened(0.14)]))
+
 func _draw_marker_halos() -> void:
 	for i in range(TOTAL_LEVELS):
 		var level_id    := i + 1
@@ -616,7 +998,7 @@ func _draw_marker_halos() -> void:
 		var unlocked    := SaveManager.is_level_unlocked(level_id)
 		var stars       := SaveManager.get_stars(level_id)
 		var needs_shoes := level_id == 6 and unlocked and not SaveManager.has_upgrade("sand_shoes")
-		var col: Color  = LEVEL_INFO[level_id - 1]["color"]
+		var col: Color  = _level_badge_color(level_id).lerp(LEVEL_INFO[level_id - 1]["color"], 0.35)
 		const R         := 44.0
 
 		# Animated glow pulse for next playable level
@@ -701,7 +1083,6 @@ func _build_level_markers() -> void:
 		_add_marker(i + 1)
 
 func _add_marker(level_id: int) -> void:
-	var info: Dictionary = LEVEL_INFO[level_id - 1]
 	var pos: Vector2     = NODE_POS_ALL[level_id - 1]
 	var unlocked         := SaveManager.is_level_unlocked(level_id)
 	var stars            := SaveManager.get_stars(level_id)
@@ -769,25 +1150,30 @@ func _add_marker(level_id: int) -> void:
 	# Level name label — beside node; left side when node is on right half of screen
 	var label_right := pos.x < 248.0
 	var name_lbl    := Label.new()
-	name_lbl.text   = info["name"].to_upper()
-	name_lbl.add_theme_font_size_override("font_size", 12)
+	name_lbl.text   = _level_marker_title(level_id).to_upper()
+	var marker_font_size: int = 10 if name_lbl.text.length() > 18 or name_lbl.text.find("\n") >= 0 else 12
+	name_lbl.add_theme_font_size_override("font_size", marker_font_size)
 	name_lbl.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.85))
 	name_lbl.add_theme_constant_override("shadow_offset_x", 1)
 	name_lbl.add_theme_constant_override("shadow_offset_y", 1)
+	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
+	name_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	if unlocked:
 		name_lbl.add_theme_color_override("font_color", Color(1.0, 0.97, 0.90))
 	else:
 		name_lbl.add_theme_color_override("font_color", Color(0.82, 0.78, 0.70, 0.90))
 	if label_right:
 		name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		name_lbl.size     = Vector2(148, 28)
-		name_lbl.position = pos + Vector2(R + 16.0, -14.0)
+		name_lbl.size     = Vector2(150, 36)
+		name_lbl.position = pos + Vector2(R + 16.0, -22.0)
 	else:
 		name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		name_lbl.size     = Vector2(138, 28)
-		name_lbl.position = pos + Vector2(-R - 154.0, -14.0)
+		name_lbl.size     = Vector2(140, 36)
+		name_lbl.position = pos + Vector2(-R - 156.0, -22.0)
 	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_marker_layer.add_child(name_lbl)
+
+	_add_mode_badge(level_id, pos, label_right, _marker_layer)
 
 	# Sand Shoes badge for Level 6
 	if level_id == 6:
@@ -852,6 +1238,26 @@ func _build_ui_overlay() -> void:
 	title.position     = Vector2(68, 10)
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(title)
+	title.text = "JUNGLE MAP"
+	title.add_theme_font_size_override("font_size", 24)
+	title.size = Vector2(242, 36)
+	title.position = Vector2(72, 5)
+
+	var subtitle := Label.new()
+	subtitle.text = "20 LEVEL EXPEDITION"
+	if SaveManager.should_show_lives():
+		subtitle.text = "20 LEVELS  -  LIFE " + SaveManager.get_lives_display()
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	subtitle.add_theme_font_size_override("font_size", 9)
+	subtitle.add_theme_color_override("font_color", Color(0.68, 0.88, 0.46))
+	subtitle.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.70))
+	subtitle.add_theme_constant_override("shadow_offset_x", 1)
+	subtitle.add_theme_constant_override("shadow_offset_y", 1)
+	subtitle.size         = Vector2(242, 18)
+	subtitle.position     = Vector2(72, 42)
+	subtitle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(subtitle)
 
 	# Coins pill container
 	var coins_bg := Panel.new()
@@ -933,6 +1339,7 @@ func _build_ui_overlay() -> void:
 	obj.position     = Vector2(0, 818)
 	obj.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(obj)
+	obj.text = "Follow the Lost Path  -  Tap a level to preview and start"
 
 
 # ── BUILD: preview panel ──────────────────────────────────────────────────────
@@ -964,14 +1371,15 @@ func _build_preview_panel() -> void:
 	_label(_preview_panel, "ChapterLbl", Vector2(20,  10), Vector2(440, 20), 11, Color(0.56, 0.80, 0.44))
 	_label(_preview_panel, "NameLbl",    Vector2(20,  32), Vector2(440, 38), 22, Color(0.96, 0.90, 0.58))
 	_label(_preview_panel, "StarsLbl",   Vector2(20,  72), Vector2(440, 28), 18, Color(1.00, 0.82, 0.18))
-	_label(_preview_panel, "DescLbl",    Vector2(22, 104), Vector2(436, 72), 13, Color(0.80, 0.88, 0.70))
+	_label(_preview_panel, "ModeLbl",    Vector2(22, 100), Vector2(436, 20), 10, Color(0.96, 0.72, 0.26))
+	_label(_preview_panel, "DescLbl",    Vector2(22, 124), Vector2(436, 58), 13, Color(0.80, 0.88, 0.70))
 	(_preview_panel.get_node("DescLbl") as Label).autowrap_mode = TextServer.AUTOWRAP_WORD
 	var div := ColorRect.new()
 	div.color = Color(0.40, 0.30, 0.12, 0.50)
-	div.size = Vector2(436, 1); div.position = Vector2(22, 180)
+	div.size = Vector2(436, 1); div.position = Vector2(22, 188)
 	div.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_preview_panel.add_child(div)
-	_label(_preview_panel, "RewardsLbl", Vector2(20, 184), Vector2(440, 22), 11, Color(0.68, 0.64, 0.42))
+	_label(_preview_panel, "RewardsLbl", Vector2(20, 192), Vector2(440, 22), 11, Color(0.68, 0.64, 0.42))
 
 	var btn_start := Button.new()
 	btn_start.name = "BtnStart"
@@ -1056,12 +1464,91 @@ func _build_sand_shoes_popup() -> void:
 	_sand_popup.add_child(btn_shop)
 
 # ── LOGIC ─────────────────────────────────────────────────────────────────────
+func _build_lives_popup() -> void:
+	_lives_popup = Control.new()
+	_lives_popup.size = Vector2(420, 402)
+	_lives_popup.position = Vector2(30, 224)
+	_lives_popup.visible = false
+	add_child(_lives_popup)
+
+	_cr(_lives_popup, Vector2(0, 0), Vector2(420, 402), Color(0.05, 0.03, 0.02, 0.98))
+	_cr(_lives_popup, Vector2(0, 0), Vector2(420, 3), Color(0.88, 0.70, 0.22))
+	_cr(_lives_popup, Vector2(0, 399), Vector2(420, 3), Color(0.88, 0.70, 0.22))
+
+	var icon := Label.new()
+	icon.text = "LIFE"
+	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	icon.add_theme_font_size_override("font_size", 28)
+	icon.add_theme_color_override("font_color", Color(1.0, 0.42, 0.34))
+	icon.size = Vector2(420, 42)
+	icon.position = Vector2(0, 14)
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_lives_popup.add_child(icon)
+
+	var title := Label.new()
+	title.text = "No Lives Left"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", Color(0.96, 0.82, 0.28))
+	title.size = Vector2(420, 34)
+	title.position = Vector2(0, 58)
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_lives_popup.add_child(title)
+
+	var desc := Label.new()
+	desc.name = "LivesDesc"
+	desc.text = "The jungle is dangerous. Rest at camp or recover a life to continue your expedition."
+	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.add_theme_font_size_override("font_size", 13)
+	desc.add_theme_color_override("font_color", Color(0.86, 0.82, 0.68))
+	desc.size = Vector2(382, 54)
+	desc.position = Vector2(19, 98)
+	desc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_lives_popup.add_child(desc)
+
+	var status := Label.new()
+	status.name = "LivesStatus"
+	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	status.add_theme_font_size_override("font_size", 12)
+	status.add_theme_color_override("font_color", Color(0.68, 0.88, 0.52))
+	status.size = Vector2(382, 46)
+	status.position = Vector2(19, 154)
+	status.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_lives_popup.add_child(status)
+
+	_lives_button("BtnCoinLife", "Use 50 Coins", Vector2(24, 210), Vector2(174, 42), _on_buy_life_coin)
+	_lives_button("BtnGemLife", "Use 1 Gem", Vector2(222, 210), Vector2(174, 42), _on_buy_life_gem)
+	_lives_button("BtnFullCoinLife", "Full 200 Coins", Vector2(24, 260), Vector2(174, 38), _on_buy_full_lives_coin)
+	_lives_button("BtnFullGemLife", "Full 4 Gems", Vector2(222, 260), Vector2(174, 38), _on_buy_full_lives_gem)
+	var ad_btn := _lives_button("BtnAdLife", "Watch Ad for +1 Life", Vector2(24, 308), Vector2(174, 42), _on_reward_ad_life)
+	ad_btn.disabled = true
+	var camp_btn := _lives_button("BtnCamp", "Return to Camp", Vector2(222, 308), Vector2(174, 42), _on_return_to_camp)
+	camp_btn.add_theme_color_override("font_color", Color(0.96, 0.90, 0.70))
+	var close_btn := _lives_button("BtnCloseLives", "Back", Vector2(124, 360), Vector2(172, 30), func() -> void: _lives_popup.visible = false)
+	close_btn.add_theme_font_size_override("font_size", 12)
+
+func _lives_button(node_name: String, text: String, pos: Vector2, box_size: Vector2, callback: Callable) -> Button:
+	var btn := Button.new()
+	btn.name = node_name
+	btn.text = text
+	btn.custom_minimum_size = box_size
+	btn.position = pos
+	btn.add_theme_font_size_override("font_size", 13)
+	btn.pressed.connect(callback)
+	_lives_popup.add_child(btn)
+	return btn
+
 func _show_preview(level_id: int) -> void:
 	_current_preview = level_id
 	var info: Dictionary = LEVEL_INFO[level_id - 1]
 	var stars            := SaveManager.get_stars(level_id)
 	(_preview_panel.get_node("ChapterLbl") as Label).text = info["chapter"] + "  ·  " + info["area"]
 	(_preview_panel.get_node("NameLbl") as Label).text    = "Level " + str(level_id) + "  —  " + info["name"]
+	(_preview_panel.get_node("ChapterLbl") as Label).text = info["chapter"] + "  -  " + _level_area(level_id)
+	(_preview_panel.get_node("NameLbl") as Label).text    = "Level " + str(level_id) + "  -  " + _level_title(level_id)
+	(_preview_panel.get_node("ModeLbl") as Label).text    = _level_badge(level_id) + " ROUTE"
 	var sl := _preview_panel.get_node("StarsLbl") as Label
 	if stars > 0:
 		sl.text = "★".repeat(stars) + "☆".repeat(3 - stars)
@@ -1071,6 +1558,8 @@ func _show_preview(level_id: int) -> void:
 		sl.add_theme_color_override("font_color", Color(0.55, 0.52, 0.40))
 	(_preview_panel.get_node("DescLbl") as Label).text    = info["desc"]
 	(_preview_panel.get_node("RewardsLbl") as Label).text = "Rewards: " + info["rewards"]
+	(_preview_panel.get_node("DescLbl") as Label).text    = _level_desc(level_id)
+	(_preview_panel.get_node("RewardsLbl") as Label).text = "Rewards: " + _level_rewards(level_id)
 	_preview_panel.visible = true
 
 func _hide_preview() -> void:
@@ -1084,9 +1573,73 @@ func _on_marker(level_id: int) -> void:
 		return
 	_show_preview(level_id)
 
+func _show_no_lives_popup(message: String = "") -> void:
+	if _lives_popup == null:
+		return
+	_update_lives_popup(message)
+	_lives_popup.visible = true
+
+func _update_lives_popup(message: String = "") -> void:
+	if _lives_popup == null:
+		return
+	var status := _lives_popup.get_node("LivesStatus") as Label
+	var text := "Expedition Lives: " + SaveManager.get_lives_display()
+	var remaining := SaveManager.get_life_regen_seconds_remaining()
+	if remaining > 0 and SaveManager.get_lives() < SaveManager.get_max_lives():
+		text += "\nNext recovery in " + _format_life_time(remaining)
+	if message != "":
+		text += "\n" + message
+	status.text = text
+
+	var lives_full := SaveManager.get_lives() >= SaveManager.get_max_lives()
+	(_lives_popup.get_node("BtnCoinLife") as Button).disabled = lives_full or SaveManager.get_coins() < SaveManager.LIFE_COIN_COST
+	(_lives_popup.get_node("BtnGemLife") as Button).disabled = lives_full or SaveManager.get_gems() < SaveManager.LIFE_GEM_COST
+	(_lives_popup.get_node("BtnFullCoinLife") as Button).disabled = lives_full or SaveManager.get_coins() < SaveManager.FULL_LIFE_COIN_COST
+	(_lives_popup.get_node("BtnFullGemLife") as Button).disabled = lives_full or SaveManager.get_gems() < SaveManager.FULL_LIFE_GEM_COST
+	(_lives_popup.get_node("BtnAdLife") as Button).disabled = true
+
+func _format_life_time(seconds: int) -> String:
+	var minutes := int(seconds / 60)
+	var secs := seconds % 60
+	return "%02d:%02d" % [minutes, secs]
+
+func _on_buy_life_coin() -> void:
+	EventBus.play_sfx.emit("button")
+	var ok := SaveManager.buy_life_with_coins()
+	_update_lives_popup("Recovered 1 life." if ok else "Not enough coins, or lives are already full.")
+	queue_redraw()
+
+func _on_buy_life_gem() -> void:
+	EventBus.play_sfx.emit("button")
+	var ok := SaveManager.buy_life_with_gems()
+	_update_lives_popup("Recovered 1 life." if ok else "Not enough gems, or lives are already full.")
+	queue_redraw()
+
+func _on_buy_full_lives_coin() -> void:
+	EventBus.play_sfx.emit("button")
+	var ok := SaveManager.buy_full_lives_with_coins()
+	_update_lives_popup("Expedition Lives refilled." if ok else "Not enough coins, or lives are already full.")
+	queue_redraw()
+
+func _on_buy_full_lives_gem() -> void:
+	EventBus.play_sfx.emit("button")
+	var ok := SaveManager.buy_full_lives_with_gems()
+	_update_lives_popup("Expedition Lives refilled." if ok else "Not enough gems, or lives are already full.")
+	queue_redraw()
+
+func _on_reward_ad_life() -> void:
+	_update_lives_popup("Reward ads coming soon.")
+
+func _on_return_to_camp() -> void:
+	EventBus.play_sfx.emit("button")
+	GameManager.go_to_menu()
+
 func _on_start() -> void:
 	if _current_preview > 0:
 		EventBus.play_sfx.emit("button")
+		if not SaveManager.can_start_level(_current_preview):
+			_show_no_lives_popup()
+			return
 		GameManager.go_to_gameplay_3d(_current_preview)
 
 func _on_buy_sand_shoes() -> void:
@@ -1100,6 +1653,8 @@ func _on_buy_sand_shoes() -> void:
 		desc.text = "Not enough coins!\n\nNeeded: 150 Coins\n\nReplay earlier levels to collect more coins."
 
 func _on_back() -> void:
+	if _lives_popup != null and _lives_popup.visible:
+		_lives_popup.visible = false; return
 	if _sand_popup != null and _sand_popup.visible:
 		_sand_popup.visible = false; return
 	if _preview_panel != null and _preview_panel.visible:
@@ -1146,6 +1701,141 @@ func _load_map_texture() -> Texture2D:
 
 func _using_reference_map() -> bool:
 	return false  # full 2460-px scrollable canvas always uses procedural drawing
+
+func _level_title(level_id: int) -> String:
+	match level_id:
+		1: return "Jungle Trail Entrance"
+		2: return "Deep Forest Bend"
+		4: return "Ancient Ruins Corridor"
+		10: return "Lost Paw Trail"
+		12: return "Water Slide Trail"
+		13: return "Park Guide Path"
+		15: return "Market River Dock"
+		17: return "Rapids Run"
+		18: return "Hound of the Hidden Trail"
+		19: return "Boar Escape"
+		20: return "Treasure Beneath the Baobab"
+		_: return LEVEL_INFO[level_id - 1]["name"]
+
+func _level_area(level_id: int) -> String:
+	match level_id:
+		12: return "Water Slide Channel"
+		15: return "River Dock"
+		17: return "Rapids Fork"
+		19: return "Survival Escape Route"
+		20: return "Ancient Baobab"
+		_: return LEVEL_INFO[level_id - 1]["area"]
+
+func _level_marker_title(level_id: int) -> String:
+	match level_id:
+		1: return "Jungle\nTrail"
+		2: return "Deep Forest"
+		4: return "Ancient\nRuins"
+		10: return "Lost Paw\nTrail"
+		12: return "Water Slide\nTrail"
+		13: return "Park Guide\nPath"
+		15: return "River Dock"
+		17: return "Rapids Run"
+		18: return "Hidden\nHound Trail"
+		19: return "Boar Escape"
+		20: return "Baobab\nTreasure"
+		_: return _level_title(level_id)
+
+func _level_desc(level_id: int) -> String:
+	match level_id:
+		10:
+			return "Muddy pawprints mark the correct path. Read the clues and choose the dog-token route."
+		12:
+			return "A blue water-slide channel drops through the jungle. Steer through rocks, logs, and spray."
+		13:
+			return "Moyo guides the route through wildlife markers, observation points, and a safe junction."
+		15:
+			return "The market trail reaches a river dock. Dodge crates, collect trade tokens, and enter the boat."
+		17:
+			return "Full boat mode through rapids, floating logs, crocodile danger zones, and a forked river."
+		18:
+			return "A hound scouts hidden footprints through mist, false paths, relic markers, and a 3-way choice."
+		19:
+			return "A high-pressure boar escape through mud, thorns, fallen branches, and a raised safe finish."
+		20:
+			return "The final route mixes chase, water slide, boat bends, treasure junctions, ruins, and the baobab."
+		_: return LEVEL_INFO[level_id - 1]["desc"]
+
+func _level_rewards(level_id: int) -> String:
+	match level_id:
+		12: return "Coins  -  Water Tokens  -  Fish Token  -  Food"
+		15: return "Coins  -  Trade Tokens  -  Windows  -  Tiles  -  Fish Token"
+		17: return "Coins  -  River Relic  -  Fish Token  -  Sunstone Shard"
+		19: return "Coins  -  Tools  -  Bricks  -  Tiles  -  Wood"
+		20: return "Coins  -  Gems  -  Treasure  -  Sunstone Shard  -  Relic Key"
+		_: return LEVEL_INFO[level_id - 1]["rewards"]
+
+func _level_badge(level_id: int) -> String:
+	match level_id:
+		1, 2, 3, 4, 5, 6: return "TRAIL"
+		7, 8, 9: return "BUILD"
+		10, 14, 18: return "TRACK"
+		11, 16: return "CHASE"
+		12: return "SLIDE"
+		13: return "GUIDE"
+		15: return "DOCK"
+		17: return "BOAT"
+		19: return "ESCAPE"
+		20: return "FINAL"
+		_: return "RUN"
+
+func _level_badge_color(level_id: int) -> Color:
+	match _level_badge(level_id):
+		"BUILD": return Color(0.68, 0.42, 0.14)
+		"TRACK": return Color(0.34, 0.50, 0.20)
+		"CHASE": return Color(0.84, 0.56, 0.12)
+		"SLIDE": return Color(0.12, 0.58, 0.82)
+		"GUIDE": return Color(0.55, 0.68, 0.24)
+		"DOCK": return Color(0.24, 0.46, 0.62)
+		"BOAT": return Color(0.10, 0.38, 0.58)
+		"ESCAPE": return Color(0.72, 0.22, 0.08)
+		"FINAL": return Color(0.86, 0.62, 0.14)
+		_: return Color(0.28, 0.50, 0.18)
+
+func _add_mode_badge(level_id: int, node_pos: Vector2, right_side: bool, parent: Node) -> void:
+	const R := 44
+	var badge := _level_badge(level_id)
+	var col := _level_badge_color(level_id)
+	var badge_size := Vector2(70, 18)
+	var badge_pos: Vector2
+	if right_side:
+		badge_pos = node_pos + Vector2(R + 16.0, 16.0)
+	else:
+		badge_pos = node_pos + Vector2(-R - 86.0, 16.0)
+
+	var panel := Panel.new()
+	panel.position = badge_pos
+	panel.size = badge_size
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(col.r, col.g, col.b, 0.72).darkened(0.34)
+	sb.border_color = Color(C_GOLD.r, C_GOLD.g, C_GOLD.b, 0.72)
+	sb.border_width_left = 1; sb.border_width_right = 1
+	sb.border_width_top = 1; sb.border_width_bottom = 1
+	sb.corner_radius_top_left = 5
+	sb.corner_radius_top_right = 5
+	sb.corner_radius_bottom_left = 5
+	sb.corner_radius_bottom_right = 5
+	panel.add_theme_stylebox_override("panel", sb)
+	parent.add_child(panel)
+
+	var lbl := Label.new()
+	lbl.text = badge
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_size_override("font_size", 8)
+	lbl.add_theme_color_override("font_color", Color(1.0, 0.92, 0.58))
+	lbl.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.80))
+	lbl.add_theme_constant_override("shadow_offset_x", 1)
+	lbl.add_theme_constant_override("shadow_offset_y", 1)
+	lbl.size = badge_size
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(lbl)
 
 func _add_shoes_badge(node_pos: Vector2, right_side: bool, parent: Node) -> void:
 	const R  := 44
@@ -1207,6 +1897,7 @@ func _anchor(world_pos: Vector2, size: Vector2) -> Control:
 func _unhandled_input(event: InputEvent) -> void:
 	if _preview_panel != null and _preview_panel.visible: return
 	if _sand_popup    != null and _sand_popup.visible:    return
+	if _lives_popup   != null and _lives_popup.visible:   return
 	if event is InputEventScreenDrag:
 		_scroll_by(-(event as InputEventScreenDrag).relative.y)
 	elif event is InputEventMouseButton:

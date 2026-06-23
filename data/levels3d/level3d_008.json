@@ -1,54 +1,248 @@
 {
-  "id": 8,
-  "length": 33,
-  "seed": 118,
-  "name": "Foundation Run",
-  "turns": [
-    { "row": 17, "dir": -1 }
-  ],
-  "obstacles": [
-    { "type": "rock",   "lane": 1, "row": 4  },
-    { "type": "spike",  "lane": 2, "row": 6  },
-    { "type": "rock",   "lane": 0, "row": 9  },
-    { "type": "branch", "lane": 1, "row": 12 },
-    { "type": "spike",  "lane": 2, "row": 15 },
-    { "type": "rock",   "lane": 0, "row": 19 },
-    { "type": "spike",  "lane": 1, "row": 22 },
-    { "type": "rock",   "lane": 2, "row": 25 },
-    { "type": "branch", "lane": 1, "row": 28 },
-    { "type": "rock",   "lane": 0, "row": 31 }
-  ],
-  "coins": [
-    { "lane": 0, "row": 2  },
-    { "lane": 2, "row": 2  },
-    { "lane": 1, "row": 3  },
-    { "lane": 2, "row": 4  },
-    { "lane": 0, "row": 5  },
-    { "lane": 1, "row": 7  },
-    { "lane": 0, "row": 8  },
-    { "lane": 2, "row": 10 },
-    { "lane": 1, "row": 11 },
-    { "lane": 0, "row": 13 },
-    { "lane": 2, "row": 14 },
-    { "lane": 1, "row": 16 },
-    { "lane": 2, "row": 17 },
-    { "lane": 0, "row": 18 },
-    { "lane": 2, "row": 20 },
-    { "lane": 1, "row": 21 },
-    { "lane": 0, "row": 23 },
-    { "lane": 2, "row": 24 },
-    { "lane": 0, "row": 26 },
-    { "lane": 1, "row": 27 },
-    { "lane": 2, "row": 29 },
-    { "lane": 1, "row": 30 },
-    { "gem": true, "lane": 0, "row": 32 },
-    { "gem": true, "lane": 2, "row": 32 }
-  ],
-  "collectables": [
-    { "type": "bricks", "lane": 0, "row": 4  },
-    { "type": "tools",  "lane": 1, "row": 8  },
-    { "type": "bricks", "lane": 0, "row": 14 },
-    { "type": "tools",  "lane": 0, "row": 22 },
-    { "type": "bricks", "lane": 0, "row": 28 }
-  ]
+    "id":  8,
+    "length":  33,
+    "seed":  118,
+    "name":  "Foundation Run",
+    "turns":  [
+                  {
+                      "row":  17,
+                      "dir":  -1
+                  }
+              ],
+    "obstacles":  [
+                      {
+                          "type":  "rock",
+                          "lane":  1,
+                          "row":  4
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  2,
+                          "row":  6
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  0,
+                          "row":  9
+                      },
+                      {
+                          "type":  "branch",
+                          "lane":  1,
+                          "row":  12
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  2,
+                          "row":  15
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  0,
+                          "row":  19
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  1,
+                          "row":  22
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  2,
+                          "row":  25
+                      },
+                      {
+                          "type":  "branch",
+                          "lane":  1,
+                          "row":  28
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  0,
+                          "row":  31
+                      }
+                  ],
+    "coins":  [
+                  {
+                      "lane":  0,
+                      "row":  2
+                  },
+                  {
+                      "lane":  2,
+                      "row":  2
+                  },
+                  {
+                      "lane":  1,
+                      "row":  3
+                  },
+                  {
+                      "lane":  2,
+                      "row":  4
+                  },
+                  {
+                      "lane":  0,
+                      "row":  5
+                  },
+                  {
+                      "lane":  1,
+                      "row":  7
+                  },
+                  {
+                      "lane":  0,
+                      "row":  8
+                  },
+                  {
+                      "lane":  2,
+                      "row":  10
+                  },
+                  {
+                      "lane":  1,
+                      "row":  11
+                  },
+                  {
+                      "lane":  0,
+                      "row":  13
+                  },
+                  {
+                      "lane":  2,
+                      "row":  14
+                  },
+                  {
+                      "lane":  1,
+                      "row":  16
+                  },
+                  {
+                      "lane":  2,
+                      "row":  17
+                  },
+                  {
+                      "lane":  0,
+                      "row":  18
+                  },
+                  {
+                      "lane":  2,
+                      "row":  20
+                  },
+                  {
+                      "lane":  1,
+                      "row":  21
+                  },
+                  {
+                      "lane":  0,
+                      "row":  23
+                  },
+                  {
+                      "lane":  2,
+                      "row":  24
+                  },
+                  {
+                      "lane":  0,
+                      "row":  26
+                  },
+                  {
+                      "lane":  1,
+                      "row":  27
+                  },
+                  {
+                      "lane":  2,
+                      "row":  29
+                  },
+                  {
+                      "lane":  1,
+                      "row":  30
+                  },
+                  {
+                      "gem":  true,
+                      "lane":  0,
+                      "row":  32
+                  },
+                  {
+                      "gem":  true,
+                      "lane":  2,
+                      "row":  32
+                  }
+              ],
+    "collectables":  [
+                         {
+                             "type":  "bricks",
+                             "lane":  0,
+                             "row":  4
+                         },
+                         {
+                             "type":  "tools",
+                             "lane":  1,
+                             "row":  8
+                         },
+                         {
+                             "type":  "bricks",
+                             "lane":  0,
+                             "row":  14
+                         },
+                         {
+                             "type":  "tools",
+                             "lane":  0,
+                             "row":  22
+                         },
+                         {
+                             "type":  "bricks",
+                             "lane":  0,
+                             "row":  28
+                         }
+                     ],
+    "difficulty":  "Medium",
+    "gameplay_modes":  [
+                           "runner",
+                           "materials",
+                           "junction"
+                       ],
+    "path_modules":  [
+                         {
+                             "type":  "narrow_passage",
+                             "rows":  6,
+                             "width":  "narrow",
+                             "surface":  "dirt",
+                             "mode":  "run"
+                         },
+                         {
+                             "type":  "gentle_curve_right",
+                             "rows":  7,
+                             "width":  "normal",
+                             "surface":  "dirt",
+                             "mode":  "run"
+                         },
+                         {
+                             "type":  "junction_two_way",
+                             "rows":  5,
+                             "width":  "wide",
+                             "surface":  "dirt",
+                             "mode":  "run",
+                             "routes":  [
+                                            {
+                                                "direction":  "left",
+                                                "label":  "Brick Trail",
+                                                "reward":  "bricks"
+                                            },
+                                            {
+                                                "direction":  "right",
+                                                "label":  "Tool Shortcut",
+                                                "reward":  "tools"
+                                            }
+                                        ],
+                             "id":  "l08_supply_split"
+                         },
+                         {
+                             "type":  "tree_root_jump_section",
+                             "rows":  6,
+                             "width":  "narrow",
+                             "surface":  "wood",
+                             "mode":  "run"
+                         },
+                         {
+                             "type":  "finish_gate_approach",
+                             "rows":  9,
+                             "width":  "normal",
+                             "surface":  "stone",
+                             "mode":  "run"
+                         }
+                     ],
+    "path_identity":  "Foundation Run uses runner, materials, junction"
 }

@@ -9,6 +9,74 @@ Generated assets were created by `tools/generate_missing_3d_assets.py`. They are
 
 ---
 
+## Path Modules - Survival Runner Update
+
+| Asset | Status | Target path | Notes |
+| --- | --- | --- | --- |
+| Curved jungle path modules | Procedural placeholder (functional, not final) | `LevelManager3D.gd` path modules | Runtime now supports smooth `gentle_curve_*`, `wide_curve_*`, and `s_curve` modules. Final GLB tiles still needed for production art. |
+| Narrow jungle trail module | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Width metadata now narrows collision/path visuals. |
+| Wide clearing module | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Used by chase and junction routes. |
+| Bridge path module | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Runtime adds wood surface and bridge posts. |
+| Ruins corridor module | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Runtime adds stone surface and side wall props. |
+| Sand dune path module | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Runtime adds sand surface and ridge dressing. |
+| Mud trail module | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Runtime adds tracking mode and footprints. |
+
+## Water Slide
+
+| Asset | Status | Target path | Notes |
+| --- | --- | --- | --- |
+| Water slide channel model | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | `water_slide_*` modules render blue channel paths and shimmer strips. |
+| Water splash effect | Procedural placeholder (functional, not final) | `LevelManager3D.gd` / `Player3D.gd` | Splash meshes appear in slide rows and around the player. |
+| Slide rocks | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | `water_rock` obstacle added. |
+| Low vines | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Existing `branch` obstacle covers duck-under sections. |
+| Water token collectible | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | `water_token` pickup renders as a blue drop. |
+
+## Boat Mode
+
+| Asset | Status | Target path | Notes |
+| --- | --- | --- | --- |
+| Canoe / boat model | Procedural placeholder (functional, not final) | `Player3D.gd` | Boat mode adds a canoe visual under the player. |
+| River rapid water material | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Boat modules render darker water and shimmer strips. |
+| Floating logs | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | `floating_log` obstacle added. |
+| River rocks | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | `river_rock` / `water_rock` obstacle added. |
+| Crocodile warning marker | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | `crocodile_zone` obstacle added as danger-zone visual. |
+| Boat dock model | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Boat-entry modules add dock props. |
+
+## Tracking
+
+| Asset | Status | Target path | Notes |
+| --- | --- | --- | --- |
+| Rabbit footprints | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Tracking and chase modes spawn footprint marks. |
+| Paw prints | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Level 10 and 18 use tracking routes. |
+| Hoofprints | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Level 16 uses chase/tracking footprint routes. |
+| Broken branch clues | Missing final art | `res://assets/3d/tracking/` | Needed for final tracking polish. |
+| Scent trail effect | Missing final art | `res://assets/3d/vfx/` | Needed for dog-guided route polish. |
+| Animal observation marker | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Route signs and animal badge pickups cover current functionality. |
+
+## Animals
+
+| Asset | Status | Target path | Notes |
+| --- | --- | --- | --- |
+| Rabbit model and animation | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Chase encounter silhouette exists; final rig/animation missing. |
+| Antelope model and animation | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Chase encounter silhouette exists; final rig/animation missing. |
+| Warthog model and animation | Generated/procedural mix | `assets/3d/wildlife/warthog.glb` / `LevelManager3D.gd` | Decorative GLB fallback plus procedural silhouettes. |
+| Boar model and chase animation | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Escape encounter silhouette exists; final rig/animation missing. |
+| Crocodile model and idle animation | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Crocodile danger-zone visual exists; final model missing. |
+| Monkey movement animation | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Existing monkey silhouettes and chase fallback. |
+
+## UI / Effects
+
+| Asset | Status | Target path | Notes |
+| --- | --- | --- | --- |
+| Junction arrow indicators | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Glowing route arrows are spawned at junctions. |
+| Route signpost icons | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Label3D signposts show route labels. |
+| Chase warning icon | Procedural placeholder (functional, not final) | `HUD3D.gd` / `LevelManager3D.gd` | HUD mode prompt and warning signs exist. |
+| Tracking mode icon | Missing final art | `res://assets/ui/icons/` | HUD currently uses text only. |
+| Boat mode icon | Missing final art | `res://assets/ui/icons/` | HUD currently uses text only. |
+| Water slide mode icon | Missing final art | `res://assets/ui/icons/` | HUD currently uses text only. |
+
+---
+
 ## Priority 0 — Asset Pipeline Setup
 
 | Item | Status | Target path | Notes |

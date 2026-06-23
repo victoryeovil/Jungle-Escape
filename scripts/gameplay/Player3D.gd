@@ -52,9 +52,15 @@ var _at_turn_zone: bool = false
 var _turn_zone_dir: int = 0
 var _turn_corner_pos: Vector3 = Vector3.ZERO
 var _queued_turn: int = 0   # swipe queued early; executes when near corner
+var _movement_mode: String = "run"
+var _at_junction: bool = false
+var _junction_id: String = ""
+var _junction_routes: Array = []
+var _mode_vehicle: Node3D = null
 
 signal died
 signal sand_blocked   # emitted when player tries to jump on sand without Sand Shoes
+signal junction_route_chosen(junction_id: String, direction: String, route: Dictionary)
 
 func _ready() -> void:
 	_cache_collision_shape()
@@ -76,7 +82,7 @@ func _physics_process(delta: float) -> void:
 		state = State.RUN
 
 	# Forward velocity along current heading
-	var effective_speed := RUN_SPEED
+	var effective_speed := RUN_SPEED * _mode_speed_multiplier()
 	if _current_surface == "sand" and not SaveManager.has_upgrade("sand_shoes"):
 		effective_speed *= 0.45
 	velocity.x = _move_fwd.x * effective_speed
@@ -117,6 +123,9 @@ func _physics_process(delta: float) -> void:
 func jump() -> void:
 	if _is_dead:
 		return
+	if _at_junction and _has_junction_direction("up"):
+		_choose_junction_route("up")
+		return
 	# Sand blocks jumping entirely without Sand Shoes
 	if _current_surface == "sand" and not SaveManager.has_upgrade("sand_shoes"):
 		sand_blocked.emit()
@@ -148,7 +157,16 @@ func slide() -> void:
 func move_lane(direction: int) -> void:
 	if _is_dead:
 		return
+	if _at_junction:
+		_choose_junction_route("left" if direction < 0 else "right")
+		return
 	if _at_turn_zone:
+		if direction != _turn_zone_dir:
+			current_lane = clamp(current_lane + direction, 0, 2)
+			_strafe_anim_name = ANIM_STRAFE_LEFT if direction < 0 else ANIM_STRAFE_RIGHT
+			_strafe_anim_timer = 0.20
+			_update_character_animation(true)
+			return
 		# Any swipe while inside the turn zone queues the turn in the required
 		# direction — the player doesn't need to swipe the exact correct side.
 		_queued_turn = _turn_zone_dir
@@ -161,6 +179,71 @@ func move_lane(direction: int) -> void:
 	_strafe_anim_name = ANIM_STRAFE_LEFT if direction < 0 else ANIM_STRAFE_RIGHT
 	_strafe_anim_timer = 0.20
 	_update_character_animation(true)
+
+func set_path_guidance(_row: int, center: Vector3, fwd: Vector3, right: Vector3, surface: String, mode: String, _path_width: float) -> void:
+	if _is_dead:
+		return
+	_move_fwd = fwd.normalized()
+	_move_right = right.normalized()
+	_right_comp_baseline = center.x * _move_right.x + center.z * _move_right.z
+	_current_surface = surface
+	_set_movement_mode(mode)
+	rotation.y = atan2(-_move_fwd.x, -_move_fwd.z)
+
+func enter_junction(junction_id: String, routes: Array) -> void:
+	_at_junction = true
+	_junction_id = junction_id
+	_junction_routes = routes.duplicate()
+
+func exit_junction(junction_id: String) -> void:
+	if _junction_id != junction_id:
+		return
+	_at_junction = false
+	_junction_id = ""
+	_junction_routes.clear()
+
+func _has_junction_direction(direction: String) -> bool:
+	for raw_route in _junction_routes:
+		if raw_route is Dictionary and str(raw_route.get("direction", "")) == direction:
+			return true
+	return false
+
+func _choose_junction_route(direction: String) -> void:
+	for raw_route in _junction_routes:
+		if not (raw_route is Dictionary):
+			continue
+		var route: Dictionary = raw_route
+		if str(route.get("direction", "")) != direction:
+			continue
+		_at_junction = false
+		current_lane = 0 if direction == "left" else (2 if direction == "right" else 1)
+		EventBus.play_sfx.emit("button")
+		junction_route_chosen.emit(_junction_id, direction, route)
+		_junction_id = ""
+		_junction_routes.clear()
+		return
+
+func _set_movement_mode(mode: String) -> void:
+	var next_mode := mode if not mode.is_empty() else "run"
+	if _movement_mode == next_mode:
+		return
+	_movement_mode = next_mode
+	_set_mode_vehicle(next_mode)
+
+func _mode_speed_multiplier() -> float:
+	match _movement_mode:
+		"tracking":
+			return 0.94
+		"chase":
+			return 1.14
+		"escape":
+			return 1.24
+		"water_slide":
+			return 1.18
+		"boat":
+			return 1.08
+		_:
+			return 1.0
 
 func _execute_turn(dir: int) -> void:
 	_at_turn_zone = false
@@ -214,6 +297,11 @@ func reset(lane: int = 1) -> void:
 	_turn_corner_pos = Vector3.ZERO
 	_right_comp_baseline = 0.0
 	_current_surface = "dirt"
+	_movement_mode = "run"
+	_at_junction = false
+	_junction_id = ""
+	_junction_routes.clear()
+	_set_mode_vehicle("")
 	_set_slide_collision(false)
 	_update_character_animation(true)
 
@@ -312,10 +400,56 @@ func _apply_placeholder_skin(skin_id: String) -> void:
 	body.material_override = _placeholder_material(body_col)
 	head.material_override = _placeholder_material(head_col)
 
+func _set_mode_vehicle(mode: String) -> void:
+	if _mode_vehicle != null and is_instance_valid(_mode_vehicle):
+		_mode_vehicle.queue_free()
+	_mode_vehicle = null
+
+	if mode == "boat":
+		_mode_vehicle = Node3D.new()
+		_mode_vehicle.name = "BoatModeVisual"
+		add_child(_mode_vehicle)
+		var hull := _player_box("CanoeHull", Vector3(1.35, 0.22, 1.85), Vector3(0.0, 0.20, 0.05), Color(0.36, 0.20, 0.08))
+		hull.rotation_degrees.x = -3.0
+		_mode_vehicle.add_child(hull)
+		var rim_l := _player_box("CanoeRimL", Vector3(0.08, 0.18, 1.80), Vector3(-0.72, 0.38, 0.05), Color(0.56, 0.34, 0.14))
+		var rim_r := _player_box("CanoeRimR", Vector3(0.08, 0.18, 1.80), Vector3(0.72, 0.38, 0.05), Color(0.56, 0.34, 0.14))
+		_mode_vehicle.add_child(rim_l)
+		_mode_vehicle.add_child(rim_r)
+	elif mode == "water_slide":
+		_mode_vehicle = Node3D.new()
+		_mode_vehicle.name = "WaterSlideVisual"
+		add_child(_mode_vehicle)
+		for i in range(5):
+			var splash := _player_sphere("Splash%d" % i, 0.09, Vector3(-0.42 + float(i) * 0.21, 0.12, 0.60 + float(i % 2) * 0.18), Color(0.72, 0.92, 1.0, 0.75))
+			splash.scale.y = 1.8
+			_mode_vehicle.add_child(splash)
+
+func _player_box(node_name: String, size: Vector3, pos: Vector3, color: Color) -> MeshInstance3D:
+	var mesh := MeshInstance3D.new()
+	mesh.name = node_name
+	mesh.mesh = BoxMesh.new()
+	(mesh.mesh as BoxMesh).size = size
+	mesh.position = pos
+	mesh.material_override = _placeholder_material(color)
+	return mesh
+
+func _player_sphere(node_name: String, radius: float, pos: Vector3, color: Color) -> MeshInstance3D:
+	var mesh := MeshInstance3D.new()
+	mesh.name = node_name
+	mesh.mesh = SphereMesh.new()
+	(mesh.mesh as SphereMesh).radius = radius
+	(mesh.mesh as SphereMesh).height = radius * 2.0
+	mesh.position = pos
+	mesh.material_override = _placeholder_material(color)
+	return mesh
+
 func _placeholder_material(color: Color) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
 	mat.albedo_color = color
+	if color.a < 1.0:
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	return mat
 
 func _set_placeholder_visible(is_visible: bool) -> void:

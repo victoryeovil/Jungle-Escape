@@ -119,6 +119,11 @@ func go_to_gameplay(level_id: int) -> void:
 
 func go_to_gameplay_3d(level_id: int) -> void:
 	print("[NAV][GameManager] go_to_gameplay_3d called; level_id=" + str(level_id))
+	if not SaveManager.can_start_level(level_id):
+		print("[NAV][GameManager] go_to_gameplay_3d blocked; no expedition lives")
+		state = GameState.MENU
+		get_tree().paused = false
+		return
 	start_level(level_id)
 	get_tree().paused = false
 	var err := get_tree().change_scene_to_file("res://scenes/game3d/Game3D.tscn")

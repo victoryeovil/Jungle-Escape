@@ -1,76 +1,347 @@
 {
-  "id": 4,
-  "length": 45,
-  "seed": 68,
-  "name": "Ancient Ruins",
-  "turns": [
-    { "row": 22, "dir": -1 }
-  ],
-  "obstacles": [
-    { "type": "rock",   "lane": 1, "row": 4  },
-    { "type": "rock",   "lane": 0, "row": 6  },
-    { "type": "spike",  "lane": 2, "row": 7  },
-    { "type": "log",    "lane": 1, "row": 9  },
-    { "type": "spike",  "lane": 0, "row": 11 },
-    { "type": "rock",   "lane": 2, "row": 12 },
-    { "type": "branch", "lane": 1, "row": 14 },
-    { "type": "rock",   "lane": 0, "row": 16 },
-    { "type": "spike",  "lane": 2, "row": 17 },
-    { "type": "log",    "lane": 1, "row": 19 },
-    { "type": "rock",   "lane": 2, "row": 21 },
-    { "type": "spike",  "lane": 0, "row": 22 },
-    { "type": "rock",   "lane": 1, "row": 24 },
-    { "type": "branch", "lane": 1, "row": 26 },
-    { "type": "spike",  "lane": 2, "row": 28 },
-    { "type": "rock",   "lane": 0, "row": 29 },
-    { "type": "log",    "lane": 1, "row": 31 },
-    { "type": "rock",   "lane": 2, "row": 33 },
-    { "type": "spike",  "lane": 0, "row": 34 },
-    { "type": "rock",   "lane": 1, "row": 36 },
-    { "type": "spike",  "lane": 2, "row": 37 },
-    { "type": "rock",   "lane": 0, "row": 37 },
-    { "type": "log",    "lane": 1, "row": 39 },
-    { "type": "spike",  "lane": 1, "row": 41 },
-    { "type": "rock",   "lane": 0, "row": 42 },
-    { "type": "rock",   "lane": 2, "row": 43 },
-    { "type": "spike",  "lane": 0, "row": 44 },
-    { "type": "rock",   "lane": 2, "row": 44 }
-  ],
-  "coins": [
-    { "lane": 1, "row": 2  },
-    { "lane": 0, "row": 3  },
-    { "lane": 2, "row": 3  },
-    { "lane": 2, "row": 5  },
-    { "lane": 1, "row": 8  },
-    { "lane": 0, "row": 8  },
-    { "lane": 2, "row": 10 },
-    { "lane": 1, "row": 13 },
-    { "lane": 0, "row": 13 },
-    { "lane": 2, "row": 15 },
-    { "lane": 1, "row": 18 },
-    { "lane": 2, "row": 18 },
-    { "lane": 0, "row": 20 },
-    { "lane": 1, "row": 20 },
-    { "lane": 2, "row": 23 },
-    { "lane": 0, "row": 25 },
-    { "lane": 1, "row": 27 },
-    { "lane": 0, "row": 27 },
-    { "lane": 1, "row": 30 },
-    { "lane": 2, "row": 32 },
-    { "lane": 1, "row": 35 },
-    { "lane": 2, "row": 35 },
-    { "lane": 1, "row": 38 },
-    { "lane": 0, "row": 40 },
-    { "lane": 2, "row": 40 },
-    { "lane": 1, "row": 45 },
-    { "gem": true, "lane": 0, "row": 25 },
-    { "gem": true, "lane": 2, "row": 44 },
-    { "gem": true, "lane": 1, "row": 45 }
-  ],
-  "collectables": [
-    { "type": "relic_key", "lane": 2, "row": 2  },
-    { "type": "bricks",    "lane": 2, "row": 6  },
-    { "type": "relic_key", "lane": 2, "row": 16 },
-    { "type": "bricks",    "lane": 0, "row": 33 }
-  ]
+    "id":  4,
+    "length":  45,
+    "seed":  68,
+    "name":  "Ancient Ruins Corridor",
+    "turns":  [
+                  {
+                      "row":  22,
+                      "dir":  -1
+                  }
+              ],
+    "obstacles":  [
+                      {
+                          "type":  "rock",
+                          "lane":  1,
+                          "row":  4
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  0,
+                          "row":  6
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  2,
+                          "row":  7
+                      },
+                      {
+                          "type":  "log",
+                          "lane":  1,
+                          "row":  9
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  0,
+                          "row":  11
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  2,
+                          "row":  12
+                      },
+                      {
+                          "type":  "branch",
+                          "lane":  1,
+                          "row":  14
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  0,
+                          "row":  16
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  2,
+                          "row":  17
+                      },
+                      {
+                          "type":  "log",
+                          "lane":  1,
+                          "row":  19
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  2,
+                          "row":  21
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  0,
+                          "row":  22
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  1,
+                          "row":  24
+                      },
+                      {
+                          "type":  "branch",
+                          "lane":  1,
+                          "row":  26
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  2,
+                          "row":  28
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  0,
+                          "row":  29
+                      },
+                      {
+                          "type":  "log",
+                          "lane":  1,
+                          "row":  31
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  2,
+                          "row":  33
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  0,
+                          "row":  34
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  1,
+                          "row":  36
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  2,
+                          "row":  37
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  0,
+                          "row":  37
+                      },
+                      {
+                          "type":  "log",
+                          "lane":  1,
+                          "row":  39
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  1,
+                          "row":  41
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  0,
+                          "row":  42
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  2,
+                          "row":  43
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  0,
+                          "row":  44
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  2,
+                          "row":  44
+                      }
+                  ],
+    "coins":  [
+                  {
+                      "lane":  1,
+                      "row":  2
+                  },
+                  {
+                      "lane":  0,
+                      "row":  3
+                  },
+                  {
+                      "lane":  2,
+                      "row":  3
+                  },
+                  {
+                      "lane":  2,
+                      "row":  5
+                  },
+                  {
+                      "lane":  1,
+                      "row":  8
+                  },
+                  {
+                      "lane":  0,
+                      "row":  8
+                  },
+                  {
+                      "lane":  2,
+                      "row":  10
+                  },
+                  {
+                      "lane":  1,
+                      "row":  13
+                  },
+                  {
+                      "lane":  0,
+                      "row":  13
+                  },
+                  {
+                      "lane":  2,
+                      "row":  15
+                  },
+                  {
+                      "lane":  1,
+                      "row":  18
+                  },
+                  {
+                      "lane":  2,
+                      "row":  18
+                  },
+                  {
+                      "lane":  0,
+                      "row":  20
+                  },
+                  {
+                      "lane":  1,
+                      "row":  20
+                  },
+                  {
+                      "lane":  2,
+                      "row":  23
+                  },
+                  {
+                      "lane":  0,
+                      "row":  25
+                  },
+                  {
+                      "lane":  1,
+                      "row":  27
+                  },
+                  {
+                      "lane":  0,
+                      "row":  27
+                  },
+                  {
+                      "lane":  1,
+                      "row":  30
+                  },
+                  {
+                      "lane":  2,
+                      "row":  32
+                  },
+                  {
+                      "lane":  1,
+                      "row":  35
+                  },
+                  {
+                      "lane":  2,
+                      "row":  35
+                  },
+                  {
+                      "lane":  1,
+                      "row":  38
+                  },
+                  {
+                      "lane":  0,
+                      "row":  40
+                  },
+                  {
+                      "lane":  2,
+                      "row":  40
+                  },
+                  {
+                      "lane":  1,
+                      "row":  45
+                  },
+                  {
+                      "gem":  true,
+                      "lane":  0,
+                      "row":  25
+                  },
+                  {
+                      "gem":  true,
+                      "lane":  2,
+                      "row":  44
+                  },
+                  {
+                      "gem":  true,
+                      "lane":  1,
+                      "row":  45
+                  }
+              ],
+    "collectables":  [
+                         {
+                             "type":  "relic_key",
+                             "lane":  2,
+                             "row":  2
+                         },
+                         {
+                             "type":  "bricks",
+                             "lane":  2,
+                             "row":  6
+                         },
+                         {
+                             "type":  "relic_key",
+                             "lane":  2,
+                             "row":  16
+                         },
+                         {
+                             "type":  "bricks",
+                             "lane":  0,
+                             "row":  33
+                         }
+                     ],
+    "difficulty":  "Medium",
+    "gameplay_modes":  [
+                           "runner",
+                           "ruins"
+                       ],
+    "path_modules":  [
+                         {
+                             "type":  "straight_short",
+                             "rows":  5,
+                             "width":  "normal",
+                             "surface":  "stone",
+                             "mode":  "run"
+                         },
+                         {
+                             "type":  "ruins_corridor",
+                             "rows":  8,
+                             "width":  "narrow",
+                             "surface":  "stone",
+                             "mode":  "run"
+                         },
+                         {
+                             "type":  "gentle_curve_left",
+                             "rows":  6,
+                             "width":  "normal",
+                             "surface":  "stone",
+                             "mode":  "run"
+                         },
+                         {
+                             "type":  "narrow_passage",
+                             "rows":  5,
+                             "width":  "narrow",
+                             "surface":  "stone",
+                             "mode":  "run"
+                         },
+                         {
+                             "type":  "ruins_corridor",
+                             "rows":  8,
+                             "width":  "narrow",
+                             "surface":  "stone",
+                             "mode":  "run"
+                         },
+                         {
+                             "type":  "finish_gate_approach",
+                             "rows":  13,
+                             "width":  "normal",
+                             "surface":  "stone",
+                             "mode":  "run"
+                         }
+                     ],
+    "path_identity":  "Ancient Ruins Corridor uses runner, ruins"
 }

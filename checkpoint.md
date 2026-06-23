@@ -2,6 +2,127 @@
 
 ---
 
+## Session 25 - Expedition Lives System
+
+### Current Monetization / Retention Focus
+The game now introduces Expedition Lives after Level 3 to support survival tension, retention, and future rewarded ads.
+
+### Completed / In Progress
+- Added saved Expedition Lives state with 5 maximum lives.
+- Added natural regeneration at 1 life every 15 minutes.
+- Added life loss on failed 3D runs after Level 3 only.
+- Added a shared `SaveManager.can_start_level(level_id)` gate for post-tutorial gameplay.
+- Added lives UI to HUD, main menu, and the level-select map.
+- Added no-lives popup with coin, gem, full-refill, disabled rewarded-ad, and return-to-camp actions.
+- Added Level 3 story text that introduces Expedition Lives.
+- Added future rewarded-ad placeholder hooks without showing forced ads.
+
+### Still Needed
+- Replace procedural text lives labels with final heart/life icon assets.
+- Replace procedural lives/refill/revive panels with final UI art.
+- Add real rewarded-ad integration later, keeping it optional.
+- Balance refill costs after playtesting.
+
+### Next Recommended Step
+Playtest Level 4+ failures and refill flow in the Godot editor, then tune costs and regen timing from real session data.
+
+---
+
+## Session 24 - Reference Map Art, Wildlife, and Build Landmarks
+
+### Current UI Focus
+The level selection screen now uses the supplied `bg_jungle_map.png` art as the visual base instead of relying on the procedural map painting.
+
+### What Changed This Session
+
+**LevelSelect.gd**
+- Loads `assets/backgrounds/bg_jungle_map.png` through `_load_map_texture()` and uses it for the scrollable level-select background when available.
+- Crops out the baked static header/footer from the source PNG before drawing it into scroll sections, so the live Godot header and bottom bar remain the only UI chrome.
+- Adds moving wildlife directly on the map canvas: birds, elephants, rabbit, antelope, boar, and monkey.
+- Adds a live home construction site that follows `SaveManager.get_home_stage()` from land purchase through complete home.
+- Adds a temple reconstruction landmark that advances from ruins to restored temple based on completed level milestones.
+- Keeps marker locks, stars, sand-shoe gating, preview panels, and gameplay launches responsive to save/game state.
+
+### Validation
+- Ran Godot 4.6.3 headless against `res://scenes/menus/LevelSelect.tscn`; the scene loaded without script errors.
+- Ran `git diff --check`; no whitespace errors were reported.
+
+---
+
+## Session 23 - Level Select Map Graphics Refresh
+
+### Current UI Focus
+The level selection screen now keeps the live 20-level map, but its graphics match the current gameplay systems instead of reading like a generic procedural route.
+
+### What Changed This Session
+
+**LevelSelect.gd**
+- Added scroll-aligned route art for tracking trails, chase streaks, water-slide channels, market dock planks, boat rivers, escape warnings, and the final baobab treasure landmark.
+- Reworked the header to `JUNGLE MAP` with a compact 20-level subtitle.
+- Added route-type badges beside level medallions for trail, build, track, chase, slide, guide, dock, boat, escape, and final routes.
+- Updated the visible level-select names and preview text for the current 3D level identities, including Water Slide Trail, Market River Dock, Rapids Run, Boar Escape, and Treasure Beneath the Baobab.
+- Kept the map procedural and SaveManager-driven so locked/unlocked states, stars, sand-shoe gating, previews, and gameplay launches remain responsive.
+
+### Validation
+- Ran Godot 4.6.3 headless against `res://scenes/menus/LevelSelect.tscn`; the scene loaded without script errors.
+- Ran `git diff --check`; no whitespace errors were reported.
+
+---
+
+## Session 22 - Path Variety, Water Slide, Boat, and Survival Gameplay
+
+### Current Gameplay Focus
+The gameplay path system has been redesigned to remove monotony and add survival-adventure variety across the active 3D runner levels.
+
+### What Changed This Session
+
+**LevelManager3D.gd**
+- Added `path_modules` parsing with smooth curves, S-curves, width changes, surfaces, modes, and junction metadata.
+- Added per-segment path guide triggers so the player follows curved route direction instead of only hard 90-degree turns.
+- Added visible module graphics for narrow trails, bridges, ruins corridors, sand ridges, water slides, boat rivers, tracking footprints, chase animals, escape warning signs, route signs, and junction arrows.
+- Added 2-way and 3-way junction triggers that emit explicit route-choice state and spawn chosen-route reward trails.
+- Added new obstacle visuals: thorn bushes, water rocks, floating logs, crocodile danger zones, whirlpools, crates, and broken planks.
+- Added water token, fish token, and river relic pickups.
+
+**Player3D.gd**
+- Added path-guidance handling so movement direction, lane baseline, surface, and mode update from the active path segment.
+- Added junction-state input: left/right/up choose visible routes only while inside a junction.
+- Fixed old turn-zone behavior so a wrong lateral swipe no longer forces the hidden preset turn.
+- Added mode speed changes and visible canoe / water-splash player attachments for boat and water-slide modes.
+
+**Game3D.gd / HUD3D.gd**
+- Connected path segment, junction, and chosen-route signals.
+- Added camera distance/height changes for junction, boat, water slide, chase, and escape sections.
+- Added escape camera shake.
+- Added HUD mode prompts, junction route prompts, and "Trail Chosen" feedback.
+- Added completion resource rewards for Levels 7-20.
+
+**Level data**
+- Updated `data/levels3d/level3d_001.json` through `level3d_020.json` with unique path identities, difficulty metadata, gameplay modes, and modular layouts.
+- Added working 2-way junctions in levels such as 2, 7, 8, 10, 13, and 17.
+- Added working 3-way junctions in levels such as 5, 11, 16, 18, and 20.
+- Added water slide gameplay in Level 12 and mixed Level 20.
+- Added boat gameplay in Level 15, Level 17, and mixed Level 20.
+- Added animal chase in Levels 11, 16, and 20.
+- Added animal escape/survival pressure in Level 19.
+
+**Documentation**
+- Updated `LEVEL_DESIGN.md` with the active 3D runner module system and Level 1-20 identities.
+- Updated `MISSING_3D_ASSETS.md` with path module, water slide, boat, tracking, animal, and UI/effect asset needs.
+- Updated `CHANGELOG.md` with the survival gameplay update.
+
+### Validation
+- Parsed all `data/levels3d/level3d_*.json` files and verified module row totals match level length, every level has at least two widths, and every level has a curve module.
+- Ran `git diff --check`; no whitespace errors were reported.
+- Ran Godot 4.6.3 headless against `res://scenes/game3d/Game3D.tscn`; the scene loaded without script errors.
+- Full interactive route-choice testing still requires playing the levels in the Godot editor/game window.
+
+### Next Recommended Steps
+1. Run the project in Godot and test Level 2 or 7 for 2-way junction choice, Level 5 or 11 for 3-way junction choice, Level 12 for water slide, Level 17 for boat, and Level 19 for escape.
+2. Replace procedural placeholders with final GLB modules, animal rigs, and HUD icons when art is ready.
+
+---
+
 ## Session 21 — Explorer Shop Preview, Level Gates, and Gameplay Response
 
 ### Current Focus

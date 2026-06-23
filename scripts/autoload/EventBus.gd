@@ -31,6 +31,8 @@ signal level_unlocked(level_id: int)
 signal skin_unlocked(skin_id: String)
 @warning_ignore("unused_signal")
 signal stars_updated(total_stars: int)
+@warning_ignore("unused_signal")
+signal lives_changed(current: int, max_lives: int)
 
 # --- UI ---
 @warning_ignore("unused_signal")

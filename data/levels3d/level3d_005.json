@@ -1,88 +1,423 @@
 {
-  "id": 5,
-  "length": 50,
-  "seed": 85,
-  "name": "Temple Approach",
-  "turns": [
-    { "row": 25, "dir": 1 }
-  ],
-  "obstacles": [
-    { "type": "rock",   "lane": 1, "row": 3  },
-    { "type": "spike",  "lane": 0, "row": 5  },
-    { "type": "rock",   "lane": 2, "row": 6  },
-    { "type": "log",    "lane": 1, "row": 8  },
-    { "type": "rock",   "lane": 0, "row": 10 },
-    { "type": "spike",  "lane": 2, "row": 11 },
-    { "type": "branch", "lane": 1, "row": 13 },
-    { "type": "spike",  "lane": 0, "row": 14 },
-    { "type": "rock",   "lane": 2, "row": 15 },
-    { "type": "log",    "lane": 1, "row": 17 },
-    { "type": "rock",   "lane": 1, "row": 19 },
-    { "type": "spike",  "lane": 0, "row": 20 },
-    { "type": "rock",   "lane": 2, "row": 21 },
-    { "type": "branch", "lane": 1, "row": 23 },
-    { "type": "rock",   "lane": 0, "row": 24 },
-    { "type": "spike",  "lane": 2, "row": 25 },
-    { "type": "log",    "lane": 1, "row": 27 },
-    { "type": "spike",  "lane": 1, "row": 29 },
-    { "type": "rock",   "lane": 0, "row": 30 },
-    { "type": "rock",   "lane": 2, "row": 30 },
-    { "type": "rock",   "lane": 1, "row": 32 },
-    { "type": "spike",  "lane": 2, "row": 33 },
-    { "type": "branch", "lane": 1, "row": 35 },
-    { "type": "spike",  "lane": 0, "row": 36 },
-    { "type": "rock",   "lane": 2, "row": 36 },
-    { "type": "log",    "lane": 1, "row": 38 },
-    { "type": "rock",   "lane": 0, "row": 40 },
-    { "type": "spike",  "lane": 1, "row": 41 },
-    { "type": "rock",   "lane": 2, "row": 42 },
-    { "type": "spike",  "lane": 0, "row": 43 },
-    { "type": "log",    "lane": 1, "row": 45 },
-    { "type": "rock",   "lane": 2, "row": 47 },
-    { "type": "spike",  "lane": 0, "row": 47 },
-    { "type": "branch", "lane": 1, "row": 49 }
-  ],
-  "coins": [
-    { "lane": 2, "row": 2  },
-    { "lane": 0, "row": 2  },
-    { "lane": 1, "row": 4  },
-    { "lane": 2, "row": 7  },
-    { "lane": 0, "row": 7  },
-    { "lane": 1, "row": 9  },
-    { "lane": 2, "row": 9  },
-    { "lane": 0, "row": 12 },
-    { "lane": 1, "row": 16 },
-    { "lane": 0, "row": 16 },
-    { "lane": 2, "row": 18 },
-    { "lane": 1, "row": 22 },
-    { "lane": 0, "row": 22 },
-    { "lane": 2, "row": 26 },
-    { "lane": 0, "row": 26 },
-    { "lane": 1, "row": 28 },
-    { "lane": 2, "row": 31 },
-    { "lane": 0, "row": 31 },
-    { "lane": 1, "row": 34 },
-    { "lane": 2, "row": 37 },
-    { "lane": 0, "row": 37 },
-    { "lane": 1, "row": 39 },
-    { "lane": 2, "row": 39 },
-    { "lane": 1, "row": 44 },
-    { "lane": 0, "row": 44 },
-    { "lane": 2, "row": 46 },
-    { "lane": 1, "row": 48 },
-    { "lane": 0, "row": 48 },
-    { "gem": true, "lane": 1, "row": 12 },
-    { "gem": true, "lane": 1, "row": 34 },
-    { "gem": true, "lane": 1, "row": 50 },
-    { "gem": true, "lane": 0, "row": 50 },
-    { "gem": true, "lane": 2, "row": 50 }
-  ],
-  "collectables": [
-    { "type": "sunstone_shard", "lane": 2, "row": 4  },
-    { "type": "relic_key",      "lane": 0, "row": 6  },
-    { "type": "sunstone_shard", "lane": 0, "row": 19 },
-    { "type": "relic_key",      "lane": 2, "row": 24 },
-    { "type": "relic_key",      "lane": 0, "row": 32 },
-    { "type": "sunstone_shard", "lane": 2, "row": 40 }
-  ]
+    "id":  5,
+    "length":  50,
+    "seed":  85,
+    "name":  "Temple Approach",
+    "turns":  [
+                  {
+                      "row":  25,
+                      "dir":  1
+                  }
+              ],
+    "obstacles":  [
+                      {
+                          "type":  "rock",
+                          "lane":  1,
+                          "row":  3
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  0,
+                          "row":  5
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  2,
+                          "row":  6
+                      },
+                      {
+                          "type":  "log",
+                          "lane":  1,
+                          "row":  8
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  0,
+                          "row":  10
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  2,
+                          "row":  11
+                      },
+                      {
+                          "type":  "branch",
+                          "lane":  1,
+                          "row":  13
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  0,
+                          "row":  14
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  2,
+                          "row":  15
+                      },
+                      {
+                          "type":  "log",
+                          "lane":  1,
+                          "row":  17
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  1,
+                          "row":  19
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  0,
+                          "row":  20
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  2,
+                          "row":  21
+                      },
+                      {
+                          "type":  "branch",
+                          "lane":  1,
+                          "row":  23
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  0,
+                          "row":  24
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  2,
+                          "row":  25
+                      },
+                      {
+                          "type":  "log",
+                          "lane":  1,
+                          "row":  27
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  1,
+                          "row":  29
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  0,
+                          "row":  30
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  2,
+                          "row":  30
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  1,
+                          "row":  32
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  2,
+                          "row":  33
+                      },
+                      {
+                          "type":  "branch",
+                          "lane":  1,
+                          "row":  35
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  0,
+                          "row":  36
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  2,
+                          "row":  36
+                      },
+                      {
+                          "type":  "log",
+                          "lane":  1,
+                          "row":  38
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  0,
+                          "row":  40
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  1,
+                          "row":  41
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  2,
+                          "row":  42
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  0,
+                          "row":  43
+                      },
+                      {
+                          "type":  "log",
+                          "lane":  1,
+                          "row":  45
+                      },
+                      {
+                          "type":  "rock",
+                          "lane":  2,
+                          "row":  47
+                      },
+                      {
+                          "type":  "spike",
+                          "lane":  0,
+                          "row":  47
+                      },
+                      {
+                          "type":  "branch",
+                          "lane":  1,
+                          "row":  49
+                      }
+                  ],
+    "coins":  [
+                  {
+                      "lane":  2,
+                      "row":  2
+                  },
+                  {
+                      "lane":  0,
+                      "row":  2
+                  },
+                  {
+                      "lane":  1,
+                      "row":  4
+                  },
+                  {
+                      "lane":  2,
+                      "row":  7
+                  },
+                  {
+                      "lane":  0,
+                      "row":  7
+                  },
+                  {
+                      "lane":  1,
+                      "row":  9
+                  },
+                  {
+                      "lane":  2,
+                      "row":  9
+                  },
+                  {
+                      "lane":  0,
+                      "row":  12
+                  },
+                  {
+                      "lane":  1,
+                      "row":  16
+                  },
+                  {
+                      "lane":  0,
+                      "row":  16
+                  },
+                  {
+                      "lane":  2,
+                      "row":  18
+                  },
+                  {
+                      "lane":  1,
+                      "row":  22
+                  },
+                  {
+                      "lane":  0,
+                      "row":  22
+                  },
+                  {
+                      "lane":  2,
+                      "row":  26
+                  },
+                  {
+                      "lane":  0,
+                      "row":  26
+                  },
+                  {
+                      "lane":  1,
+                      "row":  28
+                  },
+                  {
+                      "lane":  2,
+                      "row":  31
+                  },
+                  {
+                      "lane":  0,
+                      "row":  31
+                  },
+                  {
+                      "lane":  1,
+                      "row":  34
+                  },
+                  {
+                      "lane":  2,
+                      "row":  37
+                  },
+                  {
+                      "lane":  0,
+                      "row":  37
+                  },
+                  {
+                      "lane":  1,
+                      "row":  39
+                  },
+                  {
+                      "lane":  2,
+                      "row":  39
+                  },
+                  {
+                      "lane":  1,
+                      "row":  44
+                  },
+                  {
+                      "lane":  0,
+                      "row":  44
+                  },
+                  {
+                      "lane":  2,
+                      "row":  46
+                  },
+                  {
+                      "lane":  1,
+                      "row":  48
+                  },
+                  {
+                      "lane":  0,
+                      "row":  48
+                  },
+                  {
+                      "gem":  true,
+                      "lane":  1,
+                      "row":  12
+                  },
+                  {
+                      "gem":  true,
+                      "lane":  1,
+                      "row":  34
+                  },
+                  {
+                      "gem":  true,
+                      "lane":  1,
+                      "row":  50
+                  },
+                  {
+                      "gem":  true,
+                      "lane":  0,
+                      "row":  50
+                  },
+                  {
+                      "gem":  true,
+                      "lane":  2,
+                      "row":  50
+                  }
+              ],
+    "collectables":  [
+                         {
+                             "type":  "sunstone_shard",
+                             "lane":  2,
+                             "row":  4
+                         },
+                         {
+                             "type":  "relic_key",
+                             "lane":  0,
+                             "row":  6
+                         },
+                         {
+                             "type":  "sunstone_shard",
+                             "lane":  0,
+                             "row":  19
+                         },
+                         {
+                             "type":  "relic_key",
+                             "lane":  2,
+                             "row":  24
+                         },
+                         {
+                             "type":  "relic_key",
+                             "lane":  0,
+                             "row":  32
+                         },
+                         {
+                             "type":  "sunstone_shard",
+                             "lane":  2,
+                             "row":  40
+                         }
+                     ],
+    "difficulty":  "Medium-Hard",
+    "gameplay_modes":  [
+                           "runner",
+                           "junction"
+                       ],
+    "path_modules":  [
+                         {
+                             "type":  "straight_short",
+                             "rows":  6,
+                             "width":  "normal",
+                             "surface":  "stone",
+                             "mode":  "run"
+                         },
+                         {
+                             "type":  "gentle_curve_right",
+                             "rows":  8,
+                             "width":  "normal",
+                             "surface":  "stone",
+                             "mode":  "run"
+                         },
+                         {
+                             "type":  "junction_three_way",
+                             "rows":  6,
+                             "width":  "wide",
+                             "surface":  "stone",
+                             "mode":  "run",
+                             "routes":  [
+                                            {
+                                                "direction":  "left",
+                                                "label":  "Coin Route",
+                                                "reward":  "coins"
+                                            },
+                                            {
+                                                "direction":  "up",
+                                                "label":  "Safe Route",
+                                                "reward":  "coins"
+                                            },
+                                            {
+                                                "direction":  "right",
+                                                "label":  "Relic Route",
+                                                "reward":  "relic_key"
+                                            }
+                                        ],
+                             "id":  "l05_temple_split"
+                         },
+                         {
+                             "type":  "ruins_corridor",
+                             "rows":  8,
+                             "width":  "narrow",
+                             "surface":  "stone",
+                             "mode":  "run"
+                         },
+                         {
+                             "type":  "wide_curve_left",
+                             "rows":  8,
+                             "width":  "wide",
+                             "surface":  "stone",
+                             "mode":  "run"
+                         },
+                         {
+                             "type":  "finish_gate_approach",
+                             "rows":  14,
+                             "width":  "normal",
+                             "surface":  "stone",
+                             "mode":  "run"
+                         }
+                     ],
+    "path_identity":  "Temple Approach uses runner, junction"
 }
