@@ -173,10 +173,10 @@ func _build_skin_list() -> void:
 
 		var preview := TextureRect.new()
 		preview.custom_minimum_size = Vector2(56, 56)
-		preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		var texture_path := "res://assets/sprites/characters/%s.png" % skin["id"]
-		if ResourceLoader.exists(texture_path):
-			preview.texture = load(texture_path)
+		preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		preview.clip_contents = true
+		preview.texture = _load_art_texture(str(skin.get("preview_path", "")))
 		row.add_child(preview)
 
 		var lbl := Label.new()
@@ -184,16 +184,24 @@ func _build_skin_list() -> void:
 		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(lbl)
 
-		var btn := Button.new()
 		var unlocked := SaveManager.is_skin_unlocked(skin["id"])
 		if unlocked:
-			btn.text = "Equip" if SaveManager.get_selected_skin() != skin["id"] else "Equipped"
-			btn.disabled = SaveManager.get_selected_skin() == skin["id"]
-			btn.pressed.connect(_equip_skin.bind(skin["id"]))
+			var btn_equip := Button.new()
+			btn_equip.text     = "Equip" if SaveManager.get_selected_skin() != skin["id"] else "✓ On"
+			btn_equip.disabled = SaveManager.get_selected_skin() == skin["id"]
+			btn_equip.pressed.connect(_equip_skin.bind(skin["id"]))
+			btn_equip.custom_minimum_size = Vector2(64, 0)
+			row.add_child(btn_equip)
+			var btn_info := Button.new()
+			btn_info.text     = "Info"
+			btn_info.pressed.connect(_show_skin_preview.bind(skin))
+			btn_info.custom_minimum_size = Vector2(52, 0)
+			row.add_child(btn_info)
 		else:
-			btn.text = "Preview"
-			btn.pressed.connect(_show_skin_preview.bind(skin))
-		row.add_child(btn)
+			var btn_prev := Button.new()
+			btn_prev.text = "Preview"
+			btn_prev.pressed.connect(_show_skin_preview.bind(skin))
+			row.add_child(btn_prev)
 		list_container.add_child(row)
 	UIStyle.apply(list_container)
 
@@ -272,32 +280,72 @@ func _show_skin_preview(skin: Dictionary) -> void:
 		_build_preview_panel()
 	_preview_skin_id = skin.get("id", "")
 	var unlocked := SaveManager.is_skin_unlocked(_preview_skin_id)
-	var title  := _preview_panel.get_node("Title")       as Label
-	var desc   := _preview_panel.get_node("Desc")        as Label
-	var req    := _preview_panel.get_node("Req")         as Label
-	var action := _preview_panel.get_node("BtnAction")   as Button
+	var title  := _preview_panel.get_node("Title")     as Label
+	var req    := _preview_panel.get_node("Req")       as Label
+	var action := _preview_panel.get_node("BtnAction") as Button
 
-	# Load and display the large character portrait
+	# Portrait
 	var portrait := _preview_panel.get_node("CharPortrait") as TextureRect
 	if portrait != null:
-		var tex_path: String
-		match _preview_skin_id:
-			"explorer":    tex_path = "res://assets/3d/characters/kairo/kairo_source_preview.jpg"
-			"jungle_girl": tex_path = "res://assets/3d/characters/zuri/zuri_source_preview.jpg"
-			_:             tex_path = "res://assets/sprites/characters/%s.png" % _preview_skin_id
-		var tex: Texture2D = null
-		if ResourceLoader.exists(tex_path):
-			tex = load(tex_path) as Texture2D
-		else:
-			var img := Image.new()
-			if img.load(tex_path) == OK:
-				tex = ImageTexture.create_from_image(img)
-		portrait.texture = tex
+		var tex_path := str(skin.get("preview_path", ""))
+		portrait.texture = _load_art_texture(tex_path)
+		if portrait.texture == null:
+			push_warning("Shop: could not load character preview: " + tex_path)
 
 	title.text = str(skin.get("name", "Explorer"))
-	desc.text  = _skin_preview_desc(_preview_skin_id)
+
+	# Stats dots
+	var stats: Dictionary = skin.get("stats", {})
+	var speed   := int(stats.get("speed",   3))
+	var agility := int(stats.get("agility", 3))
+	(_preview_panel.get_node("StatsDots0") as Label).text = _stat_dots(speed)
+	(_preview_panel.get_node("StatsDots1") as Label).text = _stat_dots(agility)
+
+	# Special ability
+	(_preview_panel.get_node("Special") as Label).text = str(skin.get("special", ""))
+
+	# Lore
+	(_preview_panel.get_node("Lore") as Label).text = str(skin.get("lore", ""))
+
+	# Color variant swatches
+	var variant_row := _preview_panel.get_node("VariantRow") as HBoxContainer
+	for child in variant_row.get_children():
+		child.queue_free()
+	var selected_variant := SaveManager.get_selected_skin_variant(_preview_skin_id)
+	var variants: Array = skin.get("color_variants", [])
+	for v: Dictionary in variants:
+		var vid    := str(v.get("id", "default"))
+		var vname  := str(v.get("name", "Default"))
+		var vcolor: Color = v.get("modulate", Color.WHITE)
+		var is_sel := (vid == selected_variant)
+		var sw := Button.new()
+		sw.custom_minimum_size = Vector2(44, 44)
+		sw.focus_mode = Control.FOCUS_NONE
+		sw.tooltip_text = vname
+		sw.text = ""
+		var sw_sb := StyleBoxFlat.new()
+		sw_sb.bg_color = vcolor if vcolor != Color.WHITE else Color(0.58, 0.48, 0.28)
+		sw_sb.corner_radius_top_left    = 22; sw_sb.corner_radius_top_right    = 22
+		sw_sb.corner_radius_bottom_left = 22; sw_sb.corner_radius_bottom_right = 22
+		sw_sb.border_width_left  = 3 if is_sel else 1
+		sw_sb.border_width_right = 3 if is_sel else 1
+		sw_sb.border_width_top   = 3 if is_sel else 1
+		sw_sb.border_width_bottom = 3 if is_sel else 1
+		sw_sb.border_color = Color.WHITE if is_sel else Color(0.42, 0.36, 0.18, 0.80)
+		sw.add_theme_stylebox_override("normal",  sw_sb)
+		sw.add_theme_stylebox_override("pressed", sw_sb)
+		if unlocked:
+			sw.pressed.connect(func() -> void:
+				SaveManager.set_selected_skin_variant(_preview_skin_id, vid)
+				_show_skin_preview(skin)
+			)
+		else:
+			sw.mouse_default_cursor_shape = Control.CURSOR_FORBIDDEN
+		variant_row.add_child(sw)
+
+	# Req / cost / action
 	if unlocked:
-		req.text    = "✓  Unlocked and ready"
+		req.text    = "✓  Unlocked"
 		action.text = "▶  Equip"
 	elif not _meets_level_requirement(skin):
 		req.text    = _level_requirement_text(skin)
@@ -310,68 +358,97 @@ func _show_skin_preview(skin: Dictionary) -> void:
 		action.text = "Buy  ▶"
 	_preview_panel.visible = true
 
+func _stat_dots(value: int) -> String:
+	var out := ""
+	for i in 5:
+		out += ("■" if i < value else "□") + (" " if i < 4 else "")
+	return out
+
 func _build_preview_panel() -> void:
 	_preview_panel = Panel.new()
-	_preview_panel.name = "SkinPreview"
-	_preview_panel.position = Vector2(16, 80)
-	_preview_panel.size     = Vector2(448, 560)
+	_preview_panel.name     = "SkinPreview"
+	_preview_panel.position = Vector2(16, 78)
+	_preview_panel.size     = Vector2(448, 640)
 	var sb := StyleBoxFlat.new()
-	sb.bg_color             = Color(0.02, 0.06, 0.03, 0.97)
-	sb.border_color         = Color(0.82, 0.62, 0.18, 0.96)
-	sb.border_width_left    = 2; sb.border_width_right  = 2
-	sb.border_width_top     = 2; sb.border_width_bottom = 2
+	sb.bg_color            = Color(0.02, 0.06, 0.03, 0.97)
+	sb.border_color        = Color(0.82, 0.62, 0.18, 0.96)
+	sb.border_width_left   = 2; sb.border_width_right  = 2
+	sb.border_width_top    = 2; sb.border_width_bottom = 2
 	sb.corner_radius_top_left     = 10; sb.corner_radius_top_right    = 10
 	sb.corner_radius_bottom_left  = 10; sb.corner_radius_bottom_right = 10
 	_preview_panel.add_theme_stylebox_override("panel", sb)
 	add_child(_preview_panel)
 
-	# Large character portrait
+	# Character portrait (reduced height to make room for stats)
 	var portrait := TextureRect.new()
-	portrait.name              = "CharPortrait"
-	portrait.position          = Vector2(10, 10)
-	portrait.size              = Vector2(428, 356)
-	portrait.custom_minimum_size = Vector2(428, 356)
-	portrait.stretch_mode      = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	portrait.mouse_filter      = Control.MOUSE_FILTER_IGNORE
+	portrait.name             = "CharPortrait"
+	portrait.position         = Vector2(10, 10)
+	portrait.size             = Vector2(428, 290)
+	portrait.expand_mode      = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode     = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	portrait.clip_contents    = true
+	portrait.mouse_filter     = Control.MOUSE_FILTER_IGNORE
 	_preview_panel.add_child(portrait)
 
-	# Dark gradient behind the name label overlaid on portrait bottom
+	# Dark gradient on portrait bottom for name readability
 	var grad := ColorRect.new()
 	grad.color        = Color(0.02, 0.04, 0.02, 0.82)
-	grad.position     = Vector2(10, 308)
-	grad.size         = Vector2(428, 58)
+	grad.position     = Vector2(10, 254)
+	grad.size         = Vector2(428, 46)
 	grad.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_preview_panel.add_child(grad)
 
-	# Explorer name on top of gradient
-	var title := _preview_label("Title", Vector2(20, 316), Vector2(408, 42), 26, Color(0.98, 0.86, 0.45))
+	# Character name overlaid on gradient
+	var title := _preview_label("Title", Vector2(20, 260), Vector2(408, 36), 24, Color(0.98, 0.86, 0.45))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
-	# Requirement / cost
-	var req := _preview_label("Req", Vector2(20, 376), Vector2(408, 30), 14, Color(0.70, 0.92, 0.58))
+	# Unlock requirement / cost
+	var req := _preview_label("Req", Vector2(20, 308), Vector2(408, 22), 13, Color(0.70, 0.92, 0.58))
 	req.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
-	# Short description
-	var desc := _preview_label("Desc", Vector2(20, 410), Vector2(408, 76), 13, Color(0.88, 0.82, 0.62))
-	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# ── Stats rows ──────────────────────────────────────────────────────────────
+	var stats_lbl := _preview_label("StatsSpeed", Vector2(20, 338), Vector2(90, 18), 11, Color(0.70, 0.92, 0.58))
+	stats_lbl.text = "Speed:"
+	_preview_label("StatsDots0", Vector2(116, 338), Vector2(200, 18), 12, Color(0.92, 0.74, 0.22))  # filled by _show_skin_preview
+	_preview_label("StatsAgility", Vector2(20, 362), Vector2(90, 18), 11, Color(0.70, 0.92, 0.58)).text = "Agility:"
+	_preview_label("StatsDots1", Vector2(116, 362), Vector2(200, 18), 12, Color(0.92, 0.74, 0.22))
+
+	# Special ability
+	var spec := _preview_label("Special", Vector2(20, 392), Vector2(408, 20), 12, Color(0.62, 0.84, 0.98))
+	spec.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+	# ── Color variants ──────────────────────────────────────────────────────────
+	var vstyle_lbl := _preview_label("VariantLabel", Vector2(20, 420), Vector2(100, 18), 11, Color(0.70, 0.92, 0.58))
+	vstyle_lbl.text = "Style:"
+
+	var variant_row := HBoxContainer.new()
+	variant_row.name     = "VariantRow"
+	variant_row.position = Vector2(20, 440)
+	variant_row.size     = Vector2(408, 44)
+	variant_row.add_theme_constant_override("separation", 14)
+	_preview_panel.add_child(variant_row)
+
+	# Lore text
+	var lore := _preview_label("Lore", Vector2(20, 490), Vector2(408, 38), 11, Color(0.62, 0.62, 0.54))
+	lore.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 	# Action + Close buttons
 	var action := Button.new()
-	action.name                  = "BtnAction"
-	action.position              = Vector2(20, 496)
-	action.size                  = Vector2(195, 52)
-	action.custom_minimum_size   = Vector2(195, 52)
+	action.name                = "BtnAction"
+	action.position            = Vector2(20, 540)
+	action.size                = Vector2(195, 52)
+	action.custom_minimum_size = Vector2(195, 52)
 	action.add_theme_font_size_override("font_size", 17)
 	action.pressed.connect(_on_preview_action)
 	_style_preview_button(action, Color(0.10, 0.42, 0.18))
 	_preview_panel.add_child(action)
 
 	var close := Button.new()
-	close.name                   = "BtnClose"
-	close.text                   = "✕  Close"
-	close.position               = Vector2(228, 496)
-	close.size                   = Vector2(200, 52)
-	close.custom_minimum_size    = Vector2(200, 52)
+	close.name                 = "BtnClose"
+	close.text                 = "✕  Close"
+	close.position             = Vector2(228, 540)
+	close.size                 = Vector2(200, 52)
+	close.custom_minimum_size  = Vector2(200, 52)
 	close.add_theme_font_size_override("font_size", 17)
 	close.pressed.connect(_hide_skin_preview)
 	_style_preview_button(close, Color(0.28, 0.18, 0.06))
@@ -585,7 +662,4 @@ func _using_art_plate() -> bool:
 	return _shop_art_texture != null
 
 func _find_skin(skin_id: String) -> Dictionary:
-	for skin: Dictionary in Constants.SKINS:
-		if skin.get("id", "") == skin_id:
-			return skin
-	return {}
+	return Constants.get_skin(skin_id)

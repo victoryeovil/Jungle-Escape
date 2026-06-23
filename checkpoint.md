@@ -1,4 +1,20 @@
-# CHECKPOINT - Session 29
+# CHECKPOINT - Session 30
+
+---
+
+## Session 30 - Correct Character Preview and Gameplay Assets
+
+### Completed
+- Added each explorer's source-preview image and gameplay scene path to the shared `Constants.SKINS` data.
+- Updated the Choose Explorer list and large preview panel to use the correct Kairo, Zuri, Monkey, Robot Explorer, Treasure Hunter, Tribal Adventurer, and Golden Explorer images.
+- Changed preview rendering to centered aspect-cover cropping so landscape source renders fill both thumbnails and the large portrait without stretching.
+- Updated `Player3D.gd` to load the matching 3D scene from the same skin record used by the preview screen, preventing preview/gameplay asset mismatches.
+
+### Validation
+- Verified all seven preview files and all seven character wrapper scenes exist at the configured paths.
+- Confirmed the old sprite-placeholder preview fallback and duplicated gameplay character map are no longer used.
+- Ran static path and whitespace validation on the changed files.
+- Godot runtime visual validation remains pending because no Godot executable is available in this shell.
 
 ---
 

@@ -7,22 +7,12 @@ const RUN_SPEED: float = 8.0
 const JUMP_VELOCITY: float = 8.5
 const SLIDE_DURATION: float = 0.7
 const GRAVITY: float = 22.0
-const CHARACTER_SCENE_PATHS := {
-	"explorer": "res://assets/3d/characters/kairo/Kairo.tscn",
-	"jungle_girl": "res://assets/3d/characters/zuri/Zuri.tscn",
-	"monkey": "res://assets/3d/characters/monkey/Monkey.tscn",
-	"robot": "res://assets/3d/characters/robot/RobotExplorer.tscn",
-	"treasure": "res://assets/3d/characters/treasure/TreasureHunter.tscn",
-	"tribal": "res://assets/3d/characters/tribal/TribalAdventurer.tscn",
-	"golden": "res://assets/3d/characters/golden/GoldenExplorer.tscn",
-}
 const OUTFIT_SCENE_PATHS := {
 	"upgrade": "res://assets/3d/outfits/upgrade/UpgradeOutfit.tscn",
 	"skating": "res://assets/3d/outfits/skating/SkatingOutfit.tscn",
 	"boat": "res://assets/3d/outfits/boat/BoatOutfit.tscn",
 }
 const CANOE_SCENE_PATH := "res://assets/3d/vehicles/Canoe.tscn"
-const DEFAULT_CHARACTER_SCENE := "res://assets/3d/characters/kairo/Kairo.tscn"
 const ANIM_IDLE := "CharacterArmature|Idle"
 const ANIM_RUN := "CharacterArmature|Run"
 const ANIM_STRAFE_LEFT := "CharacterArmature|Run_Left"
@@ -295,6 +285,8 @@ func die() -> void:
 	_set_slide_collision(false)
 	EventBus.play_sfx.emit("damage")
 	_play_character_animation(ANIM_HIT, true)
+	if SaveManager.get_setting("vibration_on", true):
+		Input.vibrate_handheld(250)
 	died.emit()
 
 func reset(lane: int = 1) -> void:
@@ -344,11 +336,12 @@ func _detect_surface() -> void:
 
 func _apply_selected_character_model() -> void:
 	var skin_id := SaveManager.get_selected_skin()
-	if not CHARACTER_SCENE_PATHS.has(skin_id):
+	var skin := Constants.get_skin(skin_id)
+	var scene_path := str(skin.get("scene_path", ""))
+	if skin.is_empty() or scene_path.is_empty():
 		_use_placeholder_character(skin_id)
 		return
 
-	var scene_path: String = CHARACTER_SCENE_PATHS.get(skin_id, DEFAULT_CHARACTER_SCENE)
 	var packed_scene := load(scene_path) as PackedScene
 	if packed_scene == null:
 		push_warning("Player3D: could not load character model: " + scene_path)
@@ -366,6 +359,11 @@ func _apply_selected_character_model() -> void:
 
 	_character_model.name = "CharacterModel"
 	add_child(_character_model)
+	# Apply selected color variant tint
+	var _variant := Constants.get_skin_variant(skin_id, SaveManager.get_selected_skin_variant(skin_id))
+	var _tint: Color = _variant.get("modulate", Color.WHITE)
+	if _tint != Color.WHITE:
+		_character_model.modulate = _tint
 	_set_placeholder_visible(false)
 	_animation_player = _find_animation_player(_character_model)
 	if _animation_player == null:

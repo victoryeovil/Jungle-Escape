@@ -137,6 +137,15 @@ func unlock_skin(skin_id: String) -> void:
 func is_skin_unlocked(skin_id: String) -> bool:
 	return skin_id in get_unlocked_skins()
 
+func get_selected_skin_variant(skin_id: String) -> String:
+	return str(_save_data.get("skin_variants", {}).get(skin_id, "default"))
+
+func set_selected_skin_variant(skin_id: String, variant_id: String) -> void:
+	if not _save_data.has("skin_variants"):
+		_save_data["skin_variants"] = {}
+	_save_data["skin_variants"][skin_id] = variant_id
+	save_game()
+
 func get_setting(key: String, default_value = null):
 	return _settings.get(key, default_value)
 

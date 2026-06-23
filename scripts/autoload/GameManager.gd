@@ -14,13 +14,31 @@ var is_logged_in: bool = false
 var player_name: String = "Explorer"
 
 var levels_since_login_prompt: int = 0
-var _level_start_time: float = 0.0   # for time_sec in analytics events
-var last_fail_row: int = 0           # set by Player3D / Game3D before calling fail_current_level
+var _level_start_time: float = 0.0
+var last_fail_row: int = 0
+var login_required: bool = false         # hides skip button in LoginPrompt
+var pending_level_after_login: int = 0   # level to start once login succeeds
 
 func _ready() -> void:
 	EventBus.level_completed.connect(_on_level_completed)
 	EventBus.level_failed.connect(_on_level_failed)
 	EventBus.login_completed.connect(_on_login_completed)
+	_apply_graphics_quality()
+
+func _apply_graphics_quality() -> void:
+	var vp := get_viewport()
+	if not vp:
+		return
+	match SaveManager.get_setting("graphics_quality", "MED"):
+		"LOW":
+			vp.scaling_3d_scale = 0.66
+			vp.msaa_3d = Viewport.MSAA_DISABLED
+		"MED":
+			vp.scaling_3d_scale = 1.0
+			vp.msaa_3d = Viewport.MSAA_2X
+		"HIGH":
+			vp.scaling_3d_scale = 1.0
+			vp.msaa_3d = Viewport.MSAA_4X
 
 # ── Public API ─────────────────────────────────────────────────────────────────
 
@@ -124,6 +142,10 @@ func go_to_gameplay(level_id: int) -> void:
 
 func go_to_gameplay_3d(level_id: int) -> void:
 	print("[NAV][GameManager] go_to_gameplay_3d called; level_id=" + str(level_id))
+	if level_id > 3 and not SupabaseClient.has_registration_key():
+		print("[NAV][GameManager] go_to_gameplay_3d blocked; registration required for level", level_id)
+		go_to_login_prompt(true, level_id)
+		return
 	if not SaveManager.can_start_level(level_id):
 		print("[NAV][GameManager] go_to_gameplay_3d blocked; no expedition lives")
 		state = GameState.MENU
@@ -133,6 +155,13 @@ func go_to_gameplay_3d(level_id: int) -> void:
 	get_tree().paused = false
 	var err := get_tree().change_scene_to_file("res://scenes/game3d/Game3D.tscn")
 	print("[NAV][GameManager] go_to_gameplay_3d change_scene result=" + str(err))
+
+func go_to_login_prompt(required: bool = false, pending_level: int = 0) -> void:
+	login_required = required
+	pending_level_after_login = pending_level
+	state = GameState.MENU
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://scenes/menus/LoginPrompt.tscn")
 
 func collect_resource(resource_id: String, amount: int) -> void:
 	SaveManager.add_resource(resource_id, amount)
@@ -169,6 +198,8 @@ func _on_level_completed(level_id: int, stars: int, coins: int, _moves: int) -> 
 	var elapsed := Time.get_ticks_msec() / 1000.0 - _level_start_time
 	AdaptiveDifficulty.on_level_complete(level_id)
 	Analytics.level_complete(level_id, stars, coins, elapsed, AdaptiveDifficulty.get_current_attempt(level_id))
+	if is_logged_in and SaveManager.get_setting("cloud_backup", true):
+		SaveManager.sync_to_cloud()
 	if should_show_login_prompt():
 		EventBus.login_requested.emit()
 

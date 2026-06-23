@@ -26,7 +26,11 @@ var _inp_name  : LineEdit = null   # only visible in sign-up mode
 
 func _ready() -> void:
 	UIStyle.apply(self)
-	_lbl_benefits.text = _BENEFITS
+	if GameManager.login_required:
+		_btn_skip.visible = false
+		_lbl_benefits.text = "Level 4 and beyond require a free account.\n\nCreate one to:\n• Continue your jungle expedition\n• Keep progress safe across devices\n• Earn daily rewards & compete globally"
+	else:
+		_lbl_benefits.text = _BENEFITS
 	_btn_google.pressed.connect(_on_google)
 	_btn_email.pressed.connect(_on_email)
 	_btn_skip.pressed.connect(_on_skip)
@@ -188,20 +192,111 @@ func _on_submit() -> void:
 # ── Supabase callbacks ────────────────────────────────────────────────────────
 
 func _on_auth_success(user_id: String, display_name: String) -> void:
-	# First login bonus
 	var is_new_login := not GameManager.is_logged_in
 	GameManager.is_logged_in = true
 	GameManager.is_guest     = false
 	GameManager.player_name  = display_name
 	if is_new_login:
 		SaveManager.add_coins(50)
-
 	EventBus.login_completed.emit(true)
 
-	# Restore cloud save, then navigate
+	# Check if account has a pending deletion before proceeding
+	SupabaseClient.check_deletion_status(func(deletion_date) -> void:
+		if deletion_date != null:
+			_show_deletion_recovery(deletion_date)
+		else:
+			_proceed_after_login()
+	)
+
+func _proceed_after_login() -> void:
 	SupabaseClient.download_save(func(cloud_data: Dictionary) -> void:
 		if not cloud_data.is_empty():
 			SaveManager.restore_from_cloud(cloud_data)
+		var pending := GameManager.pending_level_after_login
+		if pending > 0:
+			GameManager.login_required = false
+			GameManager.pending_level_after_login = 0
+			GameManager.go_to_gameplay_3d(pending)
+		else:
+			GameManager.login_required = false
+			GameManager.go_to_menu()
+	)
+
+func _show_deletion_recovery(deletion_date: String) -> void:
+	# User's account is scheduled for deletion — offer to cancel it
+	var overlay := ColorRect.new()
+	overlay.color = Color(0.0, 0.0, 0.0, 0.72)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(overlay)
+
+	var dw := 420.0; var dh := 300.0
+	var dp := Panel.new()
+	dp.position = Vector2((480.0 - dw) * 0.5, (854.0 - dh) * 0.5)
+	dp.size     = Vector2(dw, dh)
+	var dsb := StyleBoxFlat.new()
+	dsb.bg_color = Color(0.04, 0.08, 0.04, 0.99)
+	dsb.border_color = Color(0.76, 0.22, 0.14, 0.85)
+	dsb.border_width_left = 2; dsb.border_width_right = 2
+	dsb.border_width_top = 2; dsb.border_width_bottom = 2
+	dsb.corner_radius_top_left = 10; dsb.corner_radius_top_right = 10
+	dsb.corner_radius_bottom_left = 10; dsb.corner_radius_bottom_right = 10
+	dp.add_theme_stylebox_override("panel", dsb)
+	add_child(dp)
+
+	var lbl_title := Label.new()
+	lbl_title.text = "Account Pending Deletion"
+	lbl_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl_title.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	lbl_title.add_theme_font_size_override("font_size", 17)
+	lbl_title.add_theme_color_override("font_color", Color(1.0, 0.38, 0.28))
+	lbl_title.size = Vector2(dw, 56); lbl_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	dp.add_child(lbl_title)
+
+	var lbl_body := Label.new()
+	lbl_body.text = "You requested deletion of this account.\nIt will be permanently deleted after 14 days.\n\nWould you like to cancel and keep it?"
+	lbl_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl_body.add_theme_font_size_override("font_size", 12)
+	lbl_body.add_theme_color_override("font_color", Color(0.90, 0.92, 0.84))
+	lbl_body.size = Vector2(dw - 40.0, 110.0); lbl_body.position = Vector2(20.0, 60.0)
+	lbl_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl_body.mouse_filter  = Control.MOUSE_FILTER_IGNORE
+	dp.add_child(lbl_body)
+
+	# Cancel deletion → keep account
+	var btn_keep := Button.new()
+	btn_keep.text       = "CANCEL DELETION — KEEP ACCOUNT"
+	btn_keep.focus_mode = Control.FOCUS_NONE
+	btn_keep.custom_minimum_size = Vector2(dw - 40.0, 46.0)
+	btn_keep.position   = Vector2(20.0, 182.0)
+	btn_keep.add_theme_font_size_override("font_size", 13)
+	btn_keep.add_theme_color_override("font_color", Color(0.96, 0.82, 0.26))
+	dp.add_child(btn_keep)
+	btn_keep.pressed.connect(func():
+		btn_keep.disabled = true
+		SupabaseClient.cancel_deletion(func(_ok: bool) -> void:
+			overlay.queue_free()
+			dp.queue_free()
+			_proceed_after_login()
+		)
+	)
+
+	# Sign out → respect the deletion
+	var btn_out := Button.new()
+	btn_out.text       = "SIGN OUT"
+	btn_out.focus_mode = Control.FOCUS_NONE
+	btn_out.custom_minimum_size = Vector2(dw - 40.0, 46.0)
+	btn_out.position   = Vector2(20.0, 238.0)
+	btn_out.flat       = true
+	btn_out.add_theme_font_size_override("font_size", 13)
+	btn_out.add_theme_color_override("font_color", Color(0.46, 0.48, 0.40))
+	dp.add_child(btn_out)
+	btn_out.pressed.connect(func():
+		SupabaseClient.sign_out()
+		GameManager.is_logged_in = false
+		GameManager.is_guest     = true
+		GameManager.player_name  = "Explorer"
+		overlay.queue_free()
+		dp.queue_free()
 		GameManager.go_to_menu()
 	)
 

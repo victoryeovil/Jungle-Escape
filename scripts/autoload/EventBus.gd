@@ -44,6 +44,8 @@ signal login_requested()
 @warning_ignore("unused_signal")
 signal login_completed(success: bool)
 @warning_ignore("unused_signal")
+signal registration_required(next_level: int)   # hard gate — skip button hidden
+@warning_ignore("unused_signal")
 signal shop_opened()
 @warning_ignore("unused_signal")
 signal daily_challenge_requested()

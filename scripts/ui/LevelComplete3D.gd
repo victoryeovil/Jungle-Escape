@@ -100,6 +100,11 @@ func _on_next() -> void:
 		GameManager.go_to_wildlands_unlock()
 		return
 	var next := completed + 1
+	# Registration gate: level 4+ requires an account
+	if next > 3 and not SupabaseClient.has_registration_key():
+		get_tree().paused = false
+		GameManager.go_to_login_prompt(true, next)
+		return
 	if SaveManager.is_level_unlocked(next):
 		_try_start_level(next)
 	else:

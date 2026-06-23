@@ -1,5 +1,17 @@
 # CHANGELOG — Jungle Escape: Lost Path
 
+## [Unreleased] - Correct Character Preview and Gameplay Assets
+
+### Changed
+- Added canonical preview and gameplay scene paths to all seven entries in `Constants.SKINS`.
+- Updated the Choose Explorer thumbnails and large preview panel to display each character's correct source-preview image with centered aspect-cover rendering.
+- Updated `Player3D.gd` to resolve the equipped character scene from the same skin record used by the preview screen.
+
+### Validation
+- Verified all seven configured source-preview files and all seven configured character scenes exist.
+- Confirmed the preview UI no longer falls back to the old 64x64 character sprites for the five generated explorers.
+- Godot runtime visual validation remains pending because no Godot executable is available in this shell.
+
 ## [Unreleased] - Generated Character Source Previews
 
 ### Added
