@@ -1,5 +1,74 @@
 # CHANGELOG — Jungle Escape: Lost Path
 
+## [Unreleased] - Generated Character Source Previews
+
+### Added
+- Added 1220×720 PNG source previews for Monkey, Robot Explorer, Treasure Hunter, Tribal Adventurer, and Golden Explorer beside their GLBs.
+- Matched the existing Kairo/Zuri presentation pattern: one centered low-poly full-body character on a simple colored backdrop with no text or UI.
+
+### Changed
+- Updated the 3D asset manifest, root license ledger, 3D credits, and checkpoint to track all seven character preview files.
+
+### Validation
+- Verified all five generated previews are valid 1220×720 PNG files.
+- Visually reviewed the final preview set together for consistent framing, silhouette readability, clothing identity, and backdrop treatment.
+
+## [Unreleased] - Level 15 Skating-to-Boat Gameplay Integration
+
+### Added
+- Added data-driven `skating_entry`, `skating_straight`, `skating_curve_left`, and `skating_curve_right` path-module support.
+- Added a smooth skating surface with cyan lane stripes, violet edge lighting, gold boost marks, module signs, and a `SKATE RUN` warning marker.
+- Added skating-specific camera distance/height, HUD title/message, 1.20× movement profile, and idle/glide character posture.
+- Added skating route art and a `SKATE` badge to the level-select map.
+
+### Changed
+- Level 15 is now `Market Skate & River Dock`: 14 rows of skating transition directly into the existing 13-row boat tutorial before the normal finish route.
+- Updated Level 15 preview title, area, marker, description, mode list, path identity, and `LEVEL_DESIGN.md` entry.
+
+### Validation
+- Parsed all 20 level JSON files and confirmed each path-module row total equals its declared level length.
+- Verified obstacles, coins, and collectables remain inside their declared level bounds.
+- Verified Level 15 resolves skating → boat → run without changing its 44-row length.
+- Ran `git diff --check` on the affected gameplay, UI, level-data, and design files.
+- Godot scene/runtime validation remains pending because no Godot executable is available in this shell.
+
+## [Unreleased] - Modular Upgrade, Skating, and Boat Clothing
+
+### Added
+- Added a reinforced expedition upgrade outfit with utility vest, field pack, wrist guards, pouches, and sand boots.
+- Added a protective skating outfit with helmet, safety harness, elbow/knee pads, inline skate boots, frames, and wheels.
+- Added a river outfit with life jacket panels, reflective straps, flotation collar, river pack, and water boots.
+- Added a pointed low-poly expedition canoe with hollow hull, gunwales, seats, keel, paddle, and bow guard.
+- Added `tools/generate_mode_equipment.py` as the deterministic source for all four equipment GLBs.
+
+### Changed
+- `Player3D.gd` now applies modular clothing to all seven explorers: upgrade clothing when Sand Shoes are owned, skating clothing in skating mode, and river clothing in boat mode.
+- Boat mode now loads `assets/3d/vehicles/Canoe.tscn`; the old procedural canoe is retained only as a load-failure fallback.
+- Added skating-mode aliases and a skating speed profile for data-driven skating sections.
+
+### Validation
+- Khronos `gltf-validator` reported 0 errors and 0 warnings for all three outfit GLBs and the canoe GLB.
+- The equipment generator passed Python compilation and produced deterministic, self-validated glTF 2.0 files.
+- Godot runtime/import validation remains pending because no Godot executable is available in this shell.
+
+## [Unreleased] - Playable Character and Resource Icon Asset Completion
+
+### Added
+- Added original animated low-poly GLBs for Monkey, Robot Explorer, Treasure Hunter, Tribal Adventurer, and Golden Explorer.
+- Added Godot wrapper scenes for all five skins and a reproducible `tools/generate_playable_characters.py` asset pipeline.
+- Added nine named gameplay animation clips per generated character: idle, run, strafe left/right, roll, interact, hit, victory wave, and death.
+- Added ten transparent 32×32 RGBA resource icons: gem, bricks, wood, tiles, windows, food, tools, relic key, Sunstone shard, and map piece.
+
+### Changed
+- Updated `Player3D.gd` so the five unlockable skin IDs load their final character scenes instead of procedural body/head placeholders.
+- Updated the 3D manifest and asset/license ledgers to record the new generated assets.
+
+### Validation
+- Khronos `gltf-validator` reported 0 errors and 0 warnings for all five character GLBs.
+- Verified every resource icon is 32×32 RGBA with both fully transparent and fully opaque pixels.
+- Ran `git diff --check`; no new whitespace errors were introduced.
+- Godot runtime import validation is still pending because no Godot executable is available in this shell.
+
 ## [Unreleased] - Expedition Lives System
 
 ### Added

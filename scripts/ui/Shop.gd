@@ -280,7 +280,11 @@ func _show_skin_preview(skin: Dictionary) -> void:
 	# Load and display the large character portrait
 	var portrait := _preview_panel.get_node("CharPortrait") as TextureRect
 	if portrait != null:
-		var tex_path := "res://assets/sprites/characters/%s.png" % _preview_skin_id
+		var tex_path: String
+		match _preview_skin_id:
+			"explorer":    tex_path = "res://assets/3d/characters/kairo/kairo_source_preview.jpg"
+			"jungle_girl": tex_path = "res://assets/3d/characters/zuri/zuri_source_preview.jpg"
+			_:             tex_path = "res://assets/sprites/characters/%s.png" % _preview_skin_id
 		var tex: Texture2D = null
 		if ResourceLoader.exists(tex_path):
 			tex = load(tex_path) as Texture2D

@@ -37,7 +37,7 @@ Normal sections keep controls simple: left/right move lanes, up jumps, down slid
 12. Water Slide Trail - water-slide entry, curves, drop, water tokens and fish token.
 13. Park Guide Path - guide/observation route with safe wildlife markers.
 14. Warthog Watch - tracking and safe-distance observation through mud and shrubs.
-15. Market River Dock - market path into first boat tutorial.
+15. Market Skate & River Dock - protected skating run through marked market lanes into the first boat tutorial.
 16. Antelope Trail - fast chase through wide sand with hoofprint route decisions.
 17. Rapids Run - full boat mode, river fork, crocodile zones, whirlpool, river relic.
 18. Hound of the Hidden Trail - dog-guided tracking, false path, relic and map choices.

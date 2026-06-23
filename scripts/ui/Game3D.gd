@@ -216,6 +216,8 @@ func _camera_distance() -> float:
 			return 6.4
 		"water_slide":
 			return 5.7
+		"skating":
+			return 5.3
 		"chase", "escape":
 			return 5.8
 		_:
@@ -229,6 +231,8 @@ func _camera_height() -> float:
 			return 3.3
 		"water_slide":
 			return 2.05
+		"skating":
+			return 2.35
 		"chase", "escape":
 			return 2.65
 		_:
@@ -246,6 +250,8 @@ func _mode_title(mode: String) -> String:
 			return "WATER SLIDE"
 		"boat":
 			return "BOAT MODE"
+		"skating":
+			return "SKATE RUN"
 		_:
 			return ""
 
@@ -261,6 +267,8 @@ func _mode_message(mode: String) -> String:
 			return "Steer through rocks, vines and drops."
 		"boat":
 			return "Steer the canoe through river hazards."
+		"skating":
+			return "Glide through the market track and dodge lane hazards."
 		_:
 			return ""
 

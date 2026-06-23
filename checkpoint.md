@@ -1,4 +1,84 @@
-# CHECKPOINT - Session 21
+# CHECKPOINT - Session 29
+
+---
+
+## Session 29 - Generated Character Source Previews
+
+### Completed
+- Added `monkey_source_preview.png`, `robot_source_preview.png`, `treasure_source_preview.png`, `tribal_source_preview.png`, and `golden_source_preview.png` beside their corresponding GLBs.
+- Matched Kairo and Zuri's source-preview presentation with landscape low-poly full-body renders on simple character-specific colored backgrounds.
+- Standardized all five new files to 1220×720 PNG.
+- Updated `MISSING_3D_ASSETS.md`, `ASSET_LICENSES.md`, `assets/3d/ASSET_CREDITS.md`, and `CHANGELOG.md`.
+
+### Validation
+- Verified all five files exist, decode successfully, and report 1220×720 dimensions.
+- Visually reviewed a combined contact sheet for consistent framing and character readability.
+
+---
+
+## Session 28 - Level 15 Skating-to-Boat Integration
+
+### Completed
+- Added skating path-module handling to `LevelManager3D.gd`, including entry, straight, and left/right curve variants.
+- Added smooth skating track visuals with cyan lane lines, violet edge glow, gold boost marks, signs, and a one-time `SKATE RUN` warning.
+- Added skating camera framing, HUD title/message, speed handling, and an idle/glide animation posture in `Player3D.gd`.
+- Converted the opening 14 rows of Level 15 into a skating course while preserving its existing 13-row boat tutorial and 44-row total length.
+- Renamed Level 15 to `Market Skate & River Dock` and updated its level-select preview, marker, route badge/art, level data, and design documentation.
+
+### Validation
+- Parsed all 20 `data/levels3d/level3d_*.json` files successfully.
+- Confirmed every level's module-row total matches its declared length.
+- Confirmed obstacle, coin, and collectable rows remain within bounds.
+- Confirmed Level 15 transitions from `skating` to `boat` and then back to `run` for the finish.
+- Ran `git diff --check` on the affected gameplay, UI, data, and documentation files.
+- Godot runtime/import validation is pending because no Godot executable was available.
+
+### Next Recommended Step
+Play Level 15 in Godot with Kairo, Zuri, and Monkey to verify outfit fit, the skating glide posture, the skating-to-boat clothing swap, canoe placement, and camera transition in motion.
+
+---
+
+## Session 27 - Modular Upgrade, Skating, and Boat Clothing
+
+### Completed
+- Added original low-poly GLBs and wrapper scenes for reinforced upgrade clothing, protective skating clothing, and river/boat clothing.
+- Added a real expedition canoe GLB and wrapper scene, replacing the procedural boat during normal asset loading.
+- Wired outfit selection into `Player3D.gd` for all seven explorers, including a smaller Monkey fit.
+- Normal running shows the reinforced outfit after the Sand Shoes upgrade is owned; boat and skating modes override it with their safety outfits.
+- Added skating aliases (`skate`, `skates`, and `roller_skating`) and speed handling so future level JSON can opt into the mode without more player-code changes.
+- Added `tools/generate_mode_equipment.py` and synchronized the manifest, credits, licenses, and changelog.
+
+### Validation
+- Upgrade outfit: 17 primitives, 5 materials.
+- Skating outfit: 20 primitives, 5 materials.
+- Boat outfit: 13 primitives, 5 materials.
+- Canoe: 13 primitives, 5 materials.
+- Khronos `gltf-validator` reported 0 errors and 0 warnings for all four GLBs.
+- Godot runtime/import validation is pending because no Godot executable was available in the checked shell and standard locations.
+
+### Next Recommended Step
+Open the project in Godot once to import the new GLBs, then verify a normal upgraded run, an explicit skating-mode test segment, and an existing boat level with Kairo, Zuri, and Monkey to confirm the three fit profiles at runtime.
+
+---
+
+## Session 26 - Playable Character and Resource Icon Asset Completion
+
+### Completed
+- Created original animated low-poly GLBs for Monkey, Robot Explorer, Treasure Hunter, Tribal Adventurer, and Golden Explorer under `assets/3d/characters/`.
+- Added nine clips per character matching the animation names already used by `Player3D.gd`.
+- Added Godot wrapper scenes and mapped all five skin IDs in `CHARACTER_SCENE_PATHS`, replacing the procedural gameplay fallbacks.
+- Added `tools/generate_playable_characters.py` so the generated character set is reproducible and self-validating.
+- Created all ten missing transparent resource icons in `assets/ui/icons/` at the manifest-required 32×32 RGBA size.
+- Updated `MISSING_3D_ASSETS.md`, `ASSET_LICENSES.md`, `assets/3d/ASSET_CREDITS.md`, and `CHANGELOG.md`.
+
+### Validation
+- The character generator confirmed 20-31 nodes, 19-25 meshes, and nine named animation clips per GLB.
+- Khronos `gltf-validator` reported 0 errors and 0 warnings for each of the five GLBs.
+- All ten icons passed dimension, RGBA, and transparent/opaque alpha checks; the final set was visually reviewed as a contact sheet at 32×32 scale.
+- Godot runtime/import validation is pending because a Godot executable was not available on PATH or in the checked standard install locations.
+
+### Next Recommended Step
+Open the project in Godot once to import the five GLBs and ten PNGs, then test each equipped skin in a gameplay run and visually confirm run, lane-change, slide, collect, hit, victory, and defeat animation transitions.
 
 ---
 

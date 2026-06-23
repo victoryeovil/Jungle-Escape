@@ -13,8 +13,9 @@ var is_guest: bool = true
 var is_logged_in: bool = false
 var player_name: String = "Explorer"
 
-# Tracks how many levels played since last login prompt (to avoid spam)
 var levels_since_login_prompt: int = 0
+var _level_start_time: float = 0.0   # for time_sec in analytics events
+var last_fail_row: int = 0           # set by Player3D / Game3D before calling fail_current_level
 
 func _ready() -> void:
 	EventBus.level_completed.connect(_on_level_completed)
@@ -28,7 +29,11 @@ func start_level(level_id: int) -> void:
 	session_coins = 0
 	session_keys = 0
 	moves_used = 0
+	last_fail_row = 0
+	_level_start_time = Time.get_ticks_msec() / 1000.0
 	state = GameState.PLAYING
+	AdaptiveDifficulty.on_level_start(level_id)
+	Analytics.level_start(level_id, SaveManager.get_selected_skin(), AdaptiveDifficulty.get_current_attempt(level_id))
 
 func pause_game() -> void:
 	if state == GameState.PLAYING:
@@ -160,14 +165,21 @@ func restart_level() -> void:
 
 # ── Signal handlers ────────────────────────────────────────────────────────────
 
-func _on_level_completed(_level_id: int, _stars: int, _coins: int, _moves: int) -> void:
+func _on_level_completed(level_id: int, stars: int, coins: int, _moves: int) -> void:
+	var elapsed := Time.get_ticks_msec() / 1000.0 - _level_start_time
+	AdaptiveDifficulty.on_level_complete(level_id)
+	Analytics.level_complete(level_id, stars, coins, elapsed, AdaptiveDifficulty.get_current_attempt(level_id))
 	if should_show_login_prompt():
 		EventBus.login_requested.emit()
 
-func _on_level_failed(_level_id: int, _reason: String) -> void:
-	pass
+func _on_level_failed(level_id: int, reason: String) -> void:
+	var elapsed := Time.get_ticks_msec() / 1000.0 - _level_start_time
+	AdaptiveDifficulty.on_level_fail(level_id)
+	Analytics.level_fail(level_id, reason, last_fail_row, elapsed, AdaptiveDifficulty.get_current_attempt(level_id))
 
 func _on_login_completed(success: bool) -> void:
 	if success:
 		is_guest = false
 		is_logged_in = true
+		if not player_name.is_empty() and player_name != "Explorer":
+			pass  # already set by LoginPrompt before emitting the signal

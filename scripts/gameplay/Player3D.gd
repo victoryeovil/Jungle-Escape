@@ -10,7 +10,18 @@ const GRAVITY: float = 22.0
 const CHARACTER_SCENE_PATHS := {
 	"explorer": "res://assets/3d/characters/kairo/Kairo.tscn",
 	"jungle_girl": "res://assets/3d/characters/zuri/Zuri.tscn",
+	"monkey": "res://assets/3d/characters/monkey/Monkey.tscn",
+	"robot": "res://assets/3d/characters/robot/RobotExplorer.tscn",
+	"treasure": "res://assets/3d/characters/treasure/TreasureHunter.tscn",
+	"tribal": "res://assets/3d/characters/tribal/TribalAdventurer.tscn",
+	"golden": "res://assets/3d/characters/golden/GoldenExplorer.tscn",
 }
+const OUTFIT_SCENE_PATHS := {
+	"upgrade": "res://assets/3d/outfits/upgrade/UpgradeOutfit.tscn",
+	"skating": "res://assets/3d/outfits/skating/SkatingOutfit.tscn",
+	"boat": "res://assets/3d/outfits/boat/BoatOutfit.tscn",
+}
+const CANOE_SCENE_PATH := "res://assets/3d/vehicles/Canoe.tscn"
 const DEFAULT_CHARACTER_SCENE := "res://assets/3d/characters/kairo/Kairo.tscn"
 const ANIM_IDLE := "CharacterArmature|Idle"
 const ANIM_RUN := "CharacterArmature|Run"
@@ -57,6 +68,7 @@ var _at_junction: bool = false
 var _junction_id: String = ""
 var _junction_routes: Array = []
 var _mode_vehicle: Node3D = null
+var _mode_outfit: Node3D = null
 
 signal died
 signal sand_blocked   # emitted when player tries to jump on sand without Sand Shoes
@@ -225,10 +237,13 @@ func _choose_junction_route(direction: String) -> void:
 
 func _set_movement_mode(mode: String) -> void:
 	var next_mode := mode if not mode.is_empty() else "run"
+	if next_mode in ["skate", "skates", "roller_skating"]:
+		next_mode = "skating"
 	if _movement_mode == next_mode:
 		return
 	_movement_mode = next_mode
 	_set_mode_vehicle(next_mode)
+	_refresh_outfit()
 
 func _mode_speed_multiplier() -> float:
 	match _movement_mode:
@@ -242,6 +257,8 @@ func _mode_speed_multiplier() -> float:
 			return 1.18
 		"boat":
 			return 1.08
+		"skating":
+			return 1.20
 		_:
 			return 1.0
 
@@ -302,6 +319,7 @@ func reset(lane: int = 1) -> void:
 	_junction_id = ""
 	_junction_routes.clear()
 	_set_mode_vehicle("")
+	_refresh_outfit()
 	_set_slide_collision(false)
 	_update_character_animation(true)
 
@@ -352,6 +370,7 @@ func _apply_selected_character_model() -> void:
 	_animation_player = _find_animation_player(_character_model)
 	if _animation_player == null:
 		push_warning("Player3D: no AnimationPlayer found in " + scene_path)
+	_refresh_outfit()
 
 func _use_placeholder_character(skin_id: String) -> void:
 	if _character_model != null:
@@ -361,6 +380,7 @@ func _use_placeholder_character(skin_id: String) -> void:
 	_active_animation = ""
 	_set_placeholder_visible(true)
 	_apply_placeholder_skin(skin_id)
+	_refresh_outfit()
 
 func _apply_placeholder_skin(skin_id: String) -> void:
 	var body := get_node_or_null("Body") as MeshInstance3D
@@ -400,12 +420,60 @@ func _apply_placeholder_skin(skin_id: String) -> void:
 	body.material_override = _placeholder_material(body_col)
 	head.material_override = _placeholder_material(head_col)
 
+func _refresh_outfit() -> void:
+	if _mode_outfit != null and is_instance_valid(_mode_outfit):
+		_mode_outfit.queue_free()
+	_mode_outfit = null
+
+	var outfit_id := ""
+	match _movement_mode:
+		"boat":
+			outfit_id = "boat"
+		"skating":
+			outfit_id = "skating"
+		_:
+			if SaveManager.has_upgrade("sand_shoes"):
+				outfit_id = "upgrade"
+	if outfit_id.is_empty():
+		return
+
+	var scene_path: String = OUTFIT_SCENE_PATHS.get(outfit_id, "")
+	var packed_scene := load(scene_path) as PackedScene
+	if packed_scene == null:
+		push_warning("Player3D: could not load outfit: " + scene_path)
+		return
+	_mode_outfit = packed_scene.instantiate() as Node3D
+	if _mode_outfit == null:
+		push_warning("Player3D: outfit scene is not Node3D: " + scene_path)
+		return
+	_mode_outfit.name = "ModeOutfit"
+	add_child(_mode_outfit)
+
+	var fit_scale := 1.0
+	var fit_y := 0.04
+	if outfit_id == "skating":
+		fit_y = 0.14
+	elif outfit_id == "boat":
+		fit_y = 0.06
+	if SaveManager.get_selected_skin() == "monkey":
+		fit_scale = 0.82
+	_mode_outfit.scale = Vector3.ONE * fit_scale
+	_mode_outfit.position.y = fit_y
+
 func _set_mode_vehicle(mode: String) -> void:
 	if _mode_vehicle != null and is_instance_valid(_mode_vehicle):
 		_mode_vehicle.queue_free()
 	_mode_vehicle = null
 
 	if mode == "boat":
+		var packed_canoe := load(CANOE_SCENE_PATH) as PackedScene
+		if packed_canoe != null:
+			_mode_vehicle = packed_canoe.instantiate() as Node3D
+			if _mode_vehicle != null:
+				_mode_vehicle.name = "BoatModeVisual"
+				add_child(_mode_vehicle)
+				return
+		push_warning("Player3D: could not load canoe scene; using procedural fallback")
 		_mode_vehicle = Node3D.new()
 		_mode_vehicle.name = "BoatModeVisual"
 		add_child(_mode_vehicle)
@@ -494,6 +562,9 @@ func _update_character_animation(force: bool = false) -> void:
 	if _strafe_anim_timer > 0.0:
 		_strafe_anim_timer -= get_physics_process_delta_time()
 		_play_character_animation(_strafe_anim_name, force)
+		return
+	if _movement_mode == "skating" and state == State.RUN:
+		_play_character_animation(ANIM_IDLE, force)
 		return
 
 	match state:

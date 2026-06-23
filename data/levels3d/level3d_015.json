@@ -2,7 +2,7 @@
     "id":  15,
     "length":  44,
     "seed":  163,
-    "name":  "Market River Dock",
+    "name":  "Market Skate & River Dock",
     "turns":  [
                   {
                       "row":  22,
@@ -216,23 +216,24 @@
                      ],
     "difficulty":  "Medium-Hard",
     "gameplay_modes":  [
-                           "runner",
+                           "skating",
                            "boat tutorial"
                        ],
     "path_modules":  [
                          {
-                             "type":  "straight_short",
+                             "type":  "skating_entry",
                              "rows":  6,
-                             "width":  "normal",
-                             "surface":  "dirt",
-                             "mode":  "run"
+                             "width":  "wide",
+                             "surface":  "skating",
+                             "mode":  "skating"
                          },
                          {
-                             "type":  "wide_curve_left",
+                             "type":  "skating_curve_left",
                              "rows":  8,
                              "width":  "wide",
-                             "surface":  "dirt",
-                             "mode":  "run"
+                             "surface":  "skating",
+                             "mode":  "skating",
+                             "curve_degrees":  20
                          },
                          {
                              "type":  "boat_entry_dock",
@@ -263,5 +264,5 @@
                              "mode":  "run"
                          }
                      ],
-    "path_identity":  "Market River Dock uses runner, boat tutorial"
+    "path_identity":  "Market Skate & River Dock uses skating, boat tutorial"
 }

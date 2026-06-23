@@ -470,3 +470,84 @@ func get_home_stage() -> int:
 func set_home_stage(stage: int) -> void:
 	_save_data["home_stage"] = stage
 	save_game()
+
+# ── Adaptive difficulty: per-level fail counts ────────────────────────────────
+# Stored locally so the adaptive AI persists across sessions.
+
+func get_level_fail_count(level_id: int) -> int:
+	return int(_save_data.get("fail_counts", {}).get(str(level_id), 0))
+
+func increment_level_fail_count(level_id: int) -> void:
+	if not _save_data.has("fail_counts"):
+		_save_data["fail_counts"] = {}
+	_save_data["fail_counts"][str(level_id)] = get_level_fail_count(level_id) + 1
+	save_game()
+
+func reset_level_fail_count(level_id: int) -> void:
+	if _save_data.has("fail_counts"):
+		_save_data["fail_counts"].erase(str(level_id))
+		save_game()
+
+# ── Optional cloud sync (login feature — not required for gameplay) ────────────
+
+func get_save_snapshot() -> Dictionary:
+	return _save_data.duplicate(true)
+
+func sync_to_cloud() -> void:
+	SupabaseClient.upload_save(get_save_snapshot())
+
+func restore_from_cloud(cloud: Dictionary) -> void:
+	# Coins / gems / hints — never reduce local
+	_save_data["coins"] = max(get_coins(), int(cloud.get("coins", 0)))
+	_save_data["gems"]  = max(get_gems(),  int(cloud.get("gems",  0)))
+	_save_data["hints"] = max(get_hints(), int(cloud.get("hints", 3)))
+
+	# Level progress — take furthest
+	var cloud_level := int(cloud.get("current_level", 1))
+	if cloud_level > get_current_level():
+		_save_data["current_level"] = cloud_level
+
+	# Completed levels — union
+	var cloud_done: Array = cloud.get("completed_levels", [])
+	var local_done: Array = get_completed_levels()
+	for lvl in cloud_done:
+		var id := int(lvl)
+		if id not in local_done:
+			local_done.append(id)
+	_save_data["completed_levels"] = local_done
+
+	# Stars — take max per level
+	if not _save_data.has("stars"):
+		_save_data["stars"] = {}
+	var cloud_stars: Dictionary = cloud.get("stars", {})
+	for key in cloud_stars:
+		var cs := int(cloud_stars[key])
+		if cs > get_stars(int(key)):
+			_save_data["stars"][str(key)] = cs
+
+	# Unlocked skins — union
+	var cloud_skins: Array = cloud.get("unlocked_skins", [])
+	for sk in cloud_skins:
+		unlock_skin(str(sk))
+
+	# Upgrades — union
+	var cloud_upgs: Array = cloud.get("upgrades", [])
+	for upg in cloud_upgs:
+		unlock_upgrade(str(upg))
+
+	# Resources — take max per type
+	var cloud_res: Dictionary = cloud.get("resources", {})
+	for res_id in cloud_res:
+		var ca := int(cloud_res[res_id])
+		if ca > get_resource(str(res_id)):
+			if not _save_data.has("resources"):
+				_save_data["resources"] = {}
+			_save_data["resources"][str(res_id)] = ca
+
+	# Home stage — take furthest
+	var cloud_home := int(cloud.get("home_stage", 0))
+	if cloud_home > get_home_stage():
+		_save_data["home_stage"] = cloud_home
+
+	save_game()
+	sync_to_cloud()  # push merged local data back up

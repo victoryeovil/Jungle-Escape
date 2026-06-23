@@ -5,7 +5,7 @@ Status key: ✅ Available/imported · 🔧 Procedural placeholder (functional, n
 This file is the production asset manifest. `res://` maps to the project root.  
 Every new import must have a corresponding entry in `ASSET_LICENSES.md`.
 
-Generated assets were created by `tools/generate_missing_3d_assets.py`. They are original low-poly project assets, not third-party downloads. Godot still needs to import them in-editor before `.import` metadata exists.
+Generated assets were created by `tools/generate_missing_3d_assets.py` and `tools/generate_playable_characters.py`. They are original low-poly project assets, not third-party downloads. The resource icon PNGs were generated specifically for this project and locally converted to transparent 32×32 RGBA assets. Godot still needs to import new assets in-editor before `.import` metadata exists.
 
 ---
 
@@ -35,12 +35,20 @@ Generated assets were created by `tools/generate_missing_3d_assets.py`. They are
 
 | Asset | Status | Target path | Notes |
 | --- | --- | --- | --- |
-| Canoe / boat model | Procedural placeholder (functional, not final) | `Player3D.gd` | Boat mode adds a canoe visual under the player. |
+| Canoe / boat model | Generated (original, wired) | `res://assets/3d/vehicles/canoe.glb` | Boat mode now loads the pointed expedition canoe scene; procedural geometry remains only as a load-failure fallback. |
+| Boat safety outfit | Generated (original, wired) | `res://assets/3d/outfits/boat/boat_outfit.glb` | Modular life jacket, reflective straps, river pack, and water boots fitted over every selectable explorer. |
 | River rapid water material | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Boat modules render darker water and shimmer strips. |
 | Floating logs | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | `floating_log` obstacle added. |
 | River rocks | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | `river_rock` / `water_rock` obstacle added. |
 | Crocodile warning marker | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | `crocodile_zone` obstacle added as danger-zone visual. |
 | Boat dock model | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Boat-entry modules add dock props. |
+
+## Skating Mode
+
+| Asset | Status | Target path | Notes |
+| --- | --- | --- | --- |
+| Protective skating outfit | Generated (original, wired) | `res://assets/3d/outfits/skating/skating_outfit.glb` | Helmet, harness, elbow/knee pads, and inline skates. `Player3D` accepts `skating`, `skate`, `skates`, and `roller_skating` mode names. |
+| Skating path modules | Implemented (procedural, wired) | `LevelManager3D.gd` / `level3d_015.json` | `skating_entry`, `skating_straight`, and left/right skating curves use a smooth dark track, cyan lane stripes, violet edge glow, boost marks, signage, and skating mode triggers. |
 
 ## Tracking
 
@@ -95,15 +103,42 @@ Generated assets were created by `tools/generate_missing_3d_assets.py`. They are
 | --- | --- | --- | --- | --- |
 | Kairo playable explorer | ✅ Imported | `.glb` | `res://assets/3d/characters/kairo/kairo.glb` | `explorer` skin, default player model |
 | Zuri playable explorer | ✅ Imported | `.glb` | `res://assets/3d/characters/zuri/zuri.glb` | `jungle_girl` skin, selectable in Shop |
+| Monkey playable explorer | Generated (original, animated) | `.glb` | `res://assets/3d/characters/monkey/monkey.glb` | `monkey` skin; original scout-vest design with nine gameplay animation clips |
+| Robot Explorer | Generated (original, animated) | `.glb` | `res://assets/3d/characters/robot/robot.glb` | `robot` skin; original steel/cyan expedition robot with nine gameplay animation clips |
+| Treasure Hunter | Generated (original, animated) | `.glb` | `res://assets/3d/characters/treasure/treasure.glb` | `treasure` skin; original hat, satchel, map-tube, and backpack design |
+| Tribal Adventurer | Generated (original, animated) | `.glb` | `res://assets/3d/characters/tribal/tribal.glb` | `tribal` skin; original fictional woven-adventure design with Sunstone accents |
+| Golden Explorer | Generated (original, animated) | `.glb` | `res://assets/3d/characters/golden/golden.glb` | `golden` skin; original gold/obsidian design with emissive Sunstone accents |
 | Shared explorer rig | ✅ Embedded | `.glb` | `res://assets/3d/characters/shared/` | Quaternius universal humanoid rig |
 | Kairo character thumbnail | ❌ Missing | `.png` | `res://assets/3d/characters/kairo/kairo_thumb.png` | Shop / profile UI |
 | Zuri character thumbnail | ❌ Missing | `.png` | `res://assets/3d/characters/zuri/zuri_thumb.png` | Shop / profile UI |
+
+### Character Source Previews
+
+| Character | Status | Format | Local path |
+| --- | --- | --- | --- |
+| Kairo | ✅ Available | `.jpg` 1220×720 | `res://assets/3d/characters/kairo/kairo_source_preview.jpg` |
+| Zuri | ✅ Available | `.jpg` 1220×720 | `res://assets/3d/characters/zuri/zuri_source_preview.jpg` |
+| Monkey | ✅ Generated | `.png` 1220×720 | `res://assets/3d/characters/monkey/monkey_source_preview.png` |
+| Robot Explorer | ✅ Generated | `.png` 1220×720 | `res://assets/3d/characters/robot/robot_source_preview.png` |
+| Treasure Hunter | ✅ Generated | `.png` 1220×720 | `res://assets/3d/characters/treasure/treasure_source_preview.png` |
+| Tribal Adventurer | ✅ Generated | `.png` 1220×720 | `res://assets/3d/characters/tribal/tribal_source_preview.png` |
+| Golden Explorer | ✅ Generated | `.png` 1220×720 | `res://assets/3d/characters/golden/golden_source_preview.png` |
 
 ### Kairo — Design Brief
 Young African jungle explorer · lean, athletic · short dark hair · khaki/olive shirt, utility belt, cargo shorts · light boots and compact backpack · readable at third-person portrait camera distance.
 
 ### Zuri — Design Brief
 Young African jungle adventurer · athletic, agile · tied-back hair or braided ponytail · practical fitted adventure top, satchel or harness, trek pants · boots and compact backpack · confident, intelligent pathfinder feel.
+
+### Modular Clothing Variants
+
+All seven playable explorers now share mode-specific clothing overlays instead of duplicating full character GLBs.
+
+| Variant | Status | Format | Target path | Runtime condition |
+| --- | --- | --- | --- | --- |
+| Reinforced upgrade outfit | Generated (original, wired) | `.glb` | `res://assets/3d/outfits/upgrade/upgrade_outfit.glb` | Shown during normal running when the Sand Shoes upgrade is owned. |
+| Protective skating outfit | Generated (original, wired) | `.glb` | `res://assets/3d/outfits/skating/skating_outfit.glb` | Shown when movement mode resolves to `skating`. |
+| River/boat outfit | Generated (original, wired) | `.glb` | `res://assets/3d/outfits/boat/boat_outfit.glb` | Shown automatically during boat mode. |
 
 ---
 
@@ -195,21 +230,21 @@ All items below are currently replaced by procedural `BoxMesh` / `CylinderMesh` 
 
 ## Priority 7 — Collectibles (In-game Pickups)
 
-Coins have a functional procedural placeholder. All others need both a 3D GLB (in-lane pickup mesh) and a 2D icon PNG (HUD, shop, level complete screen).
+The collectible GLBs and all ten requested 2D resource icons are now present. Windows and map pieces remain intentionally UI-only because they are not spawned as in-lane pickups.
 
 | Collectable | ID | 3D GLB Status | Icon PNG Status | 3D target path | Icon target path |
 | --- | --- | --- | --- | --- | --- |
 | **Coin** | `coins` | Generated (original) | ✅ Emoji 🪙 | `res://assets/3d/collectibles/coin.glb` | — |
-| **Gem** | `gems` | Generated (original) | ❌ Missing | `res://assets/3d/collectibles/gem.glb` | `res://assets/ui/icons/icon_gem.png` |
-| **Bricks** | `bricks` | Generated (original) | ❌ Missing | `res://assets/3d/collectibles/brick.glb` | `res://assets/ui/icons/icon_bricks.png` |
-| **Wood** | `wood` | Generated (original) | ❌ Missing | `res://assets/3d/collectibles/wood.glb` | `res://assets/ui/icons/icon_wood.png` |
-| **Tiles** | `tiles` | Generated (original) | ❌ Missing | `res://assets/3d/collectibles/tile.glb` | `res://assets/ui/icons/icon_tiles.png` |
-| **Windows** | `windows` | ❌ UI only | ❌ Missing | — | `res://assets/ui/icons/icon_windows.png` |
-| **Food** | `food` | Generated (original) | ❌ Missing | `res://assets/3d/collectibles/food.glb` | `res://assets/ui/icons/icon_food.png` |
-| **Tools** | `tools` | Generated (original) | ❌ Missing | `res://assets/3d/collectibles/tools.glb` | `res://assets/ui/icons/icon_tools.png` |
-| **Relic Key** | `relic_keys` | Generated (original) | ❌ Missing | `res://assets/3d/collectibles/relic_key.glb` | `res://assets/ui/icons/icon_relic_key.png` |
-| **Sunstone Shard** | `sunstone_shards` | Generated (original) | ❌ Missing | `res://assets/3d/collectibles/sunstone_shard.glb` | `res://assets/ui/icons/icon_sunstone_shard.png` |
-| **Map Piece** | `map_pieces` | ❌ UI only | ❌ Missing | — | `res://assets/ui/icons/icon_map_piece.png` |
+| **Gem** | `gems` | Generated (original) | ✅ Generated 32×32 RGBA | `res://assets/3d/collectibles/gem.glb` | `res://assets/ui/icons/icon_gem.png` |
+| **Bricks** | `bricks` | Generated (original) | ✅ Generated 32×32 RGBA | `res://assets/3d/collectibles/brick.glb` | `res://assets/ui/icons/icon_bricks.png` |
+| **Wood** | `wood` | Generated (original) | ✅ Generated 32×32 RGBA | `res://assets/3d/collectibles/wood.glb` | `res://assets/ui/icons/icon_wood.png` |
+| **Tiles** | `tiles` | Generated (original) | ✅ Generated 32×32 RGBA | `res://assets/3d/collectibles/tile.glb` | `res://assets/ui/icons/icon_tiles.png` |
+| **Windows** | `windows` | ❌ UI only | ✅ Generated 32×32 RGBA | — | `res://assets/ui/icons/icon_windows.png` |
+| **Food** | `food` | Generated (original) | ✅ Generated 32×32 RGBA | `res://assets/3d/collectibles/food.glb` | `res://assets/ui/icons/icon_food.png` |
+| **Tools** | `tools` | Generated (original) | ✅ Generated 32×32 RGBA | `res://assets/3d/collectibles/tools.glb` | `res://assets/ui/icons/icon_tools.png` |
+| **Relic Key** | `relic_keys` | Generated (original) | ✅ Generated 32×32 RGBA | `res://assets/3d/collectibles/relic_key.glb` | `res://assets/ui/icons/icon_relic_key.png` |
+| **Sunstone Shard** | `sunstone_shards` | Generated (original) | ✅ Generated 32×32 RGBA | `res://assets/3d/collectibles/sunstone_shard.glb` | `res://assets/ui/icons/icon_sunstone_shard.png` |
+| **Map Piece** | `map_pieces` | ❌ UI only | ✅ Generated 32×32 RGBA | — | `res://assets/ui/icons/icon_map_piece.png` |
 
 **Icon spec:** 32×32 PNG, transparent background, CC0 preferred.  
 **3D spec:** Low-poly GLB, single mesh, no rig needed — uses existing `Area3D` pickup logic in `_spawn_coin()`.  
@@ -272,7 +307,8 @@ The Big 5 are the primary wildlife milestone for v1 release.
 | Asset | Status | Format | Target path | Notes |
 | --- | --- | --- | --- | --- |
 | **Sand Shoes icon** | ❌ Missing | `.png` 64×64 | `res://assets/ui/upgrades/sand_shoes_icon.png` | Shown in Shop, popup, confirmation. Dusty/worn boot. |
-| Sand Shoes 3D prop | Generated (original) | `.glb` | `res://assets/3d/upgrades/sand_shoes.glb` | Optional equip visual on player feet in Level 6. |
+| Sand Shoes 3D prop | Generated (original) | `.glb` | `res://assets/3d/upgrades/sand_shoes.glb` | Standalone shop/preview prop. |
+| Equipped upgrade clothing | Generated (original, wired) | `.glb` | `res://assets/3d/outfits/upgrade/upgrade_outfit.glb` | Reinforced vest, utility gear, wrist guards, field pack, and sand boots shown on the active player after purchase. |
 
 ---
 

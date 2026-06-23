@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/3d/characters/monkey/monkey.glb" id="1_monkey_glb"]
+
+[node name="Monkey" type="Node3D"]
+
+[node name="Model" parent="." instance=ExtResource("1_monkey_glb")]

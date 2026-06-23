@@ -64,9 +64,9 @@ const LEVEL_INFO: Array = [
 	  "zone": "wildlands", "color": Color(0.70, 0.50, 0.14),
 	  "desc": "Warthogs cross the trail ahead. Collect animal badges and tiles for the home walls.",
 	  "rewards": "Coins  ·  Animal Badge  ·  Bricks  ·  Tiles" },
-	{ "name": "Market Path",         "chapter": "Chapter 15", "area": "Settlement Market",
+	{ "name": "Market Skate & Dock", "chapter": "Chapter 15", "area": "Market Skate Track",
 	  "zone": "wildlands", "color": Color(0.82, 0.48, 0.14),
-	  "desc": "Tariro the trader sets up market. Gather tiles and windows for the growing home.",
+	  "desc": "Skate the market track, gather supplies, then switch into a canoe at the river dock.",
 	  "rewards": "Coins  ·  Windows  ·  Tiles  ·  Food" },
 	{ "name": "Antelope Trail",      "chapter": "Chapter 16", "area": "Open Savanna",
 	  "zone": "wildlands", "color": Color(0.84, 0.70, 0.18),
@@ -830,6 +830,7 @@ func _draw_route_mode_art() -> void:
 	_draw_water_slide_trail(12)
 	_draw_guide_post(_node_pos(13) + Vector2(54, -22), "GUIDE")
 	_draw_tracking_trail(14, Color(0.68, 0.52, 0.22, 0.56))
+	_draw_skate_trail(15)
 	_draw_dock_trail(15)
 	_draw_chase_trail(16, Color(0.92, 0.72, 0.16, 0.56))
 	_draw_boat_trail(17)
@@ -877,6 +878,15 @@ func _draw_dock_trail(level_id: int) -> void:
 			Color(0.46, 0.28, 0.10, 0.92))
 	draw_rect(Rect2(p.x - 4.0, p.y - 5.0, 6.0, 28.0), Color(0.10, 0.07, 0.03, 0.96))
 	draw_rect(Rect2(p.x + 86.0, p.y - 5.0, 6.0, 28.0), Color(0.10, 0.07, 0.03, 0.96))
+
+func _draw_skate_trail(level_id: int) -> void:
+	var pts := _segment_points(level_id, 34.0, 12)
+	draw_polyline(pts, Color(0.08, 0.12, 0.22, 0.82), 12.0, true)
+	draw_polyline(pts, Color(0.16, 0.78, 0.92, 0.72), 4.0, true)
+	for i in range(1, pts.size(), 3):
+		var p: Vector2 = pts[i]
+		draw_circle(p + Vector2(-5, 0), 2.2, Color(0.60, 0.28, 0.92, 0.86))
+		draw_circle(p + Vector2(5, 0), 2.2, Color(0.98, 0.74, 0.18, 0.86))
 
 func _draw_boat_trail(level_id: int) -> void:
 	var pts := _segment_points(level_id, -30.0, 14)
@@ -1710,7 +1720,7 @@ func _level_title(level_id: int) -> String:
 		10: return "Lost Paw Trail"
 		12: return "Water Slide Trail"
 		13: return "Park Guide Path"
-		15: return "Market River Dock"
+		15: return "Market Skate & River Dock"
 		17: return "Rapids Run"
 		18: return "Hound of the Hidden Trail"
 		19: return "Boar Escape"
@@ -1720,7 +1730,7 @@ func _level_title(level_id: int) -> String:
 func _level_area(level_id: int) -> String:
 	match level_id:
 		12: return "Water Slide Channel"
-		15: return "River Dock"
+		15: return "Market Skate Track"
 		17: return "Rapids Fork"
 		19: return "Survival Escape Route"
 		20: return "Ancient Baobab"
@@ -1734,7 +1744,7 @@ func _level_marker_title(level_id: int) -> String:
 		10: return "Lost Paw\nTrail"
 		12: return "Water Slide\nTrail"
 		13: return "Park Guide\nPath"
-		15: return "River Dock"
+		15: return "Skate & Dock"
 		17: return "Rapids Run"
 		18: return "Hidden\nHound Trail"
 		19: return "Boar Escape"
@@ -1750,7 +1760,7 @@ func _level_desc(level_id: int) -> String:
 		13:
 			return "Moyo guides the route through wildlife markers, observation points, and a safe junction."
 		15:
-			return "The market trail reaches a river dock. Dodge crates, collect trade tokens, and enter the boat."
+			return "Skate the marked market lanes, dodge crates, collect trade tokens, then change into river gear and enter the canoe."
 		17:
 			return "Full boat mode through rapids, floating logs, crocodile danger zones, and a forked river."
 		18:
@@ -1778,7 +1788,7 @@ func _level_badge(level_id: int) -> String:
 		11, 16: return "CHASE"
 		12: return "SLIDE"
 		13: return "GUIDE"
-		15: return "DOCK"
+		15: return "SKATE"
 		17: return "BOAT"
 		19: return "ESCAPE"
 		20: return "FINAL"
@@ -1792,6 +1802,7 @@ func _level_badge_color(level_id: int) -> Color:
 		"SLIDE": return Color(0.12, 0.58, 0.82)
 		"GUIDE": return Color(0.55, 0.68, 0.24)
 		"DOCK": return Color(0.24, 0.46, 0.62)
+		"SKATE": return Color(0.20, 0.70, 0.86)
 		"BOAT": return Color(0.10, 0.38, 0.58)
 		"ESCAPE": return Color(0.72, 0.22, 0.08)
 		"FINAL": return Color(0.86, 0.62, 0.14)

@@ -26,7 +26,10 @@ config/icon="res://assets/sprites/ui/icon.png"
 
 Constants="*res://scripts/data/Constants.gd"
 EventBus="*res://scripts/autoload/EventBus.gd"
+SupabaseClient="*res://scripts/autoload/SupabaseClient.gd"
+Analytics="*res://scripts/autoload/Analytics.gd"
 SaveManager="*res://scripts/autoload/SaveManager.gd"
+AdaptiveDifficulty="*res://scripts/autoload/AdaptiveDifficulty.gd"
 GameManager="*res://scripts/autoload/GameManager.gd"
 AudioManager="*res://scripts/autoload/AudioManager.gd"
 

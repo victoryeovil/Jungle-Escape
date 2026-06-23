@@ -242,9 +242,9 @@ func _default_module_rows(kind: String) -> int:
 			return 10
 		"narrow_passage", "ruins_corridor", "bridge_crossing":
 			return 5
-		"water_slide_entry", "boat_entry_dock":
+		"water_slide_entry", "boat_entry_dock", "skating_entry":
 			return 4
-		"water_slide_curve", "boat_river_curve", "boat_rapids":
+		"water_slide_curve", "boat_river_curve", "boat_rapids", "skating_straight", "skating_curve_left", "skating_curve_right":
 			return 8
 		"junction_two_way", "junction_three_way":
 			return 5
@@ -263,6 +263,10 @@ func _default_curve_degrees(kind: String) -> float:
 			return 0.0
 		"water_slide_curve", "boat_river_curve":
 			return 32.0
+		"skating_curve_left":
+			return 20.0
+		"skating_curve_right":
+			return -20.0
 		_:
 			return 0.0
 
@@ -278,6 +282,8 @@ func _default_width_name(kind: String) -> String:
 			return "slide"
 		"boat_entry_dock", "boat_river_straight", "boat_river_curve", "boat_rapids":
 			return "boat"
+		"skating_entry", "skating_straight", "skating_curve_left", "skating_curve_right":
+			return "wide"
 		_:
 			return "normal"
 
@@ -304,6 +310,8 @@ func _default_surface_for_module(kind: String) -> String:
 			return "water_slide"
 		"boat_entry_dock", "boat_river_straight", "boat_river_curve", "boat_rapids":
 			return "boat"
+		"skating_entry", "skating_straight", "skating_curve_left", "skating_curve_right":
+			return "skating"
 		"ruins_corridor", "finish_gate_approach":
 			return "stone"
 		"sand_dune_curve":
@@ -319,6 +327,8 @@ func _default_mode_for_module(kind: String) -> String:
 			return "water_slide"
 		"boat_entry_dock", "boat_river_straight", "boat_river_curve", "boat_rapids":
 			return "boat"
+		"skating_entry", "skating_straight", "skating_curve_left", "skating_curve_right":
+			return "skating"
 		"animal_chase_lane":
 			return "chase"
 		"animal_escape_section":
@@ -402,6 +412,27 @@ func _spawn_ground(data: Dictionary) -> void:
 				Vector3(path_width * 0.10, 0.02, TILE_Z * 0.18),
 				Color(0.78, 0.96, 1.0, 0.55)
 			)
+		elif surface == "skating":
+			for lane_edge_value in [-0.9, 0.9]:
+				var lane_edge := float(lane_edge_value)
+				_add_box(segment, "SkateLaneStripe",
+					Vector3(0.055, 0.025, TILE_Z * 0.94),
+					Vector3(lane_edge, 0.018, 0.0),
+					Color(0.15, 0.88, 1.0, 0.82)
+				)
+			for outer_edge_value in [-1.0, 1.0]:
+				var outer_edge := float(outer_edge_value)
+				_add_box(segment, "SkateEdgeGlow",
+					Vector3(0.09, 0.035, TILE_Z * 0.96),
+					Vector3(outer_edge * path_width * 0.43, 0.022, 0.0),
+					Color(0.52, 0.24, 0.94, 0.72)
+				)
+			if i % 2 == 0:
+				_add_box(segment, "SkateBoostMark",
+					Vector3(1.10, 0.03, 0.18),
+					Vector3(0.0, 0.026, 0.18),
+					Color(0.92, 0.76, 0.20, 0.78)
+				)
 		elif surface == "wood":
 			for plank_i in range(3):
 				_add_box(segment, "BridgePlank%d" % plank_i,
@@ -428,6 +459,8 @@ func _surface_path_color(surface: String, module_kind: String, rng: RandomNumber
 			return Color(0.05, 0.42, 0.62).lerp(Color(0.16, 0.70, 0.92), rng.randf_range(0.0, 0.35))
 		"boat":
 			return Color(0.04, 0.22, 0.32).lerp(Color(0.05, 0.44, 0.62), rng.randf_range(0.0, 0.28))
+		"skating":
+			return Color(0.16, 0.20, 0.28).lerp(Color(0.32, 0.38, 0.50), rng.randf_range(0.0, 0.30))
 		"stone":
 			return Color(0.36, 0.35, 0.30).lerp(_theme.get("stone", COLOR_STONE), rng.randf_range(0.0, 0.35))
 		"wood":
@@ -485,7 +518,10 @@ func _spawn_path_edge_details(row: int, rng: RandomNumberGenerator) -> void:
 
 func _spawn_obstacles(data: Dictionary) -> void:
 	var obstacles: Array = data.get("obstacles", [])
+	var skip_chance: float = AdaptiveDifficulty.get_obstacle_skip_chance(_level_id)
 	for ob in obstacles:
+		if skip_chance > 0.0 and randf() < skip_chance:
+			continue
 		var kind: String = ob.get("type", "rock")
 		var lane: int = ob.get("lane", 1)
 		var row: int = ob.get("row", 5)
@@ -1083,6 +1119,7 @@ func _spawn_module_landmarks(data: Dictionary) -> void:
 	var spawned_escape := false
 	var spawned_boat := false
 	var spawned_slide := false
+	var spawned_skating := false
 
 	for row in range(1, length):
 		var kind := str(_seg_module.get(row, ""))
@@ -1115,6 +1152,9 @@ func _spawn_module_landmarks(data: Dictionary) -> void:
 			if not spawned_boat:
 				_spawn_dock_marker(row)
 				spawned_boat = true
+		elif mode == "skating" and not spawned_skating:
+			_spawn_warning_marker(row, "SKATE RUN")
+			spawned_skating = true
 
 		match kind:
 			"bridge_crossing":
@@ -1145,6 +1185,8 @@ func _module_label(kind: String) -> String:
 			return "WATER SLIDE"
 		"boat_entry_dock", "boat_river_straight", "boat_river_curve", "boat_rapids":
 			return "RIVER RUN"
+		"skating_entry", "skating_straight", "skating_curve_left", "skating_curve_right":
+			return "SKATE RUN"
 		"animal_chase_lane":
 			return "ANIMAL TRACKS"
 		"animal_escape_section":
