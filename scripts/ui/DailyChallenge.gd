@@ -99,8 +99,8 @@ func _build_challenge_card(challenge: Dictionary) -> void:
 	panel.add_child(badge)
 
 	var date_dict := Time.get_date_dict_from_system()
-	var months := ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-	var month_name := months[int(date_dict.get("month", 1)) - 1]
+	var months: Array[String] = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+	var month_name: String = months[int(date_dict.get("month", 1)) - 1]
 	var date_str := month_name + " " + str(date_dict.get("day", 1)) + ", " + str(date_dict.get("year", 2025))
 	var lbl_date := Label.new()
 	lbl_date.text = date_str
@@ -223,7 +223,7 @@ func _today_challenge() -> Dictionary:
 	var seed_val := int(d.get("day", 1)) + int(d.get("month", 1)) * 31 + int(d.get("year", 2025)) * 366
 	var idx  := seed_val % CHALLENGES.size()
 	var lvl  := (seed_val % 6) + 1
-	var c    := CHALLENGES[idx].duplicate()
+	var c: Dictionary = CHALLENGES[idx].duplicate()
 	c["level_id"] = lvl
 	c["desc"]     = c["desc"] % lvl
 	return c

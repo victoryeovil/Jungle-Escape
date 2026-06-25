@@ -519,7 +519,7 @@ func _refresh_outfit() -> void:
 		"skating":
 			outfit_id = "skating"
 		_:
-			if SaveManager.has_upgrade("sand_shoes"):
+			if SaveManager.has_upgrade("sand_shoes") and _current_surface == "sand":
 				outfit_id = "upgrade"
 	if outfit_id.is_empty():
 		return

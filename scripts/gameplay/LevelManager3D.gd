@@ -951,6 +951,14 @@ func _spawn_wildlife(data: Dictionary) -> void:
 	if length > 24:
 		_butterfly(Vector3(3.1, 1.0, -float(length - 4) * TILE_Z), rng)
 
+	# Ambient jungle wildlife at path edges
+	if length > 12:
+		_wildlife_glb("monkey",      Vector3(rng.randf_range(3.2, 4.5), 1.8, -float(rng.randi_range(5, length - 5)) * TILE_Z), Vector3(0.55, 0.55, 0.55), rng.randf_range(0.0, 360.0))
+		_wildlife_glb("weaver_bird", Vector3(-rng.randf_range(3.0, 4.2), 2.5, -float(rng.randi_range(8, length - 4)) * TILE_Z), Vector3(0.35, 0.35, 0.35), rng.randf_range(0.0, 360.0))
+	if length > 18:
+		_wildlife_glb("frog",        Vector3(rng.randf_range(2.8, 3.8), 0.05, -float(rng.randi_range(6, length - 6)) * TILE_Z), Vector3(0.45, 0.45, 0.45), rng.randf_range(0.0, 360.0))
+		_wildlife_glb("snake",       Vector3(-rng.randf_range(3.0, 4.0), 0.02, -float(rng.randi_range(10, length - 5)) * TILE_Z), Vector3(0.50, 0.50, 0.50), rng.randf_range(0.0, 360.0))
+
 func _grass_clump(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	var root := Node3D.new()
 	root.name = "GrassClump"
@@ -1511,10 +1519,11 @@ func _spawn_bridge_posts(row: int) -> void:
 	root.position = _row_center(row)
 	root.rotation.y = _row_heading_y(row)
 	_group("ModeEffects").add_child(root)
-	for side_value in [-1.0, 1.0]:
-		var side := float(side_value)
-		for z in [-1.05, 1.05]:
-			_add_cylinder(root, "Post", 0.06, 0.08, 0.72, Vector3(side * _seg_width.get(row, PATH_WIDTH) * 0.50, 0.36, z), COLOR_LOG)
+	if _place_glb(root, "res://assets/3d/environment/bridges/wood_bridge.glb", Vector3.ZERO, Vector3(1.0, 1.0, 1.0)) == null:
+		for side_value in [-1.0, 1.0]:
+			var side := float(side_value)
+			for z in [-1.05, 1.05]:
+				_add_cylinder(root, "Post", 0.06, 0.08, 0.72, Vector3(side * _seg_width.get(row, PATH_WIDTH) * 0.50, 0.36, z), COLOR_LOG)
 
 func _spawn_ruins_wall(row: int, rng: RandomNumberGenerator) -> void:
 	for side_value in [-1.0, 1.0]:
@@ -1676,16 +1685,50 @@ func _on_turn_body_exited(body: Node3D) -> void:
 	if body is CharacterBody3D:
 		turn_zone_exited.emit()
 
+func _goal_glb_path() -> String:
+	if _level_id <= 4:
+		return "res://assets/3d/goals/jungle_gate.glb"
+	elif _level_id <= 8:
+		return "res://assets/3d/goals/vine_ruin_arch.glb"
+	elif _level_id <= 12:
+		return "res://assets/3d/goals/temple_doorway.glb"
+	elif _level_id <= 16:
+		return "res://assets/3d/goals/temple_portal.glb"
+	else:
+		return "res://assets/3d/goals/river_gate.glb"
+
 func _spawn_finish(data: Dictionary) -> void:
 	var length: int = data.get("length", 30)
 	var gate_pos: Vector3 = _seg_pos.get(length, Vector3(0.0, 0.0, -float(length) * TILE_Z))
 	var gate_fwd: Vector3 = _seg_fwd.get(length, Vector3(0.0, 0.0, -1.0))
 	var heading_y := atan2(gate_fwd.x, -gate_fwd.z)
+
+	# Relic altar placed before the gate (2.5 tiles back from gate)
+	var altar_pos := gate_pos + gate_fwd * (-TILE_Z * 2.5)
+	var altar_root := Node3D.new()
+	altar_root.name = "RelicAltar"
+	altar_root.position = altar_pos
+	altar_root.rotation.y = heading_y
+	_group("Ruins").add_child(altar_root)
+	_place_glb(altar_root, "res://assets/3d/rewards/relic_altar.glb", Vector3.ZERO, Vector3(0.8, 0.8, 0.8))
+
 	var root := Node3D.new()
 	root.name = "TempleFinishGate"
 	root.position = gate_pos
 	root.rotation.y = heading_y
 	_group("FinishGate").add_child(root)
+
+	if _place_glb(root, _goal_glb_path(), Vector3.ZERO, Vector3(1.2, 1.2, 1.2)) != null:
+		var area := Area3D.new()
+		area.name = "FinishArea"
+		var col := CollisionShape3D.new()
+		col.shape = BoxShape3D.new()
+		(col.shape as BoxShape3D).size = Vector3(PATH_WIDTH, 3.2, 1.2)
+		area.add_child(col)
+		area.position = Vector3(0.0, 1.55, 0.0)
+		area.body_entered.connect(_on_finish_entered)
+		root.add_child(area)
+		return
 
 	for side_value in [-1.0, 1.0]:
 		var side := float(side_value)

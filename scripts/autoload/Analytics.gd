@@ -7,8 +7,8 @@ extends Node
 # Fill in URL and KEY after running supabase_schema.sql.
 # Leave them empty and nothing is sent — game works 100% offline.
 
-const SUPABASE_URL := ""   # e.g. "https://abcdefgh.supabase.co"
-const SUPABASE_KEY := ""   # anon / public key (INSERT-only policy — safe to ship)
+const SUPABASE_URL := "http://localhost:54321"
+const SUPABASE_KEY := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzQxODI0MDAwLCJleHAiOjE4OTk1OTA0MDB9.rdpDFdPRK_GXBl2XJ0IxMQbFd8kRPm4EnDVFsDVy5jA"
 
 const FLUSH_INTERVAL := 30.0   # seconds between automatic batch sends
 const MAX_QUEUE     := 20      # force-flush when queue hits this size

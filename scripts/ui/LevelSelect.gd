@@ -207,6 +207,7 @@ var _bird1_x         : float   = -28.0
 var _bird2_x         : float   = 510.0
 var _shimmer_t       : float   = 0.0
 var _bg_texture      : Texture2D = null
+var _monkey_map_tex  : Texture2D = null
 var _scroll_y        : float   = SCROLL_MAX  # start showing chapter 1 at bottom
 var _is_dragging     : bool    = false
 var _drag_start_y    : float   = 0.0
@@ -217,6 +218,7 @@ var _marker_layer    : Control = null
 func _ready() -> void:
 	_rng.seed = 4419
 	_bg_texture = _load_map_texture()
+	_monkey_map_tex = _load_texture_from_path("res://assets/ui/icons/monkey_map_icon.png")
 	_setup()
 
 func _setup() -> void:
@@ -392,13 +394,19 @@ func _draw_moving_boar(base: Vector2, phase: float) -> void:
 func _draw_moving_monkey(base: Vector2, phase: float) -> void:
 	var swing := sin(_shimmer_t * 1.8 + phase)
 	var p := base + Vector2(swing * 22.0, cos(_shimmer_t * 1.8 + phase) * 6.0)
-	var c := Color(0.46, 0.26, 0.10, 0.86)
-	draw_line(base + Vector2(-22, -36), p + Vector2(0, -14), Color(0.18, 0.10, 0.04, 0.70), 2.0, true)
-	draw_circle(p, 9.0, c)
-	draw_circle(p + Vector2(0, -12), 7.0, c.lightened(0.12))
-	draw_circle(p + Vector2(-7, -13), 3.0, c.lightened(0.06))
-	draw_circle(p + Vector2(7, -13), 3.0, c.lightened(0.06))
-	draw_arc(p + Vector2(-9, 3), 13.0, -0.6, 1.45, 12, c, 3.0, true)
+	draw_line(base + Vector2(-22, -36), p + Vector2(0, -24), Color(0.18, 0.10, 0.04, 0.70), 2.0, true)
+	if _monkey_map_tex != null:
+		# Shadow circle so the icon reads against any map background
+		draw_circle(p, 26.0, Color(0.0, 0.0, 0.0, 0.30))
+		var sz := Vector2(44.0, 44.0)
+		draw_texture_rect(_monkey_map_tex, Rect2(p - sz * 0.5, sz), false, Color(1, 1, 1, 0.92))
+	else:
+		var c := Color(0.46, 0.26, 0.10, 0.86)
+		draw_circle(p, 9.0, c)
+		draw_circle(p + Vector2(0, -12), 7.0, c.lightened(0.12))
+		draw_circle(p + Vector2(-7, -13), 3.0, c.lightened(0.06))
+		draw_circle(p + Vector2(7, -13), 3.0, c.lightened(0.06))
+		draw_arc(p + Vector2(-9, 3), 13.0, -0.6, 1.45, 12, c, 3.0, true)
 
 func _draw_home_progress_site(pos: Vector2, stage: int) -> void:
 	draw_circle(pos + Vector2(0, 20), 46.0, Color(0.0, 0.0, 0.0, 0.30))
@@ -1717,6 +1725,20 @@ func _load_map_texture() -> Texture2D:
 	if img.load(MAP_ART_PATH) == OK and not img.is_empty():
 		return ImageTexture.create_from_image(img)
 	var abs_path := ProjectSettings.globalize_path(MAP_ART_PATH)
+	var img2 := Image.new()
+	if img2.load(abs_path) == OK and not img2.is_empty():
+		return ImageTexture.create_from_image(img2)
+	return null
+
+func _load_texture_from_path(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		var tex := load(path)
+		if tex is Texture2D:
+			return tex as Texture2D
+	var img := Image.new()
+	if img.load(path) == OK and not img.is_empty():
+		return ImageTexture.create_from_image(img)
+	var abs_path := ProjectSettings.globalize_path(path)
 	var img2 := Image.new()
 	if img2.load(abs_path) == OK and not img2.is_empty():
 		return ImageTexture.create_from_image(img2)

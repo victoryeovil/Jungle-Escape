@@ -2,8 +2,8 @@ extends Node
 
 # ── Config (fill after creating your Supabase project) ────────────────────────
 # Dashboard → Project Settings → API
-const _URL := ""   # e.g. "https://abcdefgh.supabase.co"
-const _KEY := ""   # anon / public key
+const _URL := "http://localhost:54321"
+const _KEY := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzQxODI0MDAwLCJleHAiOjE4OTk1OTA0MDB9.rdpDFdPRK_GXBl2XJ0IxMQbFd8kRPm4EnDVFsDVy5jA"
 
 # ── Signals ───────────────────────────────────────────────────────────────────
 signal auth_success(user_id: String, display_name: String)
