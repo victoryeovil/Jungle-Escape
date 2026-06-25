@@ -63,6 +63,7 @@ func _load_and_build_level() -> void:
 		push_warning("Game3D: level data missing for " + str(_level_id) + "; using defaults")
 		data = _default_level(_level_id)
 	level_mgr.build(data)
+	player.set_level_speed(_level_id)
 
 func _apply_level_atmosphere(id: int) -> void:
 	if world_env.environment == null:

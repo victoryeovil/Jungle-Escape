@@ -39,6 +39,7 @@ desktop.ini
 .vscode/
 .idea/
 
-build.md
-checkpoint.md
+# Dev-only docs (never publish)
+_dev/
+
 android

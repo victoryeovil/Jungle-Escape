@@ -3,7 +3,15 @@ class_name Player3D
 
 const DEFAULT_LANE_OFFSETS: Array[float] = [-1.8, 0.0, 1.8]
 const LANE_SWITCH_SPEED: float = 20.0
-const RUN_SPEED: float = 8.0
+const RUN_SPEED: float = 8.0  # default; overridden per-level by Game3D
+var _run_speed: float = RUN_SPEED
+
+func set_level_speed(level_id: int) -> void:
+	match level_id:
+		1: _run_speed = 5.5
+		2: _run_speed = 6.5
+		3: _run_speed = 7.2
+		_: _run_speed = RUN_SPEED
 const JUMP_VELOCITY: float = 8.5
 const SLIDE_DURATION: float = 0.7
 const GRAVITY: float = 22.0
@@ -104,7 +112,7 @@ func _physics_process(delta: float) -> void:
 		state = State.RUN
 
 	# Forward velocity along current heading
-	var effective_speed := RUN_SPEED * _mode_speed_multiplier()
+	var effective_speed := _run_speed * _mode_speed_multiplier()
 	if _current_surface == "sand" and not SaveManager.has_upgrade("sand_shoes"):
 		effective_speed *= 0.45
 	velocity.x = _move_fwd.x * effective_speed

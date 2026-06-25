@@ -28,10 +28,33 @@ func show_result(stars: int, coins: int, level_id: int = -1, resources: Dictiona
 	lbl_story.text = _story_message(active_level)
 	if active_level == 3 and SaveManager.is_lives_intro_pending():
 		SaveManager.mark_lives_intro_seen()
+	_apply_register_gate(active_level)
 	_show_resource_rewards(resources)
 	visible = true
 	_animate_stars(stars)
 	_animate_coins(coins)
+
+func _apply_register_gate(level_id: int) -> void:
+	if level_id != 3 or SupabaseClient.has_registration_key():
+		btn_next.text = "Next Level  →"
+		return
+	# Player just finished level 3 without an account — show the gate
+	lbl_story.text = "You've proven yourself worthy of the Lost Path!\n\nThe deeper jungle awaits — but only registered explorers can continue.\n\nCreate a free account to save your progress, access leaderboards, and earn daily rewards."
+	btn_next.text  = "Register Free  →"
+	# Tint the button gold to make it stand out
+	btn_next.add_theme_color_override("font_color", Color(0.08, 0.05, 0.01))
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.92, 0.74, 0.16)
+	sb.border_color = Color(0.70, 0.52, 0.08)
+	sb.border_width_left = 2; sb.border_width_right  = 2
+	sb.border_width_top  = 2; sb.border_width_bottom = 2
+	sb.corner_radius_top_left    = 8; sb.corner_radius_top_right   = 8
+	sb.corner_radius_bottom_left = 8; sb.corner_radius_bottom_right = 8
+	btn_next.add_theme_stylebox_override("normal",  sb)
+	btn_next.add_theme_stylebox_override("pressed", sb)
+	var sbh := sb.duplicate() as StyleBoxFlat
+	sbh.bg_color = Color(1.0, 0.85, 0.24)
+	btn_next.add_theme_stylebox_override("hover", sbh)
 
 func _animate_stars(stars: int) -> void:
 	# Build 3 individual star labels layered over lbl_stars

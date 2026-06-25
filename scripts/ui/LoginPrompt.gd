@@ -26,6 +26,8 @@ var _lbl_form_title: Label  = null
 var _name_row     : Control = null
 var _confirm_row  : Control = null
 var _skip_btn     : Button  = null
+var _btn_google   : Button  = null
+var _lbl_oauth    : Label   = null
 
 func _ready() -> void:
 	UIStyle.apply(self)
@@ -252,24 +254,37 @@ func _build_form_card() -> void:
 	card.add_child(div)
 	y += 14.0
 
-	# Google button (coming soon)
-	var btn_google := Button.new()
-	btn_google.text = "Continue with Google  (coming soon)"
-	btn_google.position = Vector2(16, y)
-	btn_google.custom_minimum_size = Vector2(CW - 32, 44)
-	btn_google.focus_mode = Control.FOCUS_NONE
-	btn_google.add_theme_font_size_override("font_size", 13)
-	btn_google.add_theme_color_override("font_color", C_DIM)
-	var gsb := _make_sb(Color(0.06, 0.10, 0.04, 0.50), C_BORDER, 1, 8)
-	btn_google.add_theme_stylebox_override("normal", gsb)
-	btn_google.add_theme_stylebox_override("hover",  gsb)
-	btn_google.pressed.connect(func() -> void:
-		_show_error("Google login coming soon — use email for now.")
-	)
-	card.add_child(btn_google)
+	# Google button
+	_btn_google = Button.new()
+	_btn_google.text = "G   Continue with Google"
+	_btn_google.position = Vector2(16, y)
+	_btn_google.custom_minimum_size = Vector2(CW - 32, 48)
+	_btn_google.focus_mode = Control.FOCUS_NONE
+	_btn_google.add_theme_font_size_override("font_size", 14)
+	_btn_google.add_theme_color_override("font_color", Color(0.12, 0.12, 0.12))
+	var gsb  := _make_sb(Color(0.96, 0.96, 0.96, 1.0), Color(0.78, 0.78, 0.78, 1.0), 1, 8)
+	var gsbh := _make_sb(Color(0.88, 0.88, 0.88, 1.0), Color(0.68, 0.68, 0.68, 1.0), 1, 8)
+	_btn_google.add_theme_stylebox_override("normal",  gsb)
+	_btn_google.add_theme_stylebox_override("hover",   gsbh)
+	_btn_google.add_theme_stylebox_override("pressed", gsb)
+	_btn_google.pressed.connect(_on_google)
+	card.add_child(_btn_google)
+	y += 58.0
+
+	# OAuth waiting notice (hidden until sign-in starts)
+	_lbl_oauth = Label.new()
+	_lbl_oauth.text = "⏳  Waiting for Google sign-in in your browser…"
+	_lbl_oauth.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_lbl_oauth.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_lbl_oauth.size = Vector2(CW - 32, 36)
+	_lbl_oauth.position = Vector2(16, y)
+	_lbl_oauth.add_theme_font_size_override("font_size", 12)
+	_lbl_oauth.add_theme_color_override("font_color", C_DIM)
+	_lbl_oauth.visible = false
+	card.add_child(_lbl_oauth)
 
 	# Resize card to fit content
-	card.size = Vector2(CW, y + 60.0)
+	card.size = Vector2(CW, y + 50.0)
 
 func _make_field_row(parent: Control, y: float, hint: String, secret: bool) -> Control:
 	var row := Control.new()
@@ -331,6 +346,14 @@ func _on_toggle_mode() -> void:
 
 # ── Actions ───────────────────────────────────────────────────────────────────
 
+func _on_google() -> void:
+	EventBus.play_sfx.emit("button")
+	_lbl_error.visible  = false
+	_btn_google.disabled = true
+	_btn_google.text     = "Opening browser…"
+	_lbl_oauth.visible  = true
+	SupabaseClient.sign_in_google()
+
 func _on_skip() -> void:
 	EventBus.play_sfx.emit("button")
 	GameManager.go_to_menu()
@@ -375,7 +398,9 @@ func _set_loading(on: bool) -> void:
 
 # ── Supabase callbacks ────────────────────────────────────────────────────────
 
-func _on_auth_success(user_id: String, display_name: String) -> void:
+func _on_auth_success(_user_id: String, display_name: String) -> void:
+	if _lbl_oauth != null:
+		_lbl_oauth.visible = false
 	var is_new_login := not GameManager.is_logged_in
 	GameManager.is_logged_in = true
 	GameManager.is_guest     = false
@@ -407,6 +432,11 @@ func _proceed_after_login() -> void:
 
 func _on_auth_error(message: String) -> void:
 	_set_loading(false)
+	if _btn_google != null:
+		_btn_google.disabled = false
+		_btn_google.text     = "G   Continue with Google"
+	if _lbl_oauth != null:
+		_lbl_oauth.visible = false
 	_show_error(message)
 
 # ── Deletion recovery dialog ──────────────────────────────────────────────────

@@ -2,7 +2,7 @@ extends Node
 
 # ── Config (fill after creating your Supabase project) ────────────────────────
 # Dashboard → Project Settings → API
-const _URL := "http://localhost:54321"
+const _URL := "http://192.168.1.67:54321"
 const _KEY := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzQxODI0MDAwLCJleHAiOjE4OTk1OTA0MDB9.rdpDFdPRK_GXBl2XJ0IxMQbFd8kRPm4EnDVFsDVy5jA"
 
 # ── Signals ───────────────────────────────────────────────────────────────────
@@ -20,8 +20,113 @@ var _expires_at    := 0   # unix timestamp when access token expires
 
 const _REG_KEY_PATH := "user://registration_key.json"
 
+const _OAUTH_PORT := 9876   # local redirect listener
+
+var _oauth_server  : TCPServer = null
+var _oauth_timeout : float     = 0.0
+
 func _ready() -> void:
 	_load_tokens()
+
+func _process(delta: float) -> void:
+	if _oauth_server == null or not _oauth_server.is_listening():
+		return
+	_oauth_timeout -= delta
+	if _oauth_timeout <= 0.0:
+		_oauth_server.stop()
+		_oauth_server = null
+		auth_error.emit("Google sign-in timed out. Please try again.")
+		return
+	if not _oauth_server.is_connection_available():
+		return
+	var peer := _oauth_server.take_connection()
+	if peer == null:
+		return
+	# Read the HTTP request line
+	var raw := ""
+	var deadline := Time.get_ticks_msec() + 1000
+	while peer.get_status() == StreamPeerTCP.STATUS_CONNECTED and Time.get_ticks_msec() < deadline:
+		var avail := peer.get_available_bytes()
+		if avail > 0:
+			raw += peer.get_string(avail)
+			if "\r\n\r\n" in raw:
+				break
+	var request_line := raw.split("\r\n")[0] if raw.length() > 0 else ""
+	if "/token?" in request_line:
+		# Second leg — browser sent real params via JS redirect
+		var qs := request_line.split("?")[1].split(" ")[0] if "?" in request_line else ""
+		var params := _parse_qs(qs)
+		var at  := params.get("access_token",  "")
+		var rt  := params.get("refresh_token", "")
+		var uid := params.get("user_id",       "")
+		_serve_peer(peer, "<h1 style='font-family:sans-serif;color:#2d7a2d'>Login successful! Return to the game.</h1>")
+		_oauth_server.stop()
+		_oauth_server = null
+		if not at.is_empty():
+			_complete_oauth(at, rt, uid)
+		else:
+			auth_error.emit("Google sign-in failed — no token received.")
+	else:
+		# First leg — browser lands here with fragment; serve JS that forwards it
+		var html := """<!DOCTYPE html><html><head><meta charset='utf-8'>
+<style>body{font-family:sans-serif;text-align:center;margin-top:80px;color:#444}</style>
+</head><body><p>Completing sign-in…</p>
+<script>
+var h=window.location.hash.slice(1);
+var p=new URLSearchParams(h);
+var q=new URLSearchParams(window.location.search);
+var at=p.get('access_token')||q.get('access_token')||'';
+var rt=p.get('refresh_token')||q.get('refresh_token')||'';
+if(at){window.location.href='/token?access_token='+at+'&refresh_token='+rt;}
+else{document.body.innerHTML='<p style=color:red>Sign-in failed — no token. Close this window and try again.</p>';}
+</script></body></html>"""
+		_serve_peer(peer, html)
+
+func sign_in_google() -> void:
+	if _oauth_server != null:
+		return  # already waiting
+	_oauth_server = TCPServer.new()
+	var err := _oauth_server.listen(_OAUTH_PORT, "127.0.0.1")
+	if err != OK:
+		auth_error.emit("Could not start local auth server (port %d in use?)." % _OAUTH_PORT)
+		_oauth_server = null
+		return
+	_oauth_timeout = 300.0  # 5 minute window
+	var redirect := "http://localhost:%d" % _OAUTH_PORT
+	var url := "%s/auth/v1/authorize?provider=google&redirect_to=%s" % [_URL, redirect]
+	OS.shell_open(url)
+
+func _complete_oauth(access_token: String, refresh_token: String, _uid_hint: String) -> void:
+	# Exchange/verify the token to get full user info
+	_access_token  = access_token
+	_refresh_token = refresh_token
+	_expires_at    = int(Time.get_unix_time_from_system()) + 3600 - 60
+	_http("GET", "/auth/v1/user", {}, [], func(r: Variant) -> void:
+		if r is Dictionary and r.has("id"):
+			_user_id      = str(r.get("id", ""))
+			var meta: Dictionary = r.get("user_metadata", {})
+			_display_name = str(meta.get("full_name", meta.get("name", meta.get("display_name",
+								str(r.get("email", "Explorer"))))))
+			_save_tokens()
+			_save_registration_key()
+			_ensure_account_row()
+			auth_success.emit(_user_id, _display_name)
+		else:
+			_clear_tokens()
+			auth_error.emit("Could not fetch user info after Google sign-in.")
+	)
+
+func _serve_peer(peer: StreamPeerTCP, body: String) -> void:
+	var resp := "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\nContent-Length: %d\r\n\r\n%s" % [body.length(), body]
+	peer.put_data(resp.to_utf8_buffer())
+
+func _parse_qs(qs: String) -> Dictionary:
+	var out := {}
+	for pair in qs.split("&"):
+		var kv := pair.split("=")
+		if kv.size() == 2:
+			out[kv[0]] = kv[1].uri_decode()
+	return out
 
 # Returns true even when offline — proves the user registered at some point.
 static func has_registration_key() -> bool:

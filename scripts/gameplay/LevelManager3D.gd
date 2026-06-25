@@ -5,6 +5,7 @@ const TILE_Z: float = 3.0
 const LANE_W: float = 1.8
 const PATH_WIDTH: float = LANE_W * 3.25
 const SIDE_GROUND_WIDTH: float = 3.8
+const MAX_WIND_NODES: int = 35   # mobile performance cap
 
 const COLOR_DIRT := Color(0.47, 0.31, 0.16)
 const COLOR_DIRT_LIGHT := Color(0.61, 0.42, 0.22)
@@ -899,25 +900,25 @@ func _spawn_dressing(data: Dictionary) -> void:
 			var mid_x: float = side * rng.randf_range(path_edge + 1.05, path_edge + 1.85)
 			var far_x: float = side * rng.randf_range(path_edge + 2.35, path_edge + 3.35)
 
-			if rng.randf() < 0.80:
+			if rng.randf() < 0.40:
 				_grass_clump(_row_local(row, near_x, 0.0, rng.randf_range(-0.8, 0.8)), rng)
-			if rng.randf() < 0.55:
+			if rng.randf() < 0.25:
 				_fern(_row_local(row, near_x + side * rng.randf_range(0.2, 0.45), 0.0, rng.randf_range(-0.6, 0.6)), rng)
-			if rng.randf() < 0.72:
-				_bush(_row_local(row, mid_x, 0.0, rng.randf_range(-0.9, 0.9)), rng)
 			if rng.randf() < 0.35:
+				_bush(_row_local(row, mid_x, 0.0, rng.randf_range(-0.9, 0.9)), rng)
+			if rng.randf() < 0.15:
 				_pebble_cluster(_group("RocksAndLogs"), _row_local(row, mid_x + side * 0.30, 0.04, rng.randf_range(-0.8, 0.8)), rng)
 
-			if row % 2 == 0:
+			if row % 4 == 0:
 				if rng.randf() < 0.45:
 					_palm_tree(_row_local(row, far_x, 0.0), rng)
 				else:
 					_jungle_tree(_row_local(row, far_x, 0.0), rng)
 
-			if row % 4 == 1 and rng.randf() < 0.50:
+			if row % 6 == 1 and rng.randf() < 0.40:
 				_fallen_log_dressing(_row_local(row, side * rng.randf_range(path_edge + 1.35, path_edge + 2.10), 0.18, rng.randf_range(-1.0, 1.0)), side, rng)
 
-			if row % 5 == 0 and rng.randf() < 0.65:
+			if row % 8 == 0 and rng.randf() < 0.50:
 				_ruin_fragment(_row_local(row, side * rng.randf_range(path_edge + 2.0, path_edge + 2.8), 0.0), rng)
 
 func _spawn_wildlife(data: Dictionary) -> void:
@@ -1985,6 +1986,8 @@ func _animate_relic_glows() -> void:
 		mat.emission_energy_multiplier = 0.75 + sin(_time * 2.6 + glow.global_position.z) * 0.28
 
 func _register_wind(node: Node3D, strength: float, speed: float, phase: float) -> void:
+	if _wind_nodes.size() >= MAX_WIND_NODES:
+		return
 	_wind_nodes.append({
 		"node": node,
 		"base_x": node.rotation.x,

@@ -4,181 +4,49 @@
   "seed": 17,
   "name": "Jungle Trail Entrance",
   "obstacles": [
-    {
-      "type": "rock",
-      "lane": 0,
-      "row": 5
-    },
-    {
-      "type": "rock",
-      "lane": 0,
-      "row": 7
-    },
-    {
-      "type": "log",
-      "lane": 0,
-      "row": 10
-    },
-    {
-      "type": "branch",
-      "lane": 0,
-      "row": 13
-    },
-    {
-      "type": "rock",
-      "lane": 0,
-      "row": 16
-    },
-    {
-      "type": "log",
-      "lane": 1,
-      "row": 20
-    },
-    {
-      "type": "rock",
-      "lane": 0,
-      "row": 23
-    }
+    { "type": "rock", "lane": 1, "row": 7 },
+    { "type": "log",  "lane": 0, "row": 12 },
+    { "type": "rock", "lane": 2, "row": 17 },
+    { "type": "log",  "lane": 1, "row": 22 }
   ],
   "coins": [
-    {
-      "lane": 1,
-      "row": 2
-    },
-    {
-      "lane": 0,
-      "row": 3
-    },
-    {
-      "lane": 1,
-      "row": 4
-    },
-    {
-      "lane": 0,
-      "row": 6
-    },
-    {
-      "lane": 0,
-      "row": 8
-    },
-    {
-      "lane": 0,
-      "row": 9
-    },
-    {
-      "lane": 0,
-      "row": 11
-    },
-    {
-      "lane": 0,
-      "row": 12
-    },
-    {
-      "lane": 1,
-      "row": 14
-    },
-    {
-      "lane": 1,
-      "row": 15
-    },
-    {
-      "lane": 1,
-      "row": 17
-    },
-    {
-      "lane": 0,
-      "row": 18
-    },
-    {
-      "lane": 2,
-      "row": 18
-    },
-    {
-      "lane": 0,
-      "row": 21
-    },
-    {
-      "lane": 0,
-      "row": 22
-    },
-    {
-      "lane": 1,
-      "row": 24
-    },
-    {
-      "gem": true,
-      "lane": 0,
-      "row": 25
-    }
+    { "lane": 1, "row": 2 },
+    { "lane": 0, "row": 3 },
+    { "lane": 1, "row": 4 },
+    { "lane": 0, "row": 6 },
+    { "lane": 0, "row": 8 },
+    { "lane": 0, "row": 9 },
+    { "lane": 0, "row": 11 },
+    { "lane": 0, "row": 13 },
+    { "lane": 1, "row": 14 },
+    { "lane": 1, "row": 15 },
+    { "lane": 1, "row": 18 },
+    { "lane": 0, "row": 18 },
+    { "lane": 2, "row": 18 },
+    { "lane": 0, "row": 21 },
+    { "lane": 0, "row": 22 },
+    { "lane": 1, "row": 24 },
+    { "gem": true, "lane": 1, "row": 25 }
   ],
   "collectables": [
-    {
-      "type": "map_piece",
-      "lane": 0,
-      "row": 8
-    },
-    {
-      "type": "wood",
-      "lane": 2,
-      "row": 17
-    },
-    {
-      "type": "map_piece",
-      "lane": 1,
-      "row": 22
-    }
+    { "type": "map_piece", "lane": 2, "row": 9 },
+    { "type": "wood",      "lane": 2, "row": 17 },
+    { "type": "map_piece", "lane": 1, "row": 22 }
   ],
   "difficulty": "Easy",
-  "gameplay_modes": [
-    "runner"
-  ],
+  "gameplay_modes": ["runner"],
   "path_modules": [
-    {
-      "type": "straight_short",
-      "rows": 5,
-      "width": "double",
-      "surface": "grass",
-      "mode": "run",
-      "lanes": 2
-    },
-    {
-      "type": "gentle_curve_left",
-      "rows": 6,
-      "width": "single",
-      "surface": "dirt",
-      "mode": "run",
-      "lanes": 1
-    },
-    {
-      "type": "bridge_crossing",
-      "rows": 4,
-      "width": "double",
-      "surface": "wood",
-      "mode": "run",
-      "lanes": 2
-    },
-    {
-      "type": "gentle_curve_right",
-      "rows": 6,
-      "width": "triple",
-      "surface": "dirt",
-      "mode": "run",
-      "lanes": 3
-    },
-    {
-      "type": "finish_gate_approach",
-      "rows": 5,
-      "width": "double",
-      "surface": "stone",
-      "mode": "run",
-      "lanes": 2
-    }
+    { "type": "straight_short",     "rows": 5,  "width": "double", "surface": "grass", "mode": "run", "lanes": 2 },
+    { "type": "gentle_curve_left",  "rows": 6,  "width": "single", "surface": "dirt",  "mode": "run", "lanes": 1 },
+    { "type": "bridge_crossing",    "rows": 4,  "width": "double", "surface": "wood",  "mode": "run", "lanes": 2 },
+    { "type": "gentle_curve_right", "rows": 6,  "width": "triple", "surface": "dirt",  "mode": "run", "lanes": 3 },
+    { "type": "finish_gate_approach","rows": 5, "width": "double", "surface": "stone", "mode": "run", "lanes": 2 }
   ],
-  "path_identity": "Jungle Trail Entrance uses runner; variable 1/2/3-lane living trail",
+  "path_identity": "Jungle Trail Entrance — easy intro run",
   "environment": {
-    "wind_strength": 0.67,
-    "wind_speed": 0.95,
-    "gust_strength": 0.26,
+    "wind_strength": 0.45,
+    "wind_speed": 0.50,
+    "gust_strength": 0.15,
     "grass_footprints": true
   }
 }
