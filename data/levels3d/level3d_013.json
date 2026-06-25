@@ -2,58 +2,281 @@
   "id": 13,
   "length": 38,
   "seed": 149,
-  "name": "The Park Guide",
+  "name": "Park Guide Path",
   "turns": [
-    { "row": 19, "dir": 1 }
+    {
+      "row": 19,
+      "dir": 1
+    }
   ],
   "obstacles": [
-    { "type": "rock",   "lane": 1, "row": 4  },
-    { "type": "rock",   "lane": 0, "row": 7  },
-    { "type": "branch", "lane": 2, "row": 10 },
-    { "type": "rock",   "lane": 1, "row": 13 },
-    { "type": "branch", "lane": 0, "row": 16 },
-    { "type": "rock",   "lane": 2, "row": 19 },
-    { "type": "rock",   "lane": 1, "row": 22 },
-    { "type": "branch", "lane": 0, "row": 25 },
-    { "type": "rock",   "lane": 2, "row": 28 },
-    { "type": "rock",   "lane": 1, "row": 31 },
-    { "type": "branch", "lane": 2, "row": 34 },
-    { "type": "rock",   "lane": 0, "row": 36 }
+    {
+      "type": "rock",
+      "lane": 1,
+      "row": 4
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 7
+    },
+    {
+      "type": "branch",
+      "lane": 0,
+      "row": 10
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 13
+    },
+    {
+      "type": "branch",
+      "lane": 0,
+      "row": 16
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 19
+    },
+    {
+      "type": "rock",
+      "lane": 1,
+      "row": 22
+    },
+    {
+      "type": "branch",
+      "lane": 0,
+      "row": 25
+    },
+    {
+      "type": "rock",
+      "lane": 1,
+      "row": 28
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 31
+    },
+    {
+      "type": "branch",
+      "lane": 1,
+      "row": 34
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 36
+    }
   ],
   "coins": [
-    { "lane": 0, "row": 2  },
-    { "lane": 2, "row": 2  },
-    { "lane": 1, "row": 3  },
-    { "lane": 2, "row": 5  },
-    { "lane": 0, "row": 6  },
-    { "lane": 1, "row": 8  },
-    { "lane": 2, "row": 9  },
-    { "lane": 0, "row": 11 },
-    { "lane": 1, "row": 12 },
-    { "lane": 2, "row": 14 },
-    { "lane": 0, "row": 15 },
-    { "lane": 1, "row": 17 },
-    { "lane": 2, "row": 18 },
-    { "lane": 0, "row": 20 },
-    { "lane": 1, "row": 21 },
-    { "lane": 2, "row": 23 },
-    { "lane": 0, "row": 24 },
-    { "lane": 1, "row": 26 },
-    { "lane": 2, "row": 27 },
-    { "lane": 0, "row": 29 },
-    { "lane": 1, "row": 30 },
-    { "lane": 2, "row": 32 },
-    { "lane": 0, "row": 33 },
-    { "lane": 1, "row": 35 },
-    { "lane": 2, "row": 37 },
-    { "gem": true, "lane": 1, "row": 38 },
-    { "gem": true, "lane": 2, "row": 38 }
+    {
+      "lane": 0,
+      "row": 2
+    },
+    {
+      "lane": 1,
+      "row": 2
+    },
+    {
+      "lane": 0,
+      "row": 3
+    },
+    {
+      "lane": 0,
+      "row": 5
+    },
+    {
+      "lane": 0,
+      "row": 6
+    },
+    {
+      "lane": 0,
+      "row": 8
+    },
+    {
+      "lane": 0,
+      "row": 9
+    },
+    {
+      "lane": 0,
+      "row": 11
+    },
+    {
+      "lane": 0,
+      "row": 12
+    },
+    {
+      "lane": 1,
+      "row": 14
+    },
+    {
+      "lane": 0,
+      "row": 15
+    },
+    {
+      "lane": 0,
+      "row": 17
+    },
+    {
+      "lane": 1,
+      "row": 18
+    },
+    {
+      "lane": 0,
+      "row": 20
+    },
+    {
+      "lane": 1,
+      "row": 21
+    },
+    {
+      "lane": 2,
+      "row": 23
+    },
+    {
+      "lane": 0,
+      "row": 24
+    },
+    {
+      "lane": 1,
+      "row": 26
+    },
+    {
+      "lane": 0,
+      "row": 27
+    },
+    {
+      "lane": 0,
+      "row": 29
+    },
+    {
+      "lane": 1,
+      "row": 30
+    },
+    {
+      "lane": 1,
+      "row": 32
+    },
+    {
+      "lane": 0,
+      "row": 33
+    },
+    {
+      "lane": 0,
+      "row": 35
+    },
+    {
+      "lane": 0,
+      "row": 37
+    },
+    {
+      "gem": true,
+      "lane": 1,
+      "row": 38
+    },
+    {
+      "gem": true,
+      "lane": 2,
+      "row": 38
+    }
   ],
   "collectables": [
-    { "type": "food",         "lane": 2, "row": 4  },
-    { "type": "animal_badge", "lane": 1, "row": 7  },
-    { "type": "food",         "lane": 0, "row": 13 },
-    { "type": "animal_badge", "lane": 1, "row": 19 },
-    { "type": "food",         "lane": 0, "row": 28 }
-  ]
+    {
+      "type": "food",
+      "lane": 1,
+      "row": 4
+    },
+    {
+      "type": "animal_badge",
+      "lane": 0,
+      "row": 7
+    },
+    {
+      "type": "food",
+      "lane": 0,
+      "row": 13
+    },
+    {
+      "type": "animal_badge",
+      "lane": 0,
+      "row": 19
+    },
+    {
+      "type": "food",
+      "lane": 0,
+      "row": 28
+    }
+  ],
+  "difficulty": "Medium",
+  "gameplay_modes": [
+    "runner",
+    "npc guide",
+    "observation",
+    "junction"
+  ],
+  "path_modules": [
+    {
+      "type": "straight_short",
+      "rows": 5,
+      "width": "double",
+      "surface": "grass",
+      "mode": "run",
+      "lanes": 2
+    },
+    {
+      "type": "gentle_curve_left",
+      "rows": 8,
+      "width": "single",
+      "surface": "dirt",
+      "mode": "run",
+      "lanes": 1
+    },
+    {
+      "type": "wide_curve_right",
+      "rows": 8,
+      "width": "double",
+      "surface": "dirt",
+      "mode": "run",
+      "lanes": 2
+    },
+    {
+      "type": "junction_two_way",
+      "rows": 5,
+      "width": "triple",
+      "surface": "dirt",
+      "mode": "run",
+      "routes": [
+        {
+          "direction": "left",
+          "label": "Guide Markers",
+          "reward": "wildlife_notes"
+        },
+        {
+          "direction": "right",
+          "label": "Observation Point",
+          "reward": "animal_badge"
+        }
+      ],
+      "id": "l13_guide_split",
+      "lanes": 3
+    },
+    {
+      "type": "finish_gate_approach",
+      "rows": 12,
+      "width": "double",
+      "surface": "stone",
+      "mode": "run",
+      "lanes": 2
+    }
+  ],
+  "path_identity": "Park Guide Path uses runner, npc guide, observation, junction; variable 1/2/3-lane living trail",
+  "environment": {
+    "wind_strength": 0.85,
+    "wind_speed": 0.95,
+    "gust_strength": 0.26,
+    "grass_footprints": true
+  }
 }

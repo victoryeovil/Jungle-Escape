@@ -2,67 +2,282 @@
   "id": 17,
   "length": 45,
   "seed": 178,
-  "name": "Window Run",
+  "name": "Rapids Run",
   "turns": [
-    { "row": 22, "dir": -1 }
+    {
+      "row": 22,
+      "dir": -1
+    }
   ],
   "obstacles": [
-    { "type": "spike",  "lane": 1, "row": 4  },
-    { "type": "rock",   "lane": 2, "row": 7  },
-    { "type": "spike",  "lane": 0, "row": 10 },
-    { "type": "rock",   "lane": 1, "row": 13 },
-    { "type": "spike",  "lane": 2, "row": 17 },
-    { "type": "rock",   "lane": 0, "row": 20 },
-    { "type": "spike",  "lane": 1, "row": 25 },
-    { "type": "rock",   "lane": 2, "row": 28 },
-    { "type": "spike",  "lane": 0, "row": 32 },
-    { "type": "rock",   "lane": 1, "row": 35 },
-    { "type": "spike",  "lane": 2, "row": 38 },
-    { "type": "rock",   "lane": 0, "row": 41 },
-    { "type": "branch", "lane": 1, "row": 43 }
+    {
+      "type": "water_rock",
+      "lane": 1,
+      "row": 6
+    },
+    {
+      "type": "floating_log",
+      "lane": 0,
+      "row": 11
+    },
+    {
+      "type": "crocodile_zone",
+      "lane": 0,
+      "row": 16
+    },
+    {
+      "type": "whirlpool",
+      "lane": 1,
+      "row": 22
+    },
+    {
+      "type": "floating_log",
+      "lane": 0,
+      "row": 29
+    },
+    {
+      "type": "crocodile_zone",
+      "lane": 2,
+      "row": 34
+    },
+    {
+      "type": "water_rock",
+      "lane": 1,
+      "row": 40
+    }
   ],
   "coins": [
-    { "lane": 0, "row": 2  },
-    { "lane": 2, "row": 2  },
-    { "lane": 1, "row": 3  },
-    { "lane": 0, "row": 5  },
-    { "lane": 2, "row": 6  },
-    { "lane": 1, "row": 8  },
-    { "lane": 0, "row": 9  },
-    { "lane": 2, "row": 11 },
-    { "lane": 1, "row": 12 },
-    { "lane": 0, "row": 14 },
-    { "lane": 2, "row": 15 },
-    { "lane": 1, "row": 16 },
-    { "lane": 0, "row": 18 },
-    { "lane": 1, "row": 19 },
-    { "lane": 2, "row": 21 },
-    { "lane": 0, "row": 22 },
-    { "lane": 1, "row": 23 },
-    { "lane": 2, "row": 24 },
-    { "lane": 0, "row": 26 },
-    { "lane": 2, "row": 27 },
-    { "lane": 1, "row": 29 },
-    { "lane": 0, "row": 30 },
-    { "lane": 2, "row": 31 },
-    { "lane": 1, "row": 33 },
-    { "lane": 0, "row": 34 },
-    { "lane": 2, "row": 36 },
-    { "lane": 1, "row": 37 },
-    { "lane": 0, "row": 39 },
-    { "lane": 2, "row": 40 },
-    { "lane": 1, "row": 42 },
-    { "lane": 2, "row": 44 },
-    { "gem": true, "lane": 0, "row": 45 },
-    { "gem": true, "lane": 2, "row": 45 }
+    {
+      "lane": 0,
+      "row": 2
+    },
+    {
+      "lane": 2,
+      "row": 2
+    },
+    {
+      "lane": 1,
+      "row": 3
+    },
+    {
+      "lane": 0,
+      "row": 5
+    },
+    {
+      "lane": 1,
+      "row": 6
+    },
+    {
+      "lane": 1,
+      "row": 8
+    },
+    {
+      "lane": 0,
+      "row": 9
+    },
+    {
+      "lane": 0,
+      "row": 11
+    },
+    {
+      "lane": 1,
+      "row": 12
+    },
+    {
+      "lane": 0,
+      "row": 14
+    },
+    {
+      "lane": 2,
+      "row": 15
+    },
+    {
+      "lane": 1,
+      "row": 16
+    },
+    {
+      "lane": 0,
+      "row": 18
+    },
+    {
+      "lane": 1,
+      "row": 19
+    },
+    {
+      "lane": 2,
+      "row": 21
+    },
+    {
+      "lane": 0,
+      "row": 22
+    },
+    {
+      "lane": 1,
+      "row": 23
+    },
+    {
+      "lane": 2,
+      "row": 24
+    },
+    {
+      "lane": 0,
+      "row": 26
+    },
+    {
+      "lane": 2,
+      "row": 27
+    },
+    {
+      "lane": 1,
+      "row": 29
+    },
+    {
+      "lane": 0,
+      "row": 30
+    },
+    {
+      "lane": 2,
+      "row": 31
+    },
+    {
+      "lane": 1,
+      "row": 33
+    },
+    {
+      "lane": 0,
+      "row": 34
+    },
+    {
+      "lane": 2,
+      "row": 36
+    },
+    {
+      "lane": 0,
+      "row": 37
+    },
+    {
+      "lane": 0,
+      "row": 39
+    },
+    {
+      "lane": 1,
+      "row": 40
+    },
+    {
+      "lane": 1,
+      "row": 42
+    },
+    {
+      "lane": 1,
+      "row": 44
+    },
+    {
+      "gem": true,
+      "lane": 0,
+      "row": 45
+    },
+    {
+      "gem": true,
+      "lane": 2,
+      "row": 45
+    }
   ],
   "collectables": [
-    { "type": "windows",      "lane": 0, "row": 4  },
-    { "type": "tiles",        "lane": 0, "row": 7  },
-    { "type": "sunstone_shard","lane": 2, "row": 10 },
-    { "type": "tools",        "lane": 0, "row": 13 },
-    { "type": "windows",      "lane": 2, "row": 22 },
-    { "type": "tiles",        "lane": 2, "row": 32 },
-    { "type": "tools",        "lane": 0, "row": 35 }
-  ]
+    {
+      "type": "fish_token",
+      "lane": 0,
+      "row": 8
+    },
+    {
+      "type": "wood",
+      "lane": 2,
+      "row": 15
+    },
+    {
+      "type": "river_relic",
+      "lane": 1,
+      "row": 26
+    },
+    {
+      "type": "fish_token",
+      "lane": 1,
+      "row": 38
+    }
+  ],
+  "difficulty": "Hard",
+  "gameplay_modes": [
+    "boat",
+    "junction"
+  ],
+  "path_modules": [
+    {
+      "type": "boat_entry_dock",
+      "rows": 5,
+      "width": "triple",
+      "surface": "boat",
+      "mode": "boat",
+      "lanes": 3
+    },
+    {
+      "type": "boat_river_straight",
+      "rows": 8,
+      "width": "double",
+      "surface": "boat",
+      "mode": "boat",
+      "lanes": 2
+    },
+    {
+      "type": "boat_river_curve",
+      "rows": 9,
+      "width": "triple",
+      "surface": "boat",
+      "mode": "boat",
+      "curve_degrees": 34,
+      "lanes": 3
+    },
+    {
+      "type": "junction_two_way",
+      "rows": 5,
+      "width": "triple",
+      "surface": "boat",
+      "mode": "boat",
+      "routes": [
+        {
+          "direction": "left",
+          "label": "Safe River Fork",
+          "reward": "wood"
+        },
+        {
+          "direction": "right",
+          "label": "Gem Rapids Fork",
+          "reward": "river_relic"
+        }
+      ],
+      "id": "l17_rapids_fork",
+      "lanes": 3
+    },
+    {
+      "type": "boat_rapids",
+      "rows": 10,
+      "width": "triple",
+      "surface": "boat",
+      "mode": "boat",
+      "lanes": 3
+    },
+    {
+      "type": "finish_gate_approach",
+      "rows": 8,
+      "width": "double",
+      "surface": "stone",
+      "mode": "run",
+      "lanes": 2
+    }
+  ],
+  "path_identity": "Rapids Run uses boat, junction; variable 1/2/3-lane living trail",
+  "environment": {
+    "wind_strength": 0.76,
+    "wind_speed": 0.95,
+    "gust_strength": 0.34,
+    "grass_footprints": true
+  }
 }

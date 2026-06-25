@@ -69,6 +69,17 @@ func _build_top_bar() -> void:
 	gems_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(gems_lbl)
 
+	if SaveManager.should_show_lives():
+		var lives_lbl := Label.new()
+		lives_lbl.name = "LblLives"
+		lives_lbl.text = "LIFE  " + SaveManager.get_lives_display()
+		lives_lbl.add_theme_font_size_override("font_size", 15)
+		lives_lbl.add_theme_color_override("font_color", Color(1.0, 0.45, 0.36))
+		lives_lbl.size = Vector2(176, 36)
+		lives_lbl.position = Vector2(286, 12)
+		lives_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(lives_lbl)
+
 	# Gold separator
 	var sep := ColorRect.new()
 	sep.color = Color(0.60, 0.48, 0.14, 0.72)

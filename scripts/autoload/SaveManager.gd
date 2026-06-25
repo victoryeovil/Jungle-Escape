@@ -3,6 +3,13 @@ extends Node
 const SAVE_PATH := "user://save_data.json"
 const SETTINGS_PATH := "user://settings.json"
 const DEFAULT_UNLOCKED_SKINS := ["explorer", "jungle_girl"]
+const LIVES_UNLOCK_LEVEL := 4
+const MAX_EXPEDITION_LIVES := 5
+const LIFE_REGEN_SECONDS := 15 * 60
+const LIFE_COIN_COST := 50
+const FULL_LIFE_COIN_COST := 200
+const LIFE_GEM_COST := 1
+const FULL_LIFE_GEM_COST := 4
 
 var _save_data: Dictionary = {}
 var _settings: Dictionary = {}
@@ -52,6 +59,8 @@ func complete_level(level_id: int, stars: int, coins_earned: int) -> void:
 	add_coins(coins_earned)
 	if level_id >= get_current_level():
 		set_current_level(level_id + 1)
+	if level_id == 3:
+		_activate_lives_if_needed()
 
 func get_total_stars() -> int:
 	var total := 0
@@ -80,6 +89,13 @@ func get_gems() -> int:
 func add_gems(amount: int) -> void:
 	_save_data["gems"] = get_gems() + amount
 	save_game()
+
+func spend_gems(amount: int) -> bool:
+	if get_gems() >= amount:
+		_save_data["gems"] = get_gems() - amount
+		save_game()
+		return true
+	return false
 
 func get_hints() -> int:
 	return _save_data.get("hints", 3)
@@ -121,6 +137,15 @@ func unlock_skin(skin_id: String) -> void:
 func is_skin_unlocked(skin_id: String) -> bool:
 	return skin_id in get_unlocked_skins()
 
+func get_selected_skin_variant(skin_id: String) -> String:
+	return str(_save_data.get("skin_variants", {}).get(skin_id, "default"))
+
+func set_selected_skin_variant(skin_id: String, variant_id: String) -> void:
+	if not _save_data.has("skin_variants"):
+		_save_data["skin_variants"] = {}
+	_save_data["skin_variants"][skin_id] = variant_id
+	save_game()
+
 func get_setting(key: String, default_value = null):
 	return _settings.get(key, default_value)
 
@@ -138,6 +163,179 @@ func mark_first_launch_done() -> void:
 
 func get_levels_completed_count() -> int:
 	return get_completed_levels().size()
+
+# --- Expedition Lives -------------------------------------------------------
+
+func should_show_lives() -> bool:
+	return bool(_save_data.get("expedition_lives_active", false)) or get_current_level() >= LIVES_UNLOCK_LEVEL or is_level_completed(3)
+
+func is_lives_system_active() -> bool:
+	if bool(_save_data.get("expedition_lives_active", false)):
+		_ensure_lives_state()
+		return true
+	if get_current_level() >= LIVES_UNLOCK_LEVEL or is_level_completed(3):
+		_activate_lives_if_needed()
+		return true
+	return false
+
+func activate_expedition_lives() -> void:
+	_activate_lives_if_needed()
+
+func can_start_level(level_id: int) -> bool:
+	if level_id <= 3:
+		return true
+	if not is_lives_system_active():
+		return false
+	return get_lives() > 0
+
+func get_lives() -> int:
+	if not is_lives_system_active():
+		return MAX_EXPEDITION_LIVES
+	regenerate_lives()
+	return int(_save_data.get("expedition_lives", MAX_EXPEDITION_LIVES))
+
+func get_max_lives() -> int:
+	return MAX_EXPEDITION_LIVES
+
+func get_lives_display() -> String:
+	if not should_show_lives():
+		return ""
+	return str(get_lives()) + "/" + str(MAX_EXPEDITION_LIVES)
+
+func get_life_regen_seconds_remaining() -> int:
+	if not is_lives_system_active() or get_lives() >= MAX_EXPEDITION_LIVES:
+		return 0
+	var now := int(Time.get_unix_time_from_system())
+	var last := int(_save_data.get("last_life_regen_time", now))
+	var elapsed: int = max(0, now - last)
+	return int(max(0, LIFE_REGEN_SECONDS - (elapsed % LIFE_REGEN_SECONDS)))
+
+func lose_life(level_id: int) -> bool:
+	if level_id <= 3:
+		return false
+	if not is_lives_system_active():
+		return false
+	regenerate_lives()
+	var current := int(_save_data.get("expedition_lives", MAX_EXPEDITION_LIVES))
+	if current <= 0:
+		return false
+	_save_data["expedition_lives"] = current - 1
+	_save_data["last_life_regen_time"] = int(Time.get_unix_time_from_system())
+	save_game()
+	EventBus.lives_changed.emit(current - 1, MAX_EXPEDITION_LIVES)
+	return true
+
+func add_life(amount: int = 1) -> void:
+	if amount <= 0:
+		return
+	if not is_lives_system_active():
+		return
+	regenerate_lives()
+	var current := int(_save_data.get("expedition_lives", MAX_EXPEDITION_LIVES))
+	var updated: int = min(MAX_EXPEDITION_LIVES, current + amount)
+	if updated == current:
+		return
+	_save_data["expedition_lives"] = updated
+	if updated >= MAX_EXPEDITION_LIVES:
+		_save_data["last_life_regen_time"] = int(Time.get_unix_time_from_system())
+	save_game()
+	EventBus.lives_changed.emit(updated, MAX_EXPEDITION_LIVES)
+
+func regenerate_lives() -> void:
+	if not bool(_save_data.get("expedition_lives_active", false)):
+		return
+	_ensure_lives_state()
+	var current := int(_save_data.get("expedition_lives", MAX_EXPEDITION_LIVES))
+	if current >= MAX_EXPEDITION_LIVES:
+		return
+	var now := int(Time.get_unix_time_from_system())
+	var last := int(_save_data.get("last_life_regen_time", now))
+	var elapsed: int = max(0, now - last)
+	var lives_to_add := int(elapsed / LIFE_REGEN_SECONDS)
+	if lives_to_add <= 0:
+		return
+	var updated: int = min(MAX_EXPEDITION_LIVES, current + lives_to_add)
+	_save_data["expedition_lives"] = updated
+	_save_data["last_life_regen_time"] = now if updated >= MAX_EXPEDITION_LIVES else last + lives_to_add * LIFE_REGEN_SECONDS
+	save_game()
+	EventBus.lives_changed.emit(updated, MAX_EXPEDITION_LIVES)
+
+func buy_life_with_coins() -> bool:
+	if not is_lives_system_active() or get_lives() >= MAX_EXPEDITION_LIVES:
+		return false
+	if not spend_coins(LIFE_COIN_COST):
+		return false
+	add_life(1)
+	return true
+
+func buy_full_lives_with_coins() -> bool:
+	if not is_lives_system_active() or get_lives() >= MAX_EXPEDITION_LIVES:
+		return false
+	if not spend_coins(FULL_LIFE_COIN_COST):
+		return false
+	add_life(MAX_EXPEDITION_LIVES)
+	return true
+
+func buy_life_with_gems() -> bool:
+	if not is_lives_system_active() or get_lives() >= MAX_EXPEDITION_LIVES:
+		return false
+	if not spend_gems(LIFE_GEM_COST):
+		return false
+	add_life(1)
+	return true
+
+func buy_full_lives_with_gems() -> bool:
+	if not is_lives_system_active() or get_lives() >= MAX_EXPEDITION_LIVES:
+		return false
+	if not spend_gems(FULL_LIFE_GEM_COST):
+		return false
+	add_life(MAX_EXPEDITION_LIVES)
+	return true
+
+func reward_ad_life_available() -> bool:
+	return false
+
+func try_reward_ad_life() -> bool:
+	return false
+
+func is_lives_intro_pending() -> bool:
+	return is_lives_system_active() and not bool(_save_data.get("lives_intro_seen", false))
+
+func mark_lives_intro_seen() -> void:
+	if not is_lives_system_active():
+		return
+	_save_data["lives_intro_seen"] = true
+	save_game()
+
+func _activate_lives_if_needed() -> void:
+	if bool(_save_data.get("expedition_lives_active", false)):
+		_ensure_lives_state()
+		return
+	_save_data["expedition_lives_active"] = true
+	_save_data["expedition_lives"] = MAX_EXPEDITION_LIVES
+	_save_data["last_life_regen_time"] = int(Time.get_unix_time_from_system())
+	_save_data["lives_intro_seen"] = false
+	save_game()
+	EventBus.lives_changed.emit(MAX_EXPEDITION_LIVES, MAX_EXPEDITION_LIVES)
+
+func _ensure_lives_state() -> void:
+	var changed := false
+	if not _save_data.has("expedition_lives"):
+		_save_data["expedition_lives"] = MAX_EXPEDITION_LIVES
+		changed = true
+	else:
+		var clamped := clampi(int(_save_data["expedition_lives"]), 0, MAX_EXPEDITION_LIVES)
+		if clamped != int(_save_data["expedition_lives"]):
+			_save_data["expedition_lives"] = clamped
+			changed = true
+	if not _save_data.has("last_life_regen_time"):
+		_save_data["last_life_regen_time"] = int(Time.get_unix_time_from_system())
+		changed = true
+	if not _save_data.has("lives_intro_seen"):
+		_save_data["lives_intro_seen"] = false
+		changed = true
+	if changed:
+		save_game()
 
 # ── Pending sync queue ─────────────────────────────────────────────────────────
 
@@ -281,3 +479,84 @@ func get_home_stage() -> int:
 func set_home_stage(stage: int) -> void:
 	_save_data["home_stage"] = stage
 	save_game()
+
+# ── Adaptive difficulty: per-level fail counts ────────────────────────────────
+# Stored locally so the adaptive AI persists across sessions.
+
+func get_level_fail_count(level_id: int) -> int:
+	return int(_save_data.get("fail_counts", {}).get(str(level_id), 0))
+
+func increment_level_fail_count(level_id: int) -> void:
+	if not _save_data.has("fail_counts"):
+		_save_data["fail_counts"] = {}
+	_save_data["fail_counts"][str(level_id)] = get_level_fail_count(level_id) + 1
+	save_game()
+
+func reset_level_fail_count(level_id: int) -> void:
+	if _save_data.has("fail_counts"):
+		_save_data["fail_counts"].erase(str(level_id))
+		save_game()
+
+# ── Optional cloud sync (login feature — not required for gameplay) ────────────
+
+func get_save_snapshot() -> Dictionary:
+	return _save_data.duplicate(true)
+
+func sync_to_cloud() -> void:
+	SupabaseClient.upload_save(get_save_snapshot())
+
+func restore_from_cloud(cloud: Dictionary) -> void:
+	# Coins / gems / hints — never reduce local
+	_save_data["coins"] = max(get_coins(), int(cloud.get("coins", 0)))
+	_save_data["gems"]  = max(get_gems(),  int(cloud.get("gems",  0)))
+	_save_data["hints"] = max(get_hints(), int(cloud.get("hints", 3)))
+
+	# Level progress — take furthest
+	var cloud_level := int(cloud.get("current_level", 1))
+	if cloud_level > get_current_level():
+		_save_data["current_level"] = cloud_level
+
+	# Completed levels — union
+	var cloud_done: Array = cloud.get("completed_levels", [])
+	var local_done: Array = get_completed_levels()
+	for lvl in cloud_done:
+		var id := int(lvl)
+		if id not in local_done:
+			local_done.append(id)
+	_save_data["completed_levels"] = local_done
+
+	# Stars — take max per level
+	if not _save_data.has("stars"):
+		_save_data["stars"] = {}
+	var cloud_stars: Dictionary = cloud.get("stars", {})
+	for key in cloud_stars:
+		var cs := int(cloud_stars[key])
+		if cs > get_stars(int(key)):
+			_save_data["stars"][str(key)] = cs
+
+	# Unlocked skins — union
+	var cloud_skins: Array = cloud.get("unlocked_skins", [])
+	for sk in cloud_skins:
+		unlock_skin(str(sk))
+
+	# Upgrades — union
+	var cloud_upgs: Array = cloud.get("upgrades", [])
+	for upg in cloud_upgs:
+		unlock_upgrade(str(upg))
+
+	# Resources — take max per type
+	var cloud_res: Dictionary = cloud.get("resources", {})
+	for res_id in cloud_res:
+		var ca := int(cloud_res[res_id])
+		if ca > get_resource(str(res_id)):
+			if not _save_data.has("resources"):
+				_save_data["resources"] = {}
+			_save_data["resources"][str(res_id)] = ca
+
+	# Home stage — take furthest
+	var cloud_home := int(cloud.get("home_stage", 0))
+	if cloud_home > get_home_stage():
+		_save_data["home_stage"] = cloud_home
+
+	save_game()
+	sync_to_cloud()  # push merged local data back up

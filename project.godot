@@ -26,7 +26,10 @@ config/icon="res://assets/sprites/ui/icon.png"
 
 Constants="*res://scripts/data/Constants.gd"
 EventBus="*res://scripts/autoload/EventBus.gd"
+SupabaseClient="*res://scripts/autoload/SupabaseClient.gd"
+Analytics="*res://scripts/autoload/Analytics.gd"
 SaveManager="*res://scripts/autoload/SaveManager.gd"
+AdaptiveDifficulty="*res://scripts/autoload/AdaptiveDifficulty.gd"
 GameManager="*res://scripts/autoload/GameManager.gd"
 AudioManager="*res://scripts/autoload/AudioManager.gd"
 
@@ -61,3 +64,12 @@ swipe_right={
 
 textures/canvas_textures/default_texture_filter=0
 renderer/rendering_method="mobile"
+textures/vram_compression/import_etc2_astc=true
+lights_and_shadows/directional_shadow/size=1024
+lights_and_shadows/directional_shadow/16_bits=true
+anti_aliasing/quality/msaa_3d=0
+anti_aliasing/quality/screen_space_aa=0
+textures/default_filters/anisotropic_filtering_level=0
+camera/depth_of_field/depth_of_field_bokeh_quality=0
+environment/glow/upscale_mode=0
+environment/screen_space_reflection/roughness_quality=0

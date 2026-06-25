@@ -18,6 +18,9 @@ var _level_id: int   = 1
 var _finished: bool  = false
 var _dead: bool      = false
 var _cam_xz: Vector2 = Vector2(0.0, 4.5)  # smoothed (x-behind, z-behind) from player
+var _active_mode: String = "run"
+var _junction_active: bool = false
+var _shake_time: float = 0.0
 
 func _ready() -> void:
 	_level_id = GameManager.current_level_id
@@ -31,6 +34,17 @@ func _ready() -> void:
 	level_mgr.turn_zone_exited.connect(player._on_turn_zone_exited)
 	level_mgr.turn_zone_entered.connect(func(dir: int, cp: Vector3) -> void: hud.call("show_turn_prompt", dir, cp))
 	level_mgr.turn_zone_exited.connect(func() -> void: hud.call("hide_turn_prompt"))
+	level_mgr.path_segment_entered.connect(_on_path_segment_entered)
+	level_mgr.junction_entered.connect(_on_junction_entered)
+	level_mgr.junction_exited.connect(_on_junction_exited)
+	player.junction_route_chosen.connect(_on_junction_route_chosen)
+	player.attract_coins_request.connect(func(pos: Vector3, radius: float) -> void:
+		level_mgr.attract_coins(pos, radius)
+	)
+	player.tribal_path_reveal.connect(func(routes: Array) -> void:
+		hud.call("show_tribal_routes", routes)
+	)
+	player.grass_step.connect(level_mgr.add_grass_footprint)
 	hud.call("setup", _level_id)
 	GameManager.state = GameManager.GameState.PLAYING
 	EventBus.play_music.emit("gameplay")
@@ -49,6 +63,7 @@ func _load_and_build_level() -> void:
 		push_warning("Game3D: level data missing for " + str(_level_id) + "; using defaults")
 		data = _default_level(_level_id)
 	level_mgr.build(data)
+	player.set_level_speed(_level_id)
 
 func _apply_level_atmosphere(id: int) -> void:
 	if world_env.environment == null:
@@ -154,27 +169,134 @@ func _process(delta: float) -> void:
 	# Keep camera behind the player in their heading direction.
 	# Snap instantly when the required movement is large (just after a turn)
 	# so the player never runs off-screen; smooth-lerp for minor adjustments.
-	var target_xz := Vector2(-player._move_fwd.x * 4.5, -player._move_fwd.z * 4.5)
+	var cam_distance := _camera_distance()
+	var target_xz := Vector2(-player._move_fwd.x * cam_distance, -player._move_fwd.z * cam_distance)
 	if (_cam_xz - target_xz).length_squared() > 6.0:
 		_cam_xz = target_xz  # instant snap on turn
 	else:
 		_cam_xz = _cam_xz.lerp(target_xz, minf(1.0, delta * 8.0))
+	var shake := Vector2.ZERO
+	if _shake_time > 0.0:
+		_shake_time -= delta
+		shake = Vector2(sin(Time.get_ticks_msec() * 0.055), cos(Time.get_ticks_msec() * 0.047)) * 0.12
 	cam_pivot.global_position.x = player.global_position.x + _cam_xz.x
 	cam_pivot.global_position.z = player.global_position.z + _cam_xz.y
+	cam_pivot.global_position.x += shake.x
+	cam_pivot.global_position.z += shake.y
+	cam_pivot.global_position.y = lerpf(cam_pivot.global_position.y, player.global_position.y + _camera_height(), minf(1.0, delta * 5.0))
 	# Rotate cam_pivot so its local -Z points at the player.
 	# World-forward of a Y-rotated node is (-sin θ, 0, -cos θ), so θ = atan2(-tx, -tz).
 	var to_player := player.global_position - cam_pivot.global_position
 	if to_player.length_squared() > 0.01:
 		cam_pivot.rotation.y = atan2(-to_player.x, -to_player.z)
 
+func _on_path_segment_entered(row: int, center: Vector3, fwd: Vector3, right: Vector3, surface: String, mode: String, width: float, lanes: int) -> void:
+	player.set_path_guidance(row, center, fwd, right, surface, mode, width, lanes)
+	var next_mode := mode if not mode.is_empty() else "run"
+	if next_mode == _active_mode:
+		return
+	_active_mode = next_mode
+	hud.call("show_mode", _active_mode, _mode_title(_active_mode), _mode_message(_active_mode))
+	if _active_mode == "escape":
+		_shake_time = 2.0
+
+func _on_junction_entered(junction_id: String, routes: Array) -> void:
+	_junction_active = true
+	player.enter_junction(junction_id, routes)
+	hud.call("show_junction_prompt", routes)
+
+func _on_junction_exited(junction_id: String) -> void:
+	_junction_active = false
+	player.exit_junction(junction_id)
+	hud.call("hide_junction_prompt")
+
+func _on_junction_route_chosen(junction_id: String, direction: String, route: Dictionary) -> void:
+	_junction_active = false
+	level_mgr.apply_junction_choice(junction_id, direction, route)
+	hud.call("hide_junction_prompt")
+	hud.call("show_route_chosen", str(route.get("label", "Route")))
+
+func _camera_distance() -> float:
+	if _junction_active:
+		return 6.1
+	match _active_mode:
+		"boat":
+			return 6.4
+		"water_slide":
+			return 5.7
+		"skating":
+			return 5.3
+		"chase", "escape":
+			return 5.8
+		_:
+			return 4.5
+
+func _camera_height() -> float:
+	if _junction_active:
+		return 3.2
+	match _active_mode:
+		"boat":
+			return 3.3
+		"water_slide":
+			return 2.05
+		"skating":
+			return 2.35
+		"chase", "escape":
+			return 2.65
+		_:
+			return 2.5
+
+func _mode_title(mode: String) -> String:
+	match mode:
+		"tracking":
+			return "TRACKING"
+		"chase":
+			return "CHASE"
+		"escape":
+			return "SURVIVAL"
+		"water_slide":
+			return "WATER SLIDE"
+		"boat":
+			return "BOAT MODE"
+		"skating":
+			return "SKATE RUN"
+		_:
+			return ""
+
+func _mode_message(mode: String) -> String:
+	match mode:
+		"tracking":
+			return "Follow prints and choose the marked trail."
+		"chase":
+			return "Keep the animal in sight."
+		"escape":
+			return "Danger behind. Dodge and reach safety."
+		"water_slide":
+			return "Steer through rocks, vines and drops."
+		"boat":
+			return "Steer the canoe through river hazards."
+		"skating":
+			return "Glide through the market track and dodge lane hazards."
+		_:
+			return ""
+
 func _on_player_died() -> void:
 	if _dead:
 		return
 	_dead = true
+	if GameManager.in_daily_challenge:
+		GameManager._challenge_fail_count += 1
 	EventBus.play_sfx.emit("game_over")
 	GameManager.state = GameManager.GameState.GAME_OVER
 	get_tree().paused = true
-	game_over.call("show_fail", "You hit an obstacle!")
+	var message := "You hit an obstacle!"
+	if _level_id > 3:
+		var lost_life := SaveManager.lose_life(_level_id)
+		if lost_life:
+			message += "\n\nExpedition Life lost. " + SaveManager.get_lives_display() + " remain."
+		else:
+			message += "\n\nNo Expedition Lives were available."
+	game_over.call("show_fail", message)
 
 func _on_finish_reached() -> void:
 	if _finished:
@@ -187,6 +309,10 @@ func _on_finish_reached() -> void:
 	var stars := _calc_stars(coins, level_mgr.get_total_coins())
 	SaveManager.complete_level(_level_id, stars, coins)
 	_award_level_resources(_level_id)
+	# Provide challenge context before level_completed fires
+	GameManager._challenge_completion_stars = stars
+	GameManager._challenge_total_coins = level_mgr.get_total_coins()
+	EventBus.level_completed.emit(_level_id, stars, coins, 0)
 	GameManager.state = GameManager.GameState.LEVEL_COMPLETE
 	get_tree().paused = true
 	var rewards := _level_resource_rewards(_level_id)
@@ -204,6 +330,20 @@ func _level_resource_rewards(level_id: int) -> Dictionary:
 		4: return { "relic_keys": 1, "bricks": 2, "sunstone_shards": 1 }
 		5: return { "map_pieces": 1, "sunstone_shards": 1 }
 		6: return { "wood": 1, "bricks": 2, "food": 1, "sunstone_shards": 1 }
+		7: return { "wood": 2, "bricks": 3, "food": 1 }
+		8: return { "bricks": 4, "tools": 1 }
+		9: return { "wood": 4, "tools": 1 }
+		10: return { "food": 2, "map_pieces": 1 }
+		11: return { "animal_badge": 1, "food": 1 }
+		12: return { "water_token": 2, "fish_token": 1, "wood": 1 }
+		13: return { "animal_badge": 1, "food": 1 }
+		14: return { "animal_badge": 1, "bricks": 2, "tiles": 1 }
+		15: return { "trade_token": 2, "wood": 2, "windows": 1 }
+		16: return { "animal_badge": 1, "map_pieces": 1 }
+		17: return { "fish_token": 1, "river_relic": 1, "wood": 2 }
+		18: return { "relic_keys": 1, "map_pieces": 1 }
+		19: return { "tools": 2, "bricks": 3 }
+		20: return { "sunstone_shards": 3, "river_relic": 1, "relic_keys": 1 }
 		_: return {}
 
 func _calc_stars(collected: int, total: int) -> int:

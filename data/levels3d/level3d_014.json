@@ -4,63 +4,295 @@
   "seed": 156,
   "name": "Warthog Watch",
   "turns": [
-    { "row": 21, "dir": -1 }
+    {
+      "row": 21,
+      "dir": -1
+    }
   ],
   "obstacles": [
-    { "type": "rock",   "lane": 1, "row": 4  },
-    { "type": "rock",   "lane": 2, "row": 7  },
-    { "type": "branch", "lane": 0, "row": 10 },
-    { "type": "spike",  "lane": 1, "row": 14 },
-    { "type": "rock",   "lane": 2, "row": 17 },
-    { "type": "rock",   "lane": 0, "row": 21 },
-    { "type": "spike",  "lane": 1, "row": 24 },
-    { "type": "rock",   "lane": 2, "row": 27 },
-    { "type": "branch", "lane": 1, "row": 30 },
-    { "type": "rock",   "lane": 1, "row": 33 },
-    { "type": "spike",  "lane": 2, "row": 36 },
-    { "type": "rock",   "lane": 0, "row": 39 },
-    { "type": "branch", "lane": 1, "row": 41 }
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 4
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 7
+    },
+    {
+      "type": "branch",
+      "lane": 0,
+      "row": 10
+    },
+    {
+      "type": "spike",
+      "lane": 1,
+      "row": 14
+    },
+    {
+      "type": "rock",
+      "lane": 2,
+      "row": 17
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 21
+    },
+    {
+      "type": "spike",
+      "lane": 0,
+      "row": 24
+    },
+    {
+      "type": "rock",
+      "lane": 1,
+      "row": 27
+    },
+    {
+      "type": "branch",
+      "lane": 1,
+      "row": 30
+    },
+    {
+      "type": "rock",
+      "lane": 1,
+      "row": 33
+    },
+    {
+      "type": "spike",
+      "lane": 2,
+      "row": 36
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 39
+    },
+    {
+      "type": "branch",
+      "lane": 1,
+      "row": 41
+    }
   ],
   "coins": [
-    { "lane": 0, "row": 2  },
-    { "lane": 2, "row": 2  },
-    { "lane": 1, "row": 3  },
-    { "lane": 0, "row": 5  },
-    { "lane": 2, "row": 6  },
-    { "lane": 1, "row": 8  },
-    { "lane": 0, "row": 9  },
-    { "lane": 2, "row": 11 },
-    { "lane": 1, "row": 12 },
-    { "lane": 0, "row": 13 },
-    { "lane": 2, "row": 15 },
-    { "lane": 1, "row": 16 },
-    { "lane": 0, "row": 18 },
-    { "lane": 1, "row": 19 },
-    { "lane": 2, "row": 20 },
-    { "lane": 1, "row": 22 },
-    { "lane": 0, "row": 23 },
-    { "lane": 2, "row": 25 },
-    { "lane": 1, "row": 26 },
-    { "lane": 0, "row": 28 },
-    { "lane": 2, "row": 29 },
-    { "lane": 1, "row": 31 },
-    { "lane": 0, "row": 32 },
-    { "lane": 2, "row": 34 },
-    { "lane": 1, "row": 35 },
-    { "lane": 0, "row": 37 },
-    { "lane": 2, "row": 38 },
-    { "lane": 1, "row": 40 },
-    { "lane": 0, "row": 41 },
-    { "gem": true, "lane": 1, "row": 42 },
-    { "gem": true, "lane": 2, "row": 42 }
+    {
+      "lane": 0,
+      "row": 2
+    },
+    {
+      "lane": 0,
+      "row": 2
+    },
+    {
+      "lane": 0,
+      "row": 3
+    },
+    {
+      "lane": 0,
+      "row": 5
+    },
+    {
+      "lane": 0,
+      "row": 6
+    },
+    {
+      "lane": 0,
+      "row": 8
+    },
+    {
+      "lane": 0,
+      "row": 9
+    },
+    {
+      "lane": 0,
+      "row": 11
+    },
+    {
+      "lane": 0,
+      "row": 12
+    },
+    {
+      "lane": 0,
+      "row": 13
+    },
+    {
+      "lane": 2,
+      "row": 15
+    },
+    {
+      "lane": 1,
+      "row": 16
+    },
+    {
+      "lane": 0,
+      "row": 18
+    },
+    {
+      "lane": 1,
+      "row": 19
+    },
+    {
+      "lane": 0,
+      "row": 20
+    },
+    {
+      "lane": 0,
+      "row": 22
+    },
+    {
+      "lane": 0,
+      "row": 23
+    },
+    {
+      "lane": 1,
+      "row": 25
+    },
+    {
+      "lane": 0,
+      "row": 26
+    },
+    {
+      "lane": 0,
+      "row": 28
+    },
+    {
+      "lane": 2,
+      "row": 29
+    },
+    {
+      "lane": 1,
+      "row": 31
+    },
+    {
+      "lane": 0,
+      "row": 32
+    },
+    {
+      "lane": 2,
+      "row": 34
+    },
+    {
+      "lane": 1,
+      "row": 35
+    },
+    {
+      "lane": 0,
+      "row": 37
+    },
+    {
+      "lane": 2,
+      "row": 38
+    },
+    {
+      "lane": 1,
+      "row": 40
+    },
+    {
+      "lane": 0,
+      "row": 41
+    },
+    {
+      "gem": true,
+      "lane": 1,
+      "row": 42
+    },
+    {
+      "gem": true,
+      "lane": 2,
+      "row": 42
+    }
   ],
   "collectables": [
-    { "type": "animal_badge", "lane": 0, "row": 4  },
-    { "type": "bricks",       "lane": 0, "row": 7  },
-    { "type": "tiles",        "lane": 2, "row": 10 },
-    { "type": "animal_badge", "lane": 0, "row": 17 },
-    { "type": "bricks",       "lane": 0, "row": 24 },
-    { "type": "tiles",        "lane": 1, "row": 30 },
-    { "type": "bricks",       "lane": 0, "row": 36 }
-  ]
+    {
+      "type": "animal_badge",
+      "lane": 0,
+      "row": 4
+    },
+    {
+      "type": "bricks",
+      "lane": 0,
+      "row": 7
+    },
+    {
+      "type": "tiles",
+      "lane": 0,
+      "row": 10
+    },
+    {
+      "type": "animal_badge",
+      "lane": 0,
+      "row": 17
+    },
+    {
+      "type": "bricks",
+      "lane": 0,
+      "row": 24
+    },
+    {
+      "type": "tiles",
+      "lane": 1,
+      "row": 30
+    },
+    {
+      "type": "bricks",
+      "lane": 0,
+      "row": 36
+    }
+  ],
+  "difficulty": "Medium-Hard",
+  "gameplay_modes": [
+    "tracking",
+    "observation"
+  ],
+  "path_modules": [
+    {
+      "type": "wide_curve_left",
+      "rows": 8,
+      "width": "single",
+      "surface": "mud",
+      "mode": "tracking",
+      "lanes": 1
+    },
+    {
+      "type": "narrow_passage",
+      "rows": 6,
+      "width": "single",
+      "surface": "mud",
+      "mode": "tracking",
+      "lanes": 1
+    },
+    {
+      "type": "mud_path",
+      "rows": 6,
+      "width": "triple",
+      "surface": "mud",
+      "mode": "tracking",
+      "lanes": 3
+    },
+    {
+      "type": "wide_curve_right",
+      "rows": 8,
+      "width": "double",
+      "surface": "dirt",
+      "mode": "run",
+      "lanes": 2
+    },
+    {
+      "type": "finish_gate_approach",
+      "rows": 14,
+      "width": "triple",
+      "surface": "stone",
+      "mode": "run",
+      "lanes": 3
+    }
+  ],
+  "path_identity": "Warthog Watch uses tracking, observation; variable 1/2/3-lane living trail",
+  "environment": {
+    "wind_strength": 0.94,
+    "wind_speed": 1.08,
+    "gust_strength": 0.34,
+    "grass_footprints": true
+  }
 }

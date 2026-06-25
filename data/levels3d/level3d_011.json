@@ -4,54 +4,274 @@
   "seed": 137,
   "name": "Rabbit Tracks",
   "turns": [
-    { "row": 18, "dir": 1 }
+    {
+      "row": 18,
+      "dir": 1
+    }
   ],
   "obstacles": [
-    { "type": "rock",   "lane": 1, "row": 4  },
-    { "type": "rock",   "lane": 0, "row": 7  },
-    { "type": "rock",   "lane": 2, "row": 10 },
-    { "type": "branch", "lane": 1, "row": 14 },
-    { "type": "rock",   "lane": 0, "row": 18 },
-    { "type": "rock",   "lane": 2, "row": 21 },
-    { "type": "spike",  "lane": 1, "row": 25 },
-    { "type": "rock",   "lane": 0, "row": 28 },
-    { "type": "branch", "lane": 2, "row": 31 },
-    { "type": "rock",   "lane": 1, "row": 33 }
+    {
+      "type": "rock",
+      "lane": 1,
+      "row": 4
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 7
+    },
+    {
+      "type": "rock",
+      "lane": 2,
+      "row": 10
+    },
+    {
+      "type": "branch",
+      "lane": 1,
+      "row": 14
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 18
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 21
+    },
+    {
+      "type": "spike",
+      "lane": 0,
+      "row": 25
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 28
+    },
+    {
+      "type": "branch",
+      "lane": 0,
+      "row": 31
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 33
+    }
   ],
   "coins": [
-    { "lane": 0, "row": 2  },
-    { "lane": 2, "row": 2  },
-    { "lane": 1, "row": 3  },
-    { "lane": 2, "row": 5  },
-    { "lane": 0, "row": 6  },
-    { "lane": 1, "row": 8  },
-    { "lane": 2, "row": 9  },
-    { "lane": 0, "row": 11 },
-    { "lane": 1, "row": 12 },
-    { "lane": 2, "row": 13 },
-    { "lane": 0, "row": 15 },
-    { "lane": 1, "row": 16 },
-    { "lane": 2, "row": 17 },
-    { "lane": 1, "row": 19 },
-    { "lane": 0, "row": 20 },
-    { "lane": 2, "row": 22 },
-    { "lane": 1, "row": 23 },
-    { "lane": 0, "row": 24 },
-    { "lane": 2, "row": 26 },
-    { "lane": 1, "row": 27 },
-    { "lane": 0, "row": 29 },
-    { "lane": 1, "row": 30 },
-    { "lane": 2, "row": 32 },
-    { "lane": 1, "row": 34 },
-    { "gem": true, "lane": 0, "row": 34 },
-    { "gem": true, "lane": 2, "row": 35 }
+    {
+      "lane": 0,
+      "row": 2
+    },
+    {
+      "lane": 2,
+      "row": 2
+    },
+    {
+      "lane": 1,
+      "row": 3
+    },
+    {
+      "lane": 2,
+      "row": 5
+    },
+    {
+      "lane": 0,
+      "row": 6
+    },
+    {
+      "lane": 1,
+      "row": 8
+    },
+    {
+      "lane": 2,
+      "row": 9
+    },
+    {
+      "lane": 0,
+      "row": 11
+    },
+    {
+      "lane": 1,
+      "row": 12
+    },
+    {
+      "lane": 2,
+      "row": 13
+    },
+    {
+      "lane": 0,
+      "row": 15
+    },
+    {
+      "lane": 1,
+      "row": 16
+    },
+    {
+      "lane": 2,
+      "row": 17
+    },
+    {
+      "lane": 0,
+      "row": 19
+    },
+    {
+      "lane": 0,
+      "row": 20
+    },
+    {
+      "lane": 0,
+      "row": 22
+    },
+    {
+      "lane": 0,
+      "row": 23
+    },
+    {
+      "lane": 0,
+      "row": 24
+    },
+    {
+      "lane": 1,
+      "row": 26
+    },
+    {
+      "lane": 0,
+      "row": 27
+    },
+    {
+      "lane": 0,
+      "row": 29
+    },
+    {
+      "lane": 1,
+      "row": 30
+    },
+    {
+      "lane": 1,
+      "row": 32
+    },
+    {
+      "lane": 1,
+      "row": 34
+    },
+    {
+      "gem": true,
+      "lane": 0,
+      "row": 34
+    },
+    {
+      "gem": true,
+      "lane": 2,
+      "row": 35
+    }
   ],
   "collectables": [
-    { "type": "animal_badge", "lane": 2, "row": 4  },
-    { "type": "food",         "lane": 1, "row": 7  },
-    { "type": "map_piece",    "lane": 1, "row": 10 },
-    { "type": "food",         "lane": 1, "row": 21 },
-    { "type": "map_piece",    "lane": 2, "row": 28 },
-    { "type": "animal_badge", "lane": 0, "row": 33 }
-  ]
+    {
+      "type": "animal_badge",
+      "lane": 2,
+      "row": 4
+    },
+    {
+      "type": "food",
+      "lane": 1,
+      "row": 7
+    },
+    {
+      "type": "map_piece",
+      "lane": 1,
+      "row": 10
+    },
+    {
+      "type": "food",
+      "lane": 0,
+      "row": 21
+    },
+    {
+      "type": "map_piece",
+      "lane": 1,
+      "row": 28
+    },
+    {
+      "type": "animal_badge",
+      "lane": 0,
+      "row": 33
+    }
+  ],
+  "difficulty": "Medium-Hard",
+  "gameplay_modes": [
+    "tracking",
+    "chase",
+    "junction"
+  ],
+  "path_modules": [
+    {
+      "type": "animal_chase_lane",
+      "rows": 8,
+      "width": "triple",
+      "surface": "dirt",
+      "mode": "chase",
+      "lanes": 3
+    },
+    {
+      "type": "gentle_curve_right",
+      "rows": 6,
+      "width": "triple",
+      "surface": "grass",
+      "mode": "chase",
+      "lanes": 3
+    },
+    {
+      "type": "junction_three_way",
+      "rows": 5,
+      "width": "triple",
+      "surface": "dirt",
+      "mode": "chase",
+      "routes": [
+        {
+          "direction": "left",
+          "label": "Rabbit Trail",
+          "reward": "animal_badge"
+        },
+        {
+          "direction": "up",
+          "label": "Safe Route",
+          "reward": "coins"
+        },
+        {
+          "direction": "right",
+          "label": "Carrot Clue Route",
+          "reward": "food"
+        }
+      ],
+      "id": "l11_rabbit_split",
+      "lanes": 3
+    },
+    {
+      "type": "wide_curve_left",
+      "rows": 7,
+      "width": "single",
+      "surface": "dirt",
+      "mode": "chase",
+      "lanes": 1
+    },
+    {
+      "type": "finish_gate_approach",
+      "rows": 9,
+      "width": "double",
+      "surface": "stone",
+      "mode": "run",
+      "lanes": 2
+    }
+  ],
+  "path_identity": "Rabbit Tracks uses tracking, chase, junction; variable 1/2/3-lane living trail",
+  "environment": {
+    "wind_strength": 0.67,
+    "wind_speed": 1.21,
+    "gust_strength": 0.34,
+    "grass_footprints": true
+  }
 }

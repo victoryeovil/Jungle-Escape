@@ -4,69 +4,348 @@
   "seed": 185,
   "name": "Hound of the Hidden Trail",
   "turns": [
-    { "row": 25, "dir": 1  },
-    { "row": 38, "dir": -1 }
+    {
+      "row": 25,
+      "dir": 1
+    },
+    {
+      "row": 38,
+      "dir": -1
+    }
   ],
   "obstacles": [
-    { "type": "rock",   "lane": 1, "row": 4  },
-    { "type": "spike",  "lane": 0, "row": 7  },
-    { "type": "rock",   "lane": 2, "row": 10 },
-    { "type": "spike",  "lane": 1, "row": 14 },
-    { "type": "rock",   "lane": 0, "row": 17 },
-    { "type": "spike",  "lane": 2, "row": 20 },
-    { "type": "rock",   "lane": 1, "row": 23 },
-    { "type": "spike",  "lane": 0, "row": 27 },
-    { "type": "rock",   "lane": 2, "row": 30 },
-    { "type": "spike",  "lane": 1, "row": 33 },
-    { "type": "rock",   "lane": 0, "row": 37 },
-    { "type": "spike",  "lane": 2, "row": 41 },
-    { "type": "rock",   "lane": 1, "row": 44 },
-    { "type": "spike",  "lane": 0, "row": 47 },
-    { "type": "branch", "lane": 2, "row": 49 }
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 4
+    },
+    {
+      "type": "spike",
+      "lane": 0,
+      "row": 7
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 10
+    },
+    {
+      "type": "spike",
+      "lane": 0,
+      "row": 14
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 17
+    },
+    {
+      "type": "spike",
+      "lane": 2,
+      "row": 20
+    },
+    {
+      "type": "rock",
+      "lane": 1,
+      "row": 23
+    },
+    {
+      "type": "spike",
+      "lane": 0,
+      "row": 27
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 30
+    },
+    {
+      "type": "spike",
+      "lane": 0,
+      "row": 33
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 37
+    },
+    {
+      "type": "spike",
+      "lane": 2,
+      "row": 41
+    },
+    {
+      "type": "rock",
+      "lane": 1,
+      "row": 44
+    },
+    {
+      "type": "spike",
+      "lane": 0,
+      "row": 47
+    },
+    {
+      "type": "branch",
+      "lane": 2,
+      "row": 49
+    }
   ],
   "coins": [
-    { "lane": 0, "row": 2  },
-    { "lane": 2, "row": 2  },
-    { "lane": 1, "row": 3  },
-    { "lane": 2, "row": 5  },
-    { "lane": 0, "row": 6  },
-    { "lane": 1, "row": 8  },
-    { "lane": 2, "row": 9  },
-    { "lane": 0, "row": 11 },
-    { "lane": 1, "row": 12 },
-    { "lane": 2, "row": 13 },
-    { "lane": 0, "row": 15 },
-    { "lane": 1, "row": 16 },
-    { "lane": 2, "row": 18 },
-    { "lane": 0, "row": 19 },
-    { "lane": 1, "row": 21 },
-    { "lane": 2, "row": 22 },
-    { "lane": 0, "row": 24 },
-    { "lane": 2, "row": 26 },
-    { "lane": 1, "row": 28 },
-    { "lane": 2, "row": 29 },
-    { "lane": 0, "row": 31 },
-    { "lane": 1, "row": 32 },
-    { "lane": 2, "row": 34 },
-    { "lane": 0, "row": 35 },
-    { "lane": 1, "row": 36 },
-    { "lane": 0, "row": 39 },
-    { "lane": 2, "row": 40 },
-    { "lane": 1, "row": 42 },
-    { "lane": 2, "row": 43 },
-    { "lane": 0, "row": 45 },
-    { "lane": 1, "row": 46 },
-    { "lane": 2, "row": 48 },
-    { "gem": true, "lane": 1, "row": 49 },
-    { "gem": true, "lane": 0, "row": 50 }
+    {
+      "lane": 0,
+      "row": 2
+    },
+    {
+      "lane": 0,
+      "row": 2
+    },
+    {
+      "lane": 0,
+      "row": 3
+    },
+    {
+      "lane": 0,
+      "row": 5
+    },
+    {
+      "lane": 0,
+      "row": 6
+    },
+    {
+      "lane": 0,
+      "row": 8
+    },
+    {
+      "lane": 1,
+      "row": 9
+    },
+    {
+      "lane": 0,
+      "row": 11
+    },
+    {
+      "lane": 0,
+      "row": 12
+    },
+    {
+      "lane": 1,
+      "row": 13
+    },
+    {
+      "lane": 0,
+      "row": 15
+    },
+    {
+      "lane": 0,
+      "row": 16
+    },
+    {
+      "lane": 2,
+      "row": 18
+    },
+    {
+      "lane": 0,
+      "row": 19
+    },
+    {
+      "lane": 1,
+      "row": 21
+    },
+    {
+      "lane": 2,
+      "row": 22
+    },
+    {
+      "lane": 0,
+      "row": 24
+    },
+    {
+      "lane": 0,
+      "row": 26
+    },
+    {
+      "lane": 0,
+      "row": 28
+    },
+    {
+      "lane": 0,
+      "row": 29
+    },
+    {
+      "lane": 0,
+      "row": 31
+    },
+    {
+      "lane": 0,
+      "row": 32
+    },
+    {
+      "lane": 0,
+      "row": 34
+    },
+    {
+      "lane": 0,
+      "row": 35
+    },
+    {
+      "lane": 0,
+      "row": 36
+    },
+    {
+      "lane": 0,
+      "row": 39
+    },
+    {
+      "lane": 2,
+      "row": 40
+    },
+    {
+      "lane": 1,
+      "row": 42
+    },
+    {
+      "lane": 2,
+      "row": 43
+    },
+    {
+      "lane": 0,
+      "row": 45
+    },
+    {
+      "lane": 1,
+      "row": 46
+    },
+    {
+      "lane": 2,
+      "row": 48
+    },
+    {
+      "gem": true,
+      "lane": 1,
+      "row": 49
+    },
+    {
+      "gem": true,
+      "lane": 0,
+      "row": 50
+    }
   ],
   "collectables": [
-    { "type": "relic_key",    "lane": 2, "row": 4  },
-    { "type": "map_piece",    "lane": 2, "row": 7  },
-    { "type": "animal_badge", "lane": 0, "row": 14 },
-    { "type": "relic_key",    "lane": 1, "row": 20 },
-    { "type": "map_piece",    "lane": 2, "row": 27 },
-    { "type": "relic_key",    "lane": 2, "row": 37 },
-    { "type": "animal_badge", "lane": 0, "row": 44 }
-  ]
+    {
+      "type": "relic_key",
+      "lane": 0,
+      "row": 4
+    },
+    {
+      "type": "map_piece",
+      "lane": 0,
+      "row": 7
+    },
+    {
+      "type": "animal_badge",
+      "lane": 0,
+      "row": 14
+    },
+    {
+      "type": "relic_key",
+      "lane": 1,
+      "row": 20
+    },
+    {
+      "type": "map_piece",
+      "lane": 0,
+      "row": 27
+    },
+    {
+      "type": "relic_key",
+      "lane": 0,
+      "row": 37
+    },
+    {
+      "type": "animal_badge",
+      "lane": 0,
+      "row": 44
+    }
+  ],
+  "difficulty": "Hard",
+  "gameplay_modes": [
+    "tracking",
+    "dog clue",
+    "junction"
+  ],
+  "path_modules": [
+    {
+      "type": "mud_path",
+      "rows": 8,
+      "width": "single",
+      "surface": "mud",
+      "mode": "tracking",
+      "lanes": 1
+    },
+    {
+      "type": "s_curve",
+      "rows": 10,
+      "width": "double",
+      "surface": "mud",
+      "mode": "tracking",
+      "lanes": 2
+    },
+    {
+      "type": "junction_three_way",
+      "rows": 6,
+      "width": "triple",
+      "surface": "mud",
+      "mode": "tracking",
+      "routes": [
+        {
+          "direction": "left",
+          "label": "Dog Bark Shortcut",
+          "reward": "map_piece"
+        },
+        {
+          "direction": "up",
+          "label": "Ancient Markers",
+          "reward": "relic_key"
+        },
+        {
+          "direction": "right",
+          "label": "False Path",
+          "reward": "coins"
+        }
+      ],
+      "id": "l18_hound_split",
+      "lanes": 3
+    },
+    {
+      "type": "narrow_passage",
+      "rows": 8,
+      "width": "single",
+      "surface": "mud",
+      "mode": "tracking",
+      "lanes": 1
+    },
+    {
+      "type": "gentle_curve_right",
+      "rows": 8,
+      "width": "single",
+      "surface": "mud",
+      "mode": "tracking",
+      "lanes": 1
+    },
+    {
+      "type": "finish_gate_approach",
+      "rows": 10,
+      "width": "triple",
+      "surface": "stone",
+      "mode": "run",
+      "lanes": 3
+    }
+  ],
+  "path_identity": "Hound of the Hidden Trail uses tracking, dog clue, junction; variable 1/2/3-lane living trail",
+  "environment": {
+    "wind_strength": 0.85,
+    "wind_speed": 1.08,
+    "gust_strength": 0.18,
+    "grass_footprints": true
+  }
 }
