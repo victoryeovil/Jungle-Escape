@@ -33,6 +33,8 @@ Record every third-party 3D asset imported into the project here.
 | `res://assets/3d/upgrades/sand_shoes.glb`, `res://assets/3d/materials/*.tres`, `res://assets/3d/vfx/*` | `tools/generate_missing_3d_assets.py` | Jungle Escape project | Original project-authored output; no third-party attribution required | 2026-06-19 | Sand Shoes prop, materials, foliage shader, and particle scene resources. |
 | `res://assets/3d/characters/{monkey,robot,treasure,tribal,golden}/**` | `tools/generate_playable_characters.py` | Jungle Escape project | Original project-authored output; no third-party attribution required | 2026-06-23 | Animated low-poly playable skin GLBs and Godot wrapper scenes. |
 | `res://assets/3d/outfits/**`, `res://assets/3d/vehicles/canoe.glb` | `tools/generate_mode_equipment.py` | Jungle Escape project | Original project-authored output; no third-party attribution required | 2026-06-23 | Modular upgrade, skating, and boat clothing plus the pointed expedition canoe used by `Player3D.gd`. |
+| `res://assets/3d/environment/tracks/**/*.glb` | `tools/generate_track_assets.py` | Jungle Escape project | Original project-authored output; no third-party attribution required | 2026-06-23 | 27 modular one-, two-, and three-lane track assets across nine surfaces, wired through `LevelManager3D.gd`. |
+| Runtime Level 7-20 procedural dressing nodes | `scripts/gameplay/LevelManager3D.gd` | Jungle Escape project | Original project-authored output; no third-party attribution required | 2026-06-25 | Primitive-mesh side dressing for settlement props, tall grass, gorge spray, market stalls/reeds, logs/mounds, river mist, relic tablets, baobabs, and gold relics. |
 
 ## License Notes
 

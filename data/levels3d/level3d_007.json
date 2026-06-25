@@ -1,235 +1,246 @@
 {
-    "id":  7,
-    "length":  30,
-    "seed":  107,
-    "name":  "First Clearing",
-    "turns":  [
-                  {
-                      "row":  15,
-                      "dir":  1
-                  }
-              ],
-    "obstacles":  [
-                      {
-                          "type":  "rock",
-                          "lane":  1,
-                          "row":  4
-                      },
-                      {
-                          "type":  "log",
-                          "lane":  2,
-                          "row":  7
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  0,
-                          "row":  10
-                      },
-                      {
-                          "type":  "branch",
-                          "lane":  1,
-                          "row":  13
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  2,
-                          "row":  18
-                      },
-                      {
-                          "type":  "log",
-                          "lane":  0,
-                          "row":  22
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  1,
-                          "row":  26
-                      },
-                      {
-                          "type":  "branch",
-                          "lane":  2,
-                          "row":  28
-                      }
-                  ],
-    "coins":  [
-                  {
-                      "lane":  1,
-                      "row":  2
-                  },
-                  {
-                      "lane":  0,
-                      "row":  3
-                  },
-                  {
-                      "lane":  2,
-                      "row":  3
-                  },
-                  {
-                      "lane":  2,
-                      "row":  5
-                  },
-                  {
-                      "lane":  0,
-                      "row":  6
-                  },
-                  {
-                      "lane":  0,
-                      "row":  8
-                  },
-                  {
-                      "lane":  2,
-                      "row":  9
-                  },
-                  {
-                      "lane":  1,
-                      "row":  11
-                  },
-                  {
-                      "lane":  2,
-                      "row":  12
-                  },
-                  {
-                      "lane":  2,
-                      "row":  14
-                  },
-                  {
-                      "lane":  1,
-                      "row":  15
-                  },
-                  {
-                      "lane":  0,
-                      "row":  16
-                  },
-                  {
-                      "lane":  1,
-                      "row":  17
-                  },
-                  {
-                      "lane":  0,
-                      "row":  19
-                  },
-                  {
-                      "lane":  1,
-                      "row":  20
-                  },
-                  {
-                      "lane":  2,
-                      "row":  21
-                  },
-                  {
-                      "lane":  1,
-                      "row":  23
-                  },
-                  {
-                      "lane":  0,
-                      "row":  24
-                  },
-                  {
-                      "lane":  2,
-                      "row":  25
-                  },
-                  {
-                      "lane":  1,
-                      "row":  27
-                  },
-                  {
-                      "gem":  true,
-                      "lane":  0,
-                      "row":  29
-                  },
-                  {
-                      "gem":  true,
-                      "lane":  2,
-                      "row":  29
-                  }
-              ],
-    "collectables":  [
-                         {
-                             "type":  "wood",
-                             "lane":  2,
-                             "row":  4
-                         },
-                         {
-                             "type":  "bricks",
-                             "lane":  0,
-                             "row":  7
-                         },
-                         {
-                             "type":  "food",
-                             "lane":  1,
-                             "row":  12
-                         },
-                         {
-                             "type":  "wood",
-                             "lane":  1,
-                             "row":  16
-                         },
-                         {
-                             "type":  "bricks",
-                             "lane":  2,
-                             "row":  22
-                         },
-                         {
-                             "type":  "food",
-                             "lane":  0,
-                             "row":  25
-                         }
-                     ],
-    "difficulty":  "Medium",
-    "gameplay_modes":  [
-                           "runner",
-                           "materials",
-                           "junction"
-                       ],
-    "path_modules":  [
-                         {
-                             "type":  "straight_short",
-                             "rows":  5,
-                             "width":  "normal",
-                             "surface":  "dirt",
-                             "mode":  "run"
-                         },
-                         {
-                             "type":  "wide_curve_left",
-                             "rows":  7,
-                             "width":  "wide",
-                             "surface":  "dirt",
-                             "mode":  "run"
-                         },
-                         {
-                             "type":  "junction_two_way",
-                             "rows":  5,
-                             "width":  "wide",
-                             "surface":  "dirt",
-                             "mode":  "run",
-                             "routes":  [
-                                            {
-                                                "direction":  "left",
-                                                "label":  "Material Route",
-                                                "reward":  "bricks"
-                                            },
-                                            {
-                                                "direction":  "right",
-                                                "label":  "Coin Route",
-                                                "reward":  "coins"
-                                            }
-                                        ],
-                             "id":  "l07_clearing_split"
-                         },
-                         {
-                             "type":  "wide_curve_right",
-                             "rows":  6,
-                             "width":  "wide",
-                             "surface":  "dirt",
-                             "mode":  "run"
-                         },
-                         {
-                             "type":  "finish_gate_approach",
-                             "rows":  7,
-                             "width":  "normal",
-                             "surface":  "stone",
-                             "mode":  "run"
-                         }
-                     ],
-    "path_identity":  "First Clearing uses runner, materials, junction"
+  "id": 7,
+  "length": 30,
+  "seed": 107,
+  "name": "First Clearing",
+  "turns": [
+    {
+      "row": 15,
+      "dir": 1
+    }
+  ],
+  "obstacles": [
+    {
+      "type": "rock",
+      "lane": 1,
+      "row": 4
+    },
+    {
+      "type": "log",
+      "lane": 2,
+      "row": 7
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 10
+    },
+    {
+      "type": "branch",
+      "lane": 1,
+      "row": 13
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 18
+    },
+    {
+      "type": "log",
+      "lane": 0,
+      "row": 22
+    },
+    {
+      "type": "rock",
+      "lane": 1,
+      "row": 26
+    },
+    {
+      "type": "branch",
+      "lane": 1,
+      "row": 28
+    }
+  ],
+  "coins": [
+    {
+      "lane": 1,
+      "row": 2
+    },
+    {
+      "lane": 0,
+      "row": 3
+    },
+    {
+      "lane": 0,
+      "row": 3
+    },
+    {
+      "lane": 2,
+      "row": 5
+    },
+    {
+      "lane": 0,
+      "row": 6
+    },
+    {
+      "lane": 0,
+      "row": 8
+    },
+    {
+      "lane": 2,
+      "row": 9
+    },
+    {
+      "lane": 1,
+      "row": 11
+    },
+    {
+      "lane": 2,
+      "row": 12
+    },
+    {
+      "lane": 2,
+      "row": 14
+    },
+    {
+      "lane": 1,
+      "row": 15
+    },
+    {
+      "lane": 0,
+      "row": 16
+    },
+    {
+      "lane": 0,
+      "row": 17
+    },
+    {
+      "lane": 0,
+      "row": 19
+    },
+    {
+      "lane": 0,
+      "row": 20
+    },
+    {
+      "lane": 0,
+      "row": 21
+    },
+    {
+      "lane": 0,
+      "row": 23
+    },
+    {
+      "lane": 0,
+      "row": 24
+    },
+    {
+      "lane": 0,
+      "row": 25
+    },
+    {
+      "lane": 0,
+      "row": 27
+    },
+    {
+      "gem": true,
+      "lane": 0,
+      "row": 29
+    },
+    {
+      "gem": true,
+      "lane": 0,
+      "row": 29
+    }
+  ],
+  "collectables": [
+    {
+      "type": "wood",
+      "lane": 1,
+      "row": 4
+    },
+    {
+      "type": "bricks",
+      "lane": 0,
+      "row": 7
+    },
+    {
+      "type": "food",
+      "lane": 1,
+      "row": 12
+    },
+    {
+      "type": "wood",
+      "lane": 1,
+      "row": 16
+    },
+    {
+      "type": "bricks",
+      "lane": 0,
+      "row": 22
+    },
+    {
+      "type": "food",
+      "lane": 0,
+      "row": 25
+    }
+  ],
+  "difficulty": "Medium",
+  "gameplay_modes": [
+    "runner",
+    "materials",
+    "junction"
+  ],
+  "path_modules": [
+    {
+      "type": "straight_short",
+      "rows": 5,
+      "width": "double",
+      "surface": "grass",
+      "mode": "run",
+      "lanes": 2
+    },
+    {
+      "type": "wide_curve_left",
+      "rows": 7,
+      "width": "triple",
+      "surface": "dirt",
+      "mode": "run",
+      "lanes": 3
+    },
+    {
+      "type": "junction_two_way",
+      "rows": 5,
+      "width": "triple",
+      "surface": "dirt",
+      "mode": "run",
+      "routes": [
+        {
+          "direction": "left",
+          "label": "Material Route",
+          "reward": "bricks"
+        },
+        {
+          "direction": "right",
+          "label": "Coin Route",
+          "reward": "coins"
+        }
+      ],
+      "id": "l07_clearing_split",
+      "lanes": 3
+    },
+    {
+      "type": "wide_curve_right",
+      "rows": 6,
+      "width": "single",
+      "surface": "dirt",
+      "mode": "run",
+      "lanes": 1
+    },
+    {
+      "type": "finish_gate_approach",
+      "rows": 7,
+      "width": "double",
+      "surface": "stone",
+      "mode": "run",
+      "lanes": 2
+    }
+  ],
+  "path_identity": "First Clearing uses runner, materials, junction; variable 1/2/3-lane living trail",
+  "environment": {
+    "wind_strength": 0.76,
+    "wind_speed": 1.21,
+    "gust_strength": 0.26,
+    "grass_footprints": true
+  }
 }

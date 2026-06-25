@@ -123,7 +123,30 @@ func _draw() -> void:
 		draw_texture_rect(_shop_art_texture, Rect2(Vector2.ZERO, draw_size), false)
 
 func _build_art_plate() -> void:
-	_art_hit(Rect2(10, 10, 58, 44)).pressed.connect(_on_back)
+	# Visible back button — top-left corner
+	var back_btn := Button.new()
+	back_btn.text = "←  Back"
+	back_btn.position = Vector2(8, 10)
+	back_btn.custom_minimum_size = Vector2(96, 44)
+	back_btn.focus_mode = Control.FOCUS_NONE
+	back_btn.add_theme_font_size_override("font_size", 16)
+	back_btn.add_theme_color_override("font_color", Color(0.96, 0.82, 0.24))
+	var back_sb := StyleBoxFlat.new()
+	back_sb.bg_color = Color(0.04, 0.04, 0.02, 0.90)
+	back_sb.border_color = Color(0.70, 0.54, 0.16, 0.90)
+	back_sb.border_width_left = 2; back_sb.border_width_right = 2
+	back_sb.border_width_top = 2; back_sb.border_width_bottom = 2
+	back_sb.corner_radius_top_left = 8; back_sb.corner_radius_top_right = 8
+	back_sb.corner_radius_bottom_left = 8; back_sb.corner_radius_bottom_right = 8
+	var back_sb_h := back_sb.duplicate() as StyleBoxFlat
+	back_sb_h.bg_color = Color(0.10, 0.08, 0.04, 0.96)
+	back_btn.add_theme_stylebox_override("normal", back_sb)
+	back_btn.add_theme_stylebox_override("hover",  back_sb_h)
+	back_btn.add_theme_stylebox_override("pressed", back_sb)
+	back_btn.pressed.connect(_on_back)
+	add_child(back_btn)
+
+	# Invisible hit for the upgrade-shop "+" area in the art
 	_art_hit(Rect2(430, 12, 42, 42)).pressed.connect(_on_art_plus)
 	_art_hit(Rect2(430, 61, 42, 42)).pressed.connect(_on_art_plus)
 
@@ -368,7 +391,7 @@ func _build_preview_panel() -> void:
 	_preview_panel = Panel.new()
 	_preview_panel.name     = "SkinPreview"
 	_preview_panel.position = Vector2(16, 78)
-	_preview_panel.size     = Vector2(448, 640)
+	_preview_panel.size     = Vector2(448, 650)
 	var sb := StyleBoxFlat.new()
 	sb.bg_color            = Color(0.02, 0.06, 0.03, 0.97)
 	sb.border_color        = Color(0.82, 0.62, 0.18, 0.96)
@@ -379,20 +402,26 @@ func _build_preview_panel() -> void:
 	_preview_panel.add_theme_stylebox_override("panel", sb)
 	add_child(_preview_panel)
 
-	# Character portrait (reduced height to make room for stats)
+	# Character portrait — light frame so dark renders are visible
+	var portrait_bg := ColorRect.new()
+	portrait_bg.color        = Color(0.08, 0.12, 0.06)
+	portrait_bg.position     = Vector2(10, 10)
+	portrait_bg.size         = Vector2(428, 290)
+	portrait_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_preview_panel.add_child(portrait_bg)
+
 	var portrait := TextureRect.new()
-	portrait.name             = "CharPortrait"
-	portrait.position         = Vector2(10, 10)
-	portrait.size             = Vector2(428, 290)
-	portrait.expand_mode      = TextureRect.EXPAND_IGNORE_SIZE
-	portrait.stretch_mode     = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	portrait.clip_contents    = true
-	portrait.mouse_filter     = Control.MOUSE_FILTER_IGNORE
+	portrait.name          = "CharPortrait"
+	portrait.position      = Vector2(10, 10)
+	portrait.size          = Vector2(428, 290)
+	portrait.expand_mode   = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	portrait.stretch_mode  = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait.mouse_filter  = Control.MOUSE_FILTER_IGNORE
 	_preview_panel.add_child(portrait)
 
 	# Dark gradient on portrait bottom for name readability
 	var grad := ColorRect.new()
-	grad.color        = Color(0.02, 0.04, 0.02, 0.82)
+	grad.color        = Color(0.02, 0.04, 0.02, 0.75)
 	grad.position     = Vector2(10, 254)
 	grad.size         = Vector2(428, 46)
 	grad.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -453,6 +482,19 @@ func _build_preview_panel() -> void:
 	close.pressed.connect(_hide_skin_preview)
 	_style_preview_button(close, Color(0.28, 0.18, 0.06))
 	_preview_panel.add_child(close)
+
+	# Back to main menu from preview panel
+	var back_to_menu := Button.new()
+	back_to_menu.name                = "BtnBackMenu"
+	back_to_menu.text                = "←  Back to Menu"
+	back_to_menu.position            = Vector2(20, 600)
+	back_to_menu.size                = Vector2(408, 36)
+	back_to_menu.custom_minimum_size = Vector2(408, 36)
+	back_to_menu.add_theme_font_size_override("font_size", 13)
+	back_to_menu.pressed.connect(_on_back)
+	_style_preview_button(back_to_menu, Color(0.06, 0.06, 0.04))
+	_preview_panel.add_child(back_to_menu)
+
 	_preview_panel.visible = false
 
 func _preview_label(node_name: String, pos: Vector2, label_size: Vector2, font_size: int, color: Color) -> Label:
@@ -648,14 +690,44 @@ func _art_hit(rect: Rect2) -> Button:
 	return btn
 
 func _load_art_texture(path: String) -> Texture2D:
+	if path.is_empty():
+		return null
+	# Fast path: properly imported resource
 	if ResourceLoader.exists(path):
 		var tex := load(path)
 		if tex is Texture2D:
 			return tex as Texture2D
-
-	var img := Image.new()
-	if img.load(path) == OK:
-		return ImageTexture.create_from_image(img)
+	# Reliable path: FileAccess reads raw bytes, bypasses the import cache entirely.
+	# This works even when the .import file has valid=false.
+	var fa := FileAccess.open(path, FileAccess.READ)
+	if fa != null:
+		var bytes := fa.get_buffer(fa.get_length())
+		fa.close()
+		if not bytes.is_empty():
+			var img := Image.new()
+			var err: Error
+			if path.ends_with(".jpg") or path.ends_with(".jpeg"):
+				err = img.load_jpg_from_buffer(bytes)
+			else:
+				err = img.load_png_from_buffer(bytes)
+			if err == OK and not img.is_empty():
+				return ImageTexture.create_from_image(img)
+	# Final fallback: absolute OS path
+	if path.begins_with("res://"):
+		var abs_path := ProjectSettings.globalize_path(path)
+		var fa2 := FileAccess.open(abs_path, FileAccess.READ)
+		if fa2 != null:
+			var bytes2 := fa2.get_buffer(fa2.get_length())
+			fa2.close()
+			if not bytes2.is_empty():
+				var img2 := Image.new()
+				var err2: Error
+				if path.ends_with(".jpg") or path.ends_with(".jpeg"):
+					err2 = img2.load_jpg_from_buffer(bytes2)
+				else:
+					err2 = img2.load_png_from_buffer(bytes2)
+				if err2 == OK and not img2.is_empty():
+					return ImageTexture.create_from_image(img2)
 	return null
 
 func _using_art_plate() -> bool:

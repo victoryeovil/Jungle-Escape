@@ -1,7 +1,7 @@
 extends CharacterBody3D
 class_name Player3D
 
-const LANES: Array[float] = [-1.8, 0.0, 1.8]
+const DEFAULT_LANE_OFFSETS: Array[float] = [-1.8, 0.0, 1.8]
 const LANE_SWITCH_SPEED: float = 20.0
 const RUN_SPEED: float = 8.0
 const JUMP_VELOCITY: float = 8.5
@@ -41,12 +41,15 @@ var _active_animation: String = ""
 var _standing_collision_height: float = 1.8
 var _standing_collision_y: float = 0.9
 var _current_surface: String = "dirt"
+var _lane_offsets: Array[float] = DEFAULT_LANE_OFFSETS.duplicate()
+var _last_grass_step_position: Vector3 = Vector3.ZERO
+var _grass_step_side: int = -1
 # Direction system — updated when player turns
 var _move_fwd: Vector3 = Vector3(0.0, 0.0, -1.0)
 var _move_right: Vector3 = Vector3(1.0, 0.0, 0.0)
 # Baseline right-axis value at the path centre for the current heading segment.
 # After a turn the player's absolute world position no longer equals its lane
-# offset, so lane snapping targets become  _right_comp_baseline + LANES[lane].
+# offset, so lane snapping targets remain relative to the active trail centre.
 var _right_comp_baseline: float = 0.0
 # Turn-zone state
 var _at_turn_zone: bool = false
@@ -60,13 +63,30 @@ var _junction_routes: Array = []
 var _mode_vehicle: Node3D = null
 var _mode_outfit: Node3D = null
 
+# ── Active skin ID and ability state ─────────────────────────────────────────
+var _skin_id: String = "explorer"
+var _robot_shield_active: bool = false   # Robot: absorbs one hit
+var _magnet_timer: float = 0.0           # Treasure: coin attract pulse
+var _golden_coin_counter: int = 0        # Golden: bonus coin every 3
+
 signal died
 signal sand_blocked   # emitted when player tries to jump on sand without Sand Shoes
 signal junction_route_chosen(junction_id: String, direction: String, route: Dictionary)
+signal attract_coins_request(pos: Vector3, radius: float)  # Treasure: magnet pull
+signal tribal_path_reveal(routes: Array)                   # Tribal: shows route rewards
+signal grass_step(pos: Vector3, right: Vector3, side: int)
+
+const TRAIL_SIZE := 10   # number of trail particles
+
+var _trail_nodes: Array[MeshInstance3D] = []
+var _trail_type: String = "none"
+var _trail_tick: int = 0
 
 func _ready() -> void:
+	add_to_group("player3d")
 	_cache_collision_shape()
 	_apply_selected_character_model()
+	_setup_trail()
 	_update_character_animation(true)
 
 func _physics_process(delta: float) -> void:
@@ -92,7 +112,8 @@ func _physics_process(delta: float) -> void:
 	# Lateral lane snapping — project position onto right axis, lerp toward lane target.
 	# _right_comp_baseline keeps the target relative so it stays correct after turns.
 	var right_comp: float = position.x * _move_right.x + position.z * _move_right.z
-	var new_right_comp: float = lerp(right_comp, _right_comp_baseline + LANES[current_lane], min(1.0, LANE_SWITCH_SPEED * delta))
+	var lane_offset: float = _lane_offsets[clampi(current_lane, 0, _lane_offsets.size() - 1)]
+	var new_right_comp: float = lerp(right_comp, _right_comp_baseline + lane_offset, min(1.0, LANE_SWITCH_SPEED * delta))
 	var right_delta: float = new_right_comp - right_comp
 	position.x += _move_right.x * right_delta
 	position.z += _move_right.z * right_delta
@@ -104,6 +125,7 @@ func _physics_process(delta: float) -> void:
 			_set_slide_collision(false)
 
 	move_and_slide()
+	_update_grass_steps()
 
 	# Auto-execute a queued turn — fires within one full tile (3 m) of the corner
 	if _queued_turn != 0:
@@ -114,6 +136,8 @@ func _physics_process(delta: float) -> void:
 
 	_update_character_animation()
 	_detect_surface()
+	_tick_abilities(delta)
+	_update_trail()
 
 	for i in get_slide_collision_count():
 		var col := get_slide_collision(i)
@@ -141,6 +165,9 @@ func jump() -> void:
 				jump_vel *= 0.70
 			"stone":
 				jump_vel *= 1.06
+		# Monkey: jumps carry further — boosted velocity
+		if _skin_id == "monkey":
+			jump_vel *= 1.28
 		velocity.y = jump_vel
 		state = State.JUMP
 		EventBus.play_sfx.emit("jump")
@@ -151,7 +178,8 @@ func slide() -> void:
 		return
 	if state == State.RUN:
 		state = State.SLIDE
-		_slide_timer = SLIDE_DURATION
+		# Zuri: nimble — slides complete faster
+		_slide_timer = SLIDE_DURATION * (0.55 if _skin_id == "jungle_girl" else 1.0)
 		_set_slide_collision(true)
 		EventBus.play_sfx.emit("slide")
 		_update_character_animation(true)
@@ -164,7 +192,7 @@ func move_lane(direction: int) -> void:
 		return
 	if _at_turn_zone:
 		if direction != _turn_zone_dir:
-			current_lane = clamp(current_lane + direction, 0, 2)
+			current_lane = clampi(current_lane + direction, 0, _lane_offsets.size() - 1)
 			_strafe_anim_name = ANIM_STRAFE_LEFT if direction < 0 else ANIM_STRAFE_RIGHT
 			_strafe_anim_timer = 0.20
 			_update_character_animation(true)
@@ -177,25 +205,62 @@ func move_lane(direction: int) -> void:
 			_execute_turn(_queued_turn)
 			_queued_turn = 0
 		return
-	current_lane = clamp(current_lane + direction, 0, 2)
+	current_lane = clampi(current_lane + direction, 0, _lane_offsets.size() - 1)
 	_strafe_anim_name = ANIM_STRAFE_LEFT if direction < 0 else ANIM_STRAFE_RIGHT
 	_strafe_anim_timer = 0.20
 	_update_character_animation(true)
 
-func set_path_guidance(_row: int, center: Vector3, fwd: Vector3, right: Vector3, surface: String, mode: String, _path_width: float) -> void:
+func set_path_guidance(_row: int, center: Vector3, fwd: Vector3, right: Vector3, surface: String, mode: String, _path_width: float, lane_count: int) -> void:
 	if _is_dead:
 		return
 	_move_fwd = fwd.normalized()
 	_move_right = right.normalized()
+	var local_offset := (global_position - center).dot(_move_right)
+	_lane_offsets = _lane_offsets_for_count(lane_count)
+	current_lane = _nearest_lane_index(local_offset)
 	_right_comp_baseline = center.x * _move_right.x + center.z * _move_right.z
 	_current_surface = surface
 	_set_movement_mode(mode)
 	rotation.y = atan2(-_move_fwd.x, -_move_fwd.z)
 
+func _lane_offsets_for_count(lane_count: int) -> Array[float]:
+	match clampi(lane_count, 1, 3):
+		1:
+			return [0.0]
+		2:
+			return [-0.9, 0.9]
+		_:
+			return DEFAULT_LANE_OFFSETS.duplicate()
+
+func _nearest_lane_index(offset: float) -> int:
+	var nearest := 0
+	var nearest_distance := INF
+	for lane_index in range(_lane_offsets.size()):
+		var distance := absf(offset - _lane_offsets[lane_index])
+		if distance < nearest_distance:
+			nearest = lane_index
+			nearest_distance = distance
+	return nearest
+
+func _update_grass_steps() -> void:
+	var flat_pos := global_position
+	flat_pos.y = 0.0
+	if _current_surface != "grass" or not is_on_floor():
+		_last_grass_step_position = flat_pos
+		return
+	if flat_pos.distance_to(_last_grass_step_position) < 0.68:
+		return
+	_last_grass_step_position = flat_pos
+	_grass_step_side *= -1
+	grass_step.emit(global_position, _move_right, _grass_step_side)
+
 func enter_junction(junction_id: String, routes: Array) -> void:
 	_at_junction = true
 	_junction_id = junction_id
 	_junction_routes = routes.duplicate()
+	# Tribal: tracker reveals what reward lies down each path
+	if _skin_id == "tribal":
+		tribal_path_reveal.emit(routes)
 
 func exit_junction(junction_id: String) -> void:
 	if _junction_id != junction_id:
@@ -218,7 +283,7 @@ func _choose_junction_route(direction: String) -> void:
 		if str(route.get("direction", "")) != direction:
 			continue
 		_at_junction = false
-		current_lane = 0 if direction == "left" else (2 if direction == "right" else 1)
+		current_lane = 0 if direction == "left" else (_lane_offsets.size() - 1 if direction == "right" else _nearest_lane_index(0.0))
 		EventBus.play_sfx.emit("button")
 		junction_route_chosen.emit(_junction_id, direction, route)
 		_junction_id = ""
@@ -255,7 +320,7 @@ func _mode_speed_multiplier() -> float:
 func _execute_turn(dir: int) -> void:
 	_at_turn_zone = false
 	_turn_zone_dir = 0
-	current_lane = 1  # snap to centre lane on turn
+	current_lane = _nearest_lane_index(0.0)
 	var angle := -float(dir) * PI * 0.5
 	_move_fwd = _move_fwd.rotated(Vector3.UP, angle).normalized()
 	_move_right = _move_right.rotated(Vector3.UP, angle).normalized()
@@ -279,6 +344,16 @@ func _on_turn_zone_exited() -> void:
 func die() -> void:
 	if _is_dead:
 		return
+	# Robot: shielded — absorbs one obstacle hit
+	if _skin_id == "robot" and _robot_shield_active:
+		_robot_shield_active = false
+		EventBus.play_sfx.emit("bump")
+		_play_character_animation(ANIM_HIT, true)
+		# Brief visual flash — bounce back to run after 0.35 s
+		var tw := create_tween()
+		tw.tween_interval(0.35)
+		tw.tween_callback(func(): _update_character_animation(true))
+		return
 	_is_dead = true
 	state = State.DEAD
 	velocity = Vector3.ZERO
@@ -291,7 +366,8 @@ func die() -> void:
 
 func reset(lane: int = 1) -> void:
 	_is_dead = false
-	current_lane = lane
+	_lane_offsets = DEFAULT_LANE_OFFSETS.duplicate()
+	current_lane = clampi(lane, 0, _lane_offsets.size() - 1)
 	state = State.RUN
 	velocity = Vector3.ZERO
 	_slide_timer = 0.0
@@ -306,6 +382,8 @@ func reset(lane: int = 1) -> void:
 	_turn_corner_pos = Vector3.ZERO
 	_right_comp_baseline = 0.0
 	_current_surface = "dirt"
+	_last_grass_step_position = Vector3.ZERO
+	_grass_step_side = -1
 	_movement_mode = "run"
 	_at_junction = false
 	_junction_id = ""
@@ -324,6 +402,14 @@ func play_victory() -> void:
 func play_defeat() -> void:
 	_play_character_animation(ANIM_DEFEAT, true)
 
+func _tick_abilities(delta: float) -> void:
+	# Treasure: coin magnet — emit attract pulse every 0.15 s
+	if _skin_id == "treasure":
+		_magnet_timer -= delta
+		if _magnet_timer <= 0.0:
+			_magnet_timer = 0.15
+			attract_coins_request.emit(global_position, 2.6)
+
 func _detect_surface() -> void:
 	if not is_on_floor():
 		return
@@ -335,7 +421,10 @@ func _detect_surface() -> void:
 			return
 
 func _apply_selected_character_model() -> void:
-	var skin_id := SaveManager.get_selected_skin()
+	_skin_id = SaveManager.get_selected_skin()
+	_robot_shield_active = (_skin_id == "robot")
+	_golden_coin_counter = 0
+	var skin_id := _skin_id
 	var skin := Constants.get_skin(skin_id)
 	var scene_path := str(skin.get("scene_path", ""))
 	if skin.is_empty() or scene_path.is_empty():
@@ -509,6 +598,83 @@ func _player_sphere(node_name: String, radius: float, pos: Vector3, color: Color
 	mesh.position = pos
 	mesh.material_override = _placeholder_material(color)
 	return mesh
+
+func _setup_trail() -> void:
+	_trail_type = str(SaveManager.get_setting("selected_trail", "none"))
+	for t in _trail_nodes:
+		if is_instance_valid(t):
+			t.queue_free()
+	_trail_nodes.clear()
+	if _trail_type == "none":
+		return
+	var trail_color := _trail_color()
+	for i in TRAIL_SIZE:
+		var mesh_inst := MeshInstance3D.new()
+		mesh_inst.top_level = true
+		var sm := SphereMesh.new()
+		sm.radius = 0.055
+		sm.height = 0.11
+		mesh_inst.mesh = sm
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.albedo_color = trail_color
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		if _trail_type in ["firefly", "sparkle"]:
+			mat.emission_enabled = true
+			mat.emission = trail_color
+			mat.emission_energy_multiplier = 1.4
+		mesh_inst.material_override = mat
+		mesh_inst.visible = false
+		add_child(mesh_inst)
+		_trail_nodes.append(mesh_inst)
+
+func _trail_color() -> Color:
+	match _trail_type:
+		"leaf":     return Color(0.28, 0.78, 0.22, 0.80)
+		"firefly":  return Color(0.72, 1.00, 0.36, 0.90)
+		"dust":     return Color(0.76, 0.64, 0.40, 0.70)
+		"splash":   return Color(0.46, 0.82, 1.00, 0.80)
+		"sparkle":  return Color(1.00, 0.88, 0.22, 0.90)
+	return Color(1, 1, 1, 0.5)
+
+func _update_trail() -> void:
+	if _trail_type == "none" or _trail_nodes.is_empty() or _is_dead:
+		return
+	if state == State.DEAD:
+		for n in _trail_nodes:
+			if is_instance_valid(n):
+				n.visible = false
+		return
+	_trail_tick = (_trail_tick + 1) % TRAIL_SIZE
+	var node := _trail_nodes[_trail_tick]
+	if not is_instance_valid(node):
+		return
+	# Place particle slightly behind and below the player in world space
+	node.global_position = global_position + Vector3(0.0, 0.25, 0.0) - _move_fwd * 0.3
+	node.scale = Vector3.ONE
+	node.visible = true
+	var mat := node.material_override as StandardMaterial3D
+	if mat != null:
+		var base_color := _trail_color()
+		mat.albedo_color = base_color
+		if _trail_type in ["firefly", "sparkle"]:
+			mat.emission = base_color
+			mat.emission_energy_multiplier = 1.4
+	# Fade out older particles
+	for i in TRAIL_SIZE:
+		var age := (_trail_tick - i + TRAIL_SIZE) % TRAIL_SIZE
+		var t_node := _trail_nodes[i]
+		if not is_instance_valid(t_node) or not t_node.visible:
+			continue
+		var alpha_frac := 1.0 - float(age) / float(TRAIL_SIZE)
+		var t_mat := t_node.material_override as StandardMaterial3D
+		if t_mat != null:
+			var c := t_mat.albedo_color
+			c.a = alpha_frac * _trail_color().a
+			t_mat.albedo_color = c
+			if _trail_type in ["firefly", "sparkle"]:
+				t_mat.emission_energy_multiplier = 1.4 * alpha_frac
+		t_node.scale = Vector3.ONE * lerp(0.3, 1.0, alpha_frac)
 
 func _placeholder_material(color: Color) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()

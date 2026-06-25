@@ -56,6 +56,26 @@ func _ready() -> void:
 	# Fixed title bar
 	_cr(panel, Vector2(0, 0), Vector2(PW, 58), Color(0.02, 0.03, 0.02))
 	_cr(panel, Vector2(0, 58), Vector2(PW, 2), Color(C_GOLD.r, C_GOLD.g, C_GOLD.b, 0.75))
+
+	# Back button in header — always visible, no scrolling needed
+	var hdr_back := Button.new()
+	hdr_back.text = "←"
+	hdr_back.position = Vector2(8, 8)
+	hdr_back.custom_minimum_size = Vector2(48, 42)
+	hdr_back.focus_mode = Control.FOCUS_NONE
+	hdr_back.add_theme_font_size_override("font_size", 22)
+	hdr_back.add_theme_color_override("font_color", C_GOLD)
+	var hdr_back_sb := StyleBoxFlat.new()
+	hdr_back_sb.bg_color = Color(0.04, 0.04, 0.02, 0.70)
+	hdr_back_sb.border_color = Color(0.60, 0.46, 0.14, 0.70)
+	hdr_back_sb.border_width_left = 1; hdr_back_sb.border_width_right = 1
+	hdr_back_sb.border_width_top = 1; hdr_back_sb.border_width_bottom = 1
+	hdr_back_sb.corner_radius_top_left = 6; hdr_back_sb.corner_radius_top_right = 6
+	hdr_back_sb.corner_radius_bottom_left = 6; hdr_back_sb.corner_radius_bottom_right = 6
+	hdr_back.add_theme_stylebox_override("normal", hdr_back_sb)
+	hdr_back.pressed.connect(_on_back)
+	panel.add_child(hdr_back)
+
 	var title := Label.new()
 	title.text = "⚙   SETTINGS"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -296,7 +316,7 @@ func _mk_action_btn(parent: Node, text: String, y: float, danger: bool) -> Butto
 	btn.focus_mode = Control.FOCUS_NONE
 	btn.custom_minimum_size = Vector2(IW, 46)
 	btn.position   = Vector2(PAD, y)
-	btn.add_theme_font_size_override("font_size", danger ? 13 : 16)
+	btn.add_theme_font_size_override("font_size", 13 if danger else 16)
 	var sb := StyleBoxFlat.new()
 	if danger:
 		sb.bg_color     = Color(0.24, 0.07, 0.05, 0.92)
@@ -321,34 +341,34 @@ func _mk_action_btn(parent: Node, text: String, y: float, danger: bool) -> Butto
 # ── Toggle / cycle handlers ───────────────────────────────────────────────────
 
 func _on_sfx_toggle() -> void:
-	var v := not SaveManager.get_setting("sfx_on", true)
+	var v: bool = not SaveManager.get_setting("sfx_on", true)
 	SaveManager.set_setting("sfx_on", v)
 	_apply_toggle_style(_sfx_toggle, v)
 	EventBus.settings_changed.emit()
 
 func _on_music_toggle() -> void:
-	var v := not SaveManager.get_setting("music_on", true)
+	var v: bool = not SaveManager.get_setting("music_on", true)
 	SaveManager.set_setting("music_on", v)
 	_apply_toggle_style(_music_toggle, v)
 	EventBus.settings_changed.emit()
 
 func _on_vib_toggle() -> void:
-	var v := not SaveManager.get_setting("vibration_on", true)
+	var v: bool = not SaveManager.get_setting("vibration_on", true)
 	SaveManager.set_setting("vibration_on", v)
 	_apply_toggle_style(_vib_toggle, v)
 
 func _on_notif_toggle() -> void:
-	var v := not SaveManager.get_setting("notifications_on", true)
+	var v: bool = not SaveManager.get_setting("notifications_on", true)
 	SaveManager.set_setting("notifications_on", v)
 	_apply_toggle_style(_notif_toggle, v)
 
 func _on_backup_toggle() -> void:
-	var v := not SaveManager.get_setting("cloud_backup", true)
+	var v: bool = not SaveManager.get_setting("cloud_backup", true)
 	SaveManager.set_setting("cloud_backup", v)
 	_apply_toggle_style(_backup_toggle, v)
 
 func _on_gfx_cycle() -> void:
-	var cur := SaveManager.get_setting("graphics_quality", "MED")
+	var cur: String = SaveManager.get_setting("graphics_quality", "MED")
 	var next: String
 	match cur:
 		"LOW":  next = "MED"

@@ -5,7 +5,7 @@ Status key: ✅ Available/imported · 🔧 Procedural placeholder (functional, n
 This file is the production asset manifest. `res://` maps to the project root.  
 Every new import must have a corresponding entry in `ASSET_LICENSES.md`.
 
-Generated assets were created by `tools/generate_missing_3d_assets.py` and `tools/generate_playable_characters.py`. They are original low-poly project assets, not third-party downloads. The resource icon PNGs were generated specifically for this project and locally converted to transparent 32×32 RGBA assets. Godot still needs to import new assets in-editor before `.import` metadata exists.
+Generated assets were created by `tools/generate_missing_3d_assets.py`, `tools/generate_playable_characters.py`, `tools/generate_mode_equipment.py`, and `tools/generate_track_assets.py`. They are original low-poly project assets, not third-party downloads. The resource icon PNGs were generated specifically for this project and locally converted to transparent 32×32 RGBA assets.
 
 ---
 
@@ -13,19 +13,21 @@ Generated assets were created by `tools/generate_missing_3d_assets.py` and `tool
 
 | Asset | Status | Target path | Notes |
 | --- | --- | --- | --- |
-| Curved jungle path modules | Procedural placeholder (functional, not final) | `LevelManager3D.gd` path modules | Runtime now supports smooth `gentle_curve_*`, `wide_curve_*`, and `s_curve` modules. Final GLB tiles still needed for production art. |
-| Narrow jungle trail module | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Width metadata now narrows collision/path visuals. |
-| Wide clearing module | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Used by chase and junction routes. |
-| Bridge path module | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Runtime adds wood surface and bridge posts. |
-| Ruins corridor module | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Runtime adds stone surface and side wall props. |
-| Sand dune path module | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Runtime adds sand surface and ridge dressing. |
-| Mud trail module | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Runtime adds tracking mode and footprints. |
+| 1-, 2-, and 3-lane curved trail modules | Generated (original, wired) | `res://assets/3d/environment/tracks/` | Curves select a lane-count-specific GLB and matching collision/lane topology. |
+| Narrow jungle trail module | Generated (original, wired) | `res://assets/3d/environment/tracks/{dirt,grass}/track_*_1lane.glb` | Single-lane modules force the player to the centre trail. |
+| Wide clearing module | Generated (original, wired) | `res://assets/3d/environment/tracks/*/track_*_3lane.glb` | Three-lane modules support chase and junction routes. |
+| Bridge path module | Generated (original, wired) | `res://assets/3d/environment/tracks/wood/` | Planked variants include edge rails. |
+| Ruins corridor module | Generated (original, wired) | `res://assets/3d/environment/tracks/stone/` | Stone paver variants support corridors and temple approaches. |
+| Sand dune path module | Generated (original, wired) | `res://assets/3d/environment/tracks/sand/` | Sand variants include wind ridges and worn lane markings. |
+| Mud trail module | Generated (original, wired) | `res://assets/3d/environment/tracks/mud/` | Mud variants include puddles and tracking-mode lane wear. |
+| Grass trail and pressed-footstep response | Generated/runtime (wired) | `res://assets/3d/environment/tracks/grass/` / `LevelManager3D.gd` | Grass-track steps create alternating flattened marks that fade after 6.5 seconds. |
+| Living vegetation wind | Runtime (wired) | `LevelManager3D.gd` | Grass, ferns, bushes, palms, jungle trees, dry grass, and acacias sway with per-level wind/gust settings. |
 
 ## Water Slide
 
 | Asset | Status | Target path | Notes |
 | --- | --- | --- | --- |
-| Water slide channel model | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | `water_slide_*` modules render blue channel paths and shimmer strips. |
+| Water slide channel model | Generated (original, wired) | `res://assets/3d/environment/tracks/water_slide/` | One-, two-, and three-lane blue channels with raised edges and water glints. |
 | Water splash effect | Procedural placeholder (functional, not final) | `LevelManager3D.gd` / `Player3D.gd` | Splash meshes appear in slide rows and around the player. |
 | Slide rocks | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | `water_rock` obstacle added. |
 | Low vines | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Existing `branch` obstacle covers duck-under sections. |
@@ -37,7 +39,7 @@ Generated assets were created by `tools/generate_missing_3d_assets.py` and `tool
 | --- | --- | --- | --- |
 | Canoe / boat model | Generated (original, wired) | `res://assets/3d/vehicles/canoe.glb` | Boat mode now loads the pointed expedition canoe scene; procedural geometry remains only as a load-failure fallback. |
 | Boat safety outfit | Generated (original, wired) | `res://assets/3d/outfits/boat/boat_outfit.glb` | Modular life jacket, reflective straps, river pack, and water boots fitted over every selectable explorer. |
-| River rapid water material | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | Boat modules render darker water and shimmer strips. |
+| River rapid track variants | Generated (original, wired) | `res://assets/3d/environment/tracks/boat/` | One-, two-, and three-lane river sections with banks and water glints. |
 | Floating logs | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | `floating_log` obstacle added. |
 | River rocks | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | `river_rock` / `water_rock` obstacle added. |
 | Crocodile warning marker | Procedural placeholder (functional, not final) | `LevelManager3D.gd` | `crocodile_zone` obstacle added as danger-zone visual. |
@@ -48,7 +50,7 @@ Generated assets were created by `tools/generate_missing_3d_assets.py` and `tool
 | Asset | Status | Target path | Notes |
 | --- | --- | --- | --- |
 | Protective skating outfit | Generated (original, wired) | `res://assets/3d/outfits/skating/skating_outfit.glb` | Helmet, harness, elbow/knee pads, and inline skates. `Player3D` accepts `skating`, `skate`, `skates`, and `roller_skating` mode names. |
-| Skating path modules | Implemented (procedural, wired) | `LevelManager3D.gd` / `level3d_015.json` | `skating_entry`, `skating_straight`, and left/right skating curves use a smooth dark track, cyan lane stripes, violet edge glow, boost marks, signage, and skating mode triggers. |
+| Skating path modules | Generated (original, wired) | `res://assets/3d/environment/tracks/skating/` / `level3d_015.json` | Lane-count-specific tracks use cyan dividers, violet edge lighting, signage, and skating mode triggers. |
 
 ## Tracking
 
@@ -192,6 +194,20 @@ All items below are currently replaced by procedural `BoxMesh` / `CylinderMesh` 
 | Level 4 — Ancient Jungle Ruins | Generated kit available; runtime procedural | Mossy stone path, pillars, broken walls, archways, carved stone props | GLB kits now exist; wire into `LevelManager3D` when replacing procedural spawns. |
 | Level 5 — Temple Approach | Generated kit available; runtime procedural | Large gates, torches, statues, rolling boulder, treasure altar | GLB kits now exist; wire into `LevelManager3D` when replacing procedural spawns. |
 | Level 6 — Wildlands of Peace | Generated kit available; runtime procedural | Sandy dirt path, savanna grass, distant wildlife silhouettes, finish altar | GLB kits now exist; wire into `LevelManager3D` when replacing procedural spawns. |
+| Level 7 — First Clearing | Runtime procedural created | Settlement posts, crates, campfires | Distinct warm settlement theme; row-aligned side dressing in `LevelManager3D.gd`. |
+| Level 8 — Foundation Run | Runtime procedural created | Settlement posts, crates, campfires | Construction-settlement theme; supplies and posts follow variable-width trail rows. |
+| Level 9 — Timber Trail | Runtime procedural created | Settlement posts, crates, campfires | Darker forest settlement theme with side supplies and campfires. |
+| Level 10 — Lost Paw Trail | Runtime procedural created | Wildlife silhouettes, tall grass | Savanna-edge theme; wind-reactive tall grass and distant antelope silhouettes. |
+| Level 11 — Rabbit Tracks | Runtime procedural created | Wildlife silhouettes, tall grass | Lush wildlife-valley theme; wind-reactive tall grass and safe-distance animal dressing. |
+| Level 12 — Water Slide Trail | Runtime procedural created | Gorge walls, water spray | Wet gorge theme; moss wall slabs and spray puffs follow the water-slide rows. |
+| Level 13 — Park Guide Path | Runtime procedural created | Wildlife silhouettes, tall grass | Bright guide-route theme; tall grass and background wildlife are kept outside active lanes. |
+| Level 14 — Warthog Watch | Runtime procedural created | Market stalls, lanterns, reeds | Warm market/river-edge dressing with stall frames, lanterns, and wind-reactive reeds. |
+| Level 15 — Market Skate & River Dock | Runtime procedural created | Market stalls, lanterns, reeds | Market-to-dock theme; side stalls, lanterns, reeds, skating/river transition dressing. |
+| Level 16 — Antelope Trail | Runtime procedural created | Fallen logs, earth mounds | Dark escape-route theme; fallen logs and disturbed mounds placed along trail sides. |
+| Level 17 — Rapids Run | Runtime procedural created | River boulders, mist | Rapids/boat theme; dark river boulders and mist wisps line the banks. |
+| Level 18 — Hound of the Hidden Trail | Runtime procedural created | Glowing relic tablets | Purple-grey relic theme; emissive tablets are animated through the relic-glow pulse system. |
+| Level 19 — Boar Escape | Runtime procedural created | Fallen logs, earth mounds | Red-brown panic-route theme; fallen logs and disturbed mounds support the escape mood. |
+| Level 20 — Treasure Beneath the Baobab | Runtime procedural created | Baobab trunks, gold relics | Gold-amber finale theme; huge baobab trunks and pulsing gold relic glints. |
 
 ---
 
@@ -292,6 +308,8 @@ The Big 5 are the primary wildlife milestone for v1 release.
 | Effect | Status | Format | Target path | Notes |
 | --- | --- | --- | --- | --- |
 | Foliage sway | Generated (original) | shader | `res://assets/3d/vfx/foliage_sway.gdshader` | Subtle, cheap, reusable on all foliage. |
+| Runtime trail ring buffer | Generated (original, wired) | `MeshInstance3D` particles | `res://scripts/gameplay/Player3D.gd` | 10-node world-space ring buffer for leaf, firefly, sparkle, dust, and splash trails; older nodes fade and shrink. |
+| Pressed grass trail marks | Generated (original, wired) | procedural meshes | `res://scripts/gameplay/LevelManager3D.gd` / `Player3D.gd` | Player footsteps stamp temporary flattened grass marks on grass surfaces. |
 | Water material | Generated (original) | `.tres` / shader | `res://assets/3d/materials/water_stylized.tres` | Transparent stylized water material. |
 | Torch flame | Generated (original) | `GPUParticles3D` | `res://assets/3d/vfx/torch_flame.tscn` | Level 5 temple torches. Use sparingly. |
 | Finish glow | Generated (original) | `GPUParticles3D` | `res://assets/3d/vfx/finish_glow.tscn` | Portal / gate reward effect. |
@@ -306,7 +324,7 @@ The Big 5 are the primary wildlife milestone for v1 release.
 
 | Asset | Status | Format | Target path | Notes |
 | --- | --- | --- | --- | --- |
-| **Sand Shoes icon** | ❌ Missing | `.png` 64×64 | `res://assets/ui/upgrades/sand_shoes_icon.png` | Shown in Shop, popup, confirmation. Dusty/worn boot. |
+| **Sand Shoes icon** | Generated (original, wired) | `.png` 32×32 RGBA | `res://assets/ui/icons/sand_shoes_icon.png` | Used by the Sand Shoes popup in `LevelSelect.gd`, with emoji fallback retained. |
 | Sand Shoes 3D prop | Generated (original) | `.glb` | `res://assets/3d/upgrades/sand_shoes.glb` | Standalone shop/preview prop. |
 | Equipped upgrade clothing | Generated (original, wired) | `.glb` | `res://assets/3d/outfits/upgrade/upgrade_outfit.glb` | Reinforced vest, utility gear, wrist guards, field pack, and sand boots shown on the active player after purchase. |
 
@@ -340,6 +358,11 @@ All images: 320×240 PNG. Style: simple stylized illustration showing progressiv
 | Level card renders | ❌ Missing | `.png` | `res://assets/ui/level_cards/` | One card per 6 levels for level select preview. |
 | Play Store screenshots | ❌ Not yet | `.png` | external/exported | Capture only after placeholder geometry is replaced. |
 | Feature graphic art | ❌ Not yet | `.png` 1024×500 | external/exported | Use final 3D characters and jungle / temple scene. |
+| Water token icon | Generated (original, wired) | `.png` 32×32 RGBA | `res://assets/ui/icons/water_token_icon.png` | Wired through `Constants.RESOURCES` and `LevelComplete3D.gd`. |
+| Fish token icon | Generated (original, wired) | `.png` 32×32 RGBA | `res://assets/ui/icons/fish_token_icon.png` | Wired through `Constants.RESOURCES` and `LevelComplete3D.gd`. |
+| River relic icon | Generated (original, wired) | `.png` 32×32 RGBA | `res://assets/ui/icons/river_relic_icon.png` | Wired through `Constants.RESOURCES` and `LevelComplete3D.gd`. |
+| Animal badge icon | Generated (original, wired) | `.png` 32×32 RGBA | `res://assets/ui/icons/animal_badge_icon.png` | Wired through `Constants.RESOURCES` and `LevelComplete3D.gd`. |
+| Trade token icon | Generated (original, wired) | `.png` 32×32 RGBA | `res://assets/ui/icons/trade_token_icon.png` | Wired through `Constants.RESOURCES` and `LevelComplete3D.gd`. |
 
 ---
 
@@ -349,8 +372,9 @@ All images: 320×240 PNG. Style: simple stylized illustration showing progressiv
 | --- | --- | --- | --- |
 | Jungle ambience loop | ❌ Missing | `.ogg` | `res://assets/sounds/jungle_ambience.ogg` |
 | Runner footstep set | ❌ Missing | `.wav`/`.ogg` | `res://assets/sounds/footstep_dirt_*.ogg` |
-| Jump whoosh | ❌ Missing | `.wav`/`.ogg` | `res://assets/sounds/jump.ogg` |
-| Slide swoosh | ❌ Missing | `.wav`/`.ogg` | `res://assets/sounds/slide.ogg` |
+| Jump whoosh | Generated (original, wired) | `.wav` 22050 Hz 16-bit PCM | `res://assets/sounds/jump.wav` |
+| Slide swoosh | Generated (original, wired) | `.wav` 22050 Hz 16-bit PCM | `res://assets/sounds/slide.wav` |
+| Land thud | Generated (original, wired) | `.wav` 22050 Hz 16-bit PCM | `res://assets/sounds/land.wav` |
 | Coin pickup | ❌ Missing | `.wav`/`.ogg` | `res://assets/sounds/coin.ogg` |
 | Gem pickup | ❌ Missing | `.wav`/`.ogg` | `res://assets/sounds/gem.ogg` |
 | Hit / stumble | ❌ Missing | `.wav`/`.ogg` | `res://assets/sounds/hit.ogg` |

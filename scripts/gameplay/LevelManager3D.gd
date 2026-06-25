@@ -31,7 +31,7 @@ signal finish_reached
 signal coin_collected(total: int)
 signal turn_zone_entered(required_dir: int, corner_pos: Vector3)
 signal turn_zone_exited
-signal path_segment_entered(row: int, center: Vector3, fwd: Vector3, right: Vector3, surface: String, mode: String, width: float)
+signal path_segment_entered(row: int, center: Vector3, fwd: Vector3, right: Vector3, surface: String, mode: String, width: float, lanes: int)
 signal junction_entered(junction_id: String, routes: Array)
 signal junction_exited(junction_id: String)
 
@@ -53,12 +53,19 @@ var _seg_pos: Dictionary = {}
 var _seg_fwd: Dictionary = {}
 var _seg_right: Dictionary = {}
 var _seg_width: Dictionary = {}
+var _seg_lane_count: Dictionary = {}
 var _seg_surface: Dictionary = {}
 var _seg_mode: Dictionary = {}
 var _seg_module: Dictionary = {}
 var _turn_rows: Dictionary = {}
 var _junction_rows: Dictionary = {}
 var _junction_defs: Dictionary = {}
+var _wind_nodes: Array[Dictionary] = []
+var _grass_marks: Array[Dictionary] = []
+var _wind_strength: float = 0.72
+var _wind_speed: float = 1.0
+var _gust_strength: float = 0.26
+var _grass_footprints_enabled: bool = true
 
 func build(data: Dictionary) -> void:
 	level_data = data
@@ -71,18 +78,26 @@ func build(data: Dictionary) -> void:
 	_birds.clear()
 	_torch_flames.clear()
 	_relic_glows.clear()
+	_wind_nodes.clear()
+	_grass_marks.clear()
 	_groups.clear()
 	_path_tiles.clear()
 	_seg_pos.clear()
 	_seg_fwd.clear()
 	_seg_right.clear()
 	_seg_width.clear()
+	_seg_lane_count.clear()
 	_seg_surface.clear()
 	_seg_mode.clear()
 	_seg_module.clear()
 	_turn_rows.clear()
 	_junction_rows.clear()
 	_junction_defs.clear()
+	var environment: Dictionary = data.get("environment", {})
+	_wind_strength = float(environment.get("wind_strength", 0.72))
+	_wind_speed = float(environment.get("wind_speed", 1.0))
+	_gust_strength = float(environment.get("gust_strength", 0.26))
+	_grass_footprints_enabled = bool(environment.get("grass_footprints", true))
 
 	for child in get_children():
 		remove_child(child)
@@ -113,6 +128,8 @@ func _process(delta: float) -> void:
 	_animate_birds()
 	_animate_torches()
 	_animate_relic_glows()
+	_animate_wind()
+	_animate_grass_marks(delta)
 
 func _create_level_groups() -> void:
 	for group_name in [
@@ -156,6 +173,7 @@ func _parse_turns(data: Dictionary) -> void:
 		_seg_fwd[i] = fwd
 		_seg_right[i] = right
 		_seg_width[i] = PATH_WIDTH
+		_seg_lane_count[i] = 3
 		_seg_surface[i] = _theme.get("surface", "dirt")
 		_seg_mode[i] = "run"
 		_seg_module[i] = "legacy_straight"
@@ -179,6 +197,7 @@ func _parse_path_modules(data: Dictionary, modules: Array) -> void:
 		var kind := str(module.get("type", "straight_short"))
 		var rows: int = max(1, int(module.get("rows", _default_module_rows(kind))))
 		var width_name := str(module.get("width", _default_width_name(kind)))
+		var lane_count := clampi(int(module.get("lanes", _default_lane_count(kind, width_name))), 1, 3)
 		var width := float(module.get("path_width", _width_for_type(width_name)))
 		var surface := str(module.get("surface", _default_surface_for_module(kind)))
 		var mode := str(module.get("mode", _default_mode_for_module(kind)))
@@ -191,6 +210,7 @@ func _parse_path_modules(data: Dictionary, modules: Array) -> void:
 			_seg_fwd[row] = fwd
 			_seg_right[row] = right
 			_seg_width[row] = width
+			_seg_lane_count[row] = lane_count
 			_seg_surface[row] = surface
 			_seg_mode[row] = mode
 			_seg_module[row] = kind
@@ -226,6 +246,7 @@ func _parse_path_modules(data: Dictionary, modules: Array) -> void:
 		_seg_fwd[row + tail] = fwd
 		_seg_right[row + tail] = right
 		_seg_width[row + tail] = PATH_WIDTH
+		_seg_lane_count[row + tail] = 3
 		_seg_surface[row + tail] = _theme.get("surface", "dirt")
 		_seg_mode[row + tail] = "run"
 		_seg_module[row + tail] = "finish_tail"
@@ -289,6 +310,12 @@ func _default_width_name(kind: String) -> String:
 
 func _width_for_type(width_name: String) -> float:
 	match width_name:
+		"single":
+			return 2.60
+		"double":
+			return 4.45
+		"triple":
+			return 6.25
 		"narrow":
 			return LANE_W * 2.35
 		"bridge":
@@ -301,6 +328,13 @@ func _width_for_type(width_name: String) -> float:
 			return LANE_W * 4.35
 		_:
 			return PATH_WIDTH
+
+func _default_lane_count(kind: String, width_name: String) -> int:
+	if width_name == "single" or kind in ["narrow_passage", "ruins_corridor", "tree_root_jump_section", "water_slide_entry", "water_slide_curve", "water_slide_drop"]:
+		return 1
+	if width_name == "double" or kind == "bridge_crossing":
+		return 2
+	return 3
 
 func _default_surface_for_module(kind: String) -> String:
 	match kind:
@@ -354,7 +388,7 @@ func _world_pos(row: int, lane: int) -> Vector3:
 	var sp: Vector3 = _seg_pos.get(row, Vector3(0.0, 0.0, -float(row) * TILE_Z))
 	var sf: Vector3 = _seg_fwd.get(row, Vector3(0.0, 0.0, -1.0))
 	var sr: Vector3 = _seg_right.get(row, Vector3(1.0, 0.0, 0.0))
-	return sp + sf * (TILE_Z * 0.5) + sr * _lane_x(lane)
+	return sp + sf * (TILE_Z * 0.5) + sr * _lane_x_for_row(row, lane)
 
 func _row_center(row: int) -> Vector3:
 	var sp: Vector3 = _seg_pos.get(row, Vector3(0.0, 0.0, -float(row) * TILE_Z))
@@ -377,6 +411,7 @@ func _spawn_ground(data: Dictionary) -> void:
 		var seg_f: Vector3 = _seg_fwd.get(i, Vector3(0.0, 0.0, -1.0))
 		var heading_y := atan2(seg_f.x, -seg_f.z)
 		var path_width: float = _seg_width.get(i, PATH_WIDTH)
+		var lane_count: int = int(_seg_lane_count.get(i, 3))
 		var surface := str(_seg_surface.get(i, _theme.get("surface", "dirt")))
 		var mode := str(_seg_mode.get(i, "run"))
 		var module_kind := str(_seg_module.get(i, "straight_short"))
@@ -388,20 +423,25 @@ func _spawn_ground(data: Dictionary) -> void:
 		_group("JunglePath").add_child(segment)
 		_path_tiles[i] = segment
 
-		var path_col := _surface_path_color(surface, module_kind, rng)
-		_add_box(segment, "DirtPath",
-			Vector3(path_width, 0.16, TILE_Z + 0.08),
-			Vector3(0.0, -0.08, 0.0),
-			path_col
-		)
+		var track_asset := _place_glb(segment, _track_asset_path(surface, lane_count), Vector3(0.0, 0.01, 0.0), Vector3.ONE)
+		if track_asset != null:
+			var scale_x := path_width / _base_track_width(lane_count)
+			track_asset.scale.x = scale_x * (-1.0 if i % 2 else 1.0)
+		else:
+			var path_col := _surface_path_color(surface, module_kind, rng)
+			_add_box(segment, "DirtPath",
+				Vector3(path_width, 0.16, TILE_Z + 0.08),
+				Vector3(0.0, -0.08, 0.0),
+				path_col
+			)
 		_add_static_box(segment, "PathCollision",
 			Vector3(path_width, 0.16, TILE_Z + 0.08),
 			Vector3(0.0, -0.08, 0.0),
 			{"surface": surface}
 		)
-		_add_path_guide(segment, i, path_width, surface, mode)
+		_add_path_guide(segment, i, path_width, surface, mode, lane_count)
 
-		if surface == "water_slide" or surface == "boat":
+		if track_asset == null and (surface == "water_slide" or surface == "boat"):
 			_add_box(segment, "WaterShimmerA",
 				Vector3(path_width * 0.55, 0.025, TILE_Z * 0.18),
 				Vector3(-path_width * 0.08, 0.015, -TILE_Z * 0.16),
@@ -412,7 +452,7 @@ func _spawn_ground(data: Dictionary) -> void:
 				Vector3(path_width * 0.10, 0.02, TILE_Z * 0.18),
 				Color(0.78, 0.96, 1.0, 0.55)
 			)
-		elif surface == "skating":
+		elif track_asset == null and surface == "skating":
 			for lane_edge_value in [-0.9, 0.9]:
 				var lane_edge := float(lane_edge_value)
 				_add_box(segment, "SkateLaneStripe",
@@ -433,7 +473,7 @@ func _spawn_ground(data: Dictionary) -> void:
 					Vector3(0.0, 0.026, 0.18),
 					Color(0.92, 0.76, 0.20, 0.78)
 				)
-		elif surface == "wood":
+		elif track_asset == null and surface == "wood":
 			for plank_i in range(3):
 				_add_box(segment, "BridgePlank%d" % plank_i,
 					Vector3(path_width * 0.92, 0.05, 0.08),
@@ -469,13 +509,15 @@ func _surface_path_color(surface: String, module_kind: String, rng: RandomNumber
 			return Color(0.74, 0.60, 0.34).lerp(Color(0.92, 0.76, 0.46), rng.randf_range(0.0, 0.35))
 		"mud":
 			return COLOR_MUD.lerp(Color(0.42, 0.27, 0.12), rng.randf_range(0.0, 0.25))
+		"grass":
+			return _grass_color(rng).lerp(Color(0.22, 0.42, 0.12), 0.30)
 		_:
 			var dirt_d: Color = _theme.get("dirt_dark", COLOR_DIRT)
 			var dirt_l: Color = _theme.get("dirt_light", COLOR_DIRT_LIGHT)
 			var tint := 0.18 if module_kind == "narrow_passage" else 0.35
 			return dirt_d.lerp(dirt_l, rng.randf_range(0.0, tint))
 
-func _add_path_guide(segment: Node3D, row: int, path_width: float, surface: String, mode: String) -> void:
+func _add_path_guide(segment: Node3D, row: int, path_width: float, surface: String, mode: String, lane_count: int) -> void:
 	var area := Area3D.new()
 	area.name = "PathGuide"
 	area.monitoring = true
@@ -485,16 +527,29 @@ func _add_path_guide(segment: Node3D, row: int, path_width: float, surface: Stri
 	(col.shape as BoxShape3D).size = Vector3(path_width + 0.5, 2.4, TILE_Z + 0.12)
 	col.position = Vector3(0.0, 1.05, 0.0)
 	area.add_child(col)
-	area.body_entered.connect(_on_path_segment_body_entered.bind(row, surface, mode, path_width))
+	area.body_entered.connect(_on_path_segment_body_entered.bind(row, surface, mode, path_width, lane_count))
 	segment.add_child(area)
 
-func _on_path_segment_body_entered(body: Node3D, row: int, surface: String, mode: String, path_width: float) -> void:
+func _on_path_segment_body_entered(body: Node3D, row: int, surface: String, mode: String, path_width: float, lane_count: int) -> void:
 	if not (body is CharacterBody3D):
 		return
 	var center := _row_center(row)
 	var fwd: Vector3 = _seg_fwd.get(row, Vector3(0.0, 0.0, -1.0))
 	var right: Vector3 = _seg_right.get(row, Vector3(1.0, 0.0, 0.0))
-	path_segment_entered.emit(row, center, fwd, right, surface, mode, path_width)
+	path_segment_entered.emit(row, center, fwd, right, surface, mode, path_width, lane_count)
+
+func _track_asset_path(surface: String, lane_count: int) -> String:
+	var safe_surface := surface if surface in ["dirt", "grass", "mud", "stone", "wood", "sand", "skating", "water_slide", "boat"] else "dirt"
+	return "res://assets/3d/environment/tracks/%s/track_%s_%dlane.glb" % [safe_surface, safe_surface, clampi(lane_count, 1, 3)]
+
+func _base_track_width(lane_count: int) -> float:
+	match clampi(lane_count, 1, 3):
+		1:
+			return 2.60
+		2:
+			return 4.45
+		_:
+			return 6.25
 
 func _spawn_path_edge_details(row: int, rng: RandomNumberGenerator) -> void:
 	var parent := _group("GrassAndPlants")
@@ -575,13 +630,14 @@ func _obstacle_log(pos: Vector3, heading_y: float = 0.0) -> void:
 	root.rotation.y = heading_y
 	_group("Obstacles").add_child(root)
 
-	# Cylinder height is local Y; rotation.z = 90 makes height go along local X (= path right)
-	var log := _add_cylinder(root, "Log", 0.26, 0.31, PATH_WIDTH * 0.92, Vector3.ZERO, COLOR_LOG)
-	log.rotation_degrees.z = 90.0
-	for side_value in [-1.0, 1.0]:
-		var side := float(side_value)
-		var cap := _add_cylinder(root, "CutFace", 0.28, 0.28, 0.08, Vector3(side * PATH_WIDTH * 0.46, 0.0, 0.0), Color(0.58, 0.38, 0.18))
-		cap.rotation_degrees.z = 90.0
+	if _place_glb(root, "res://assets/3d/obstacles/fallen_log.glb", Vector3.ZERO, Vector3(1.0, 1.0, 1.0)) == null:
+		# Cylinder height is local Y; rotation.z = 90 makes height go along local X (= path right)
+		var log := _add_cylinder(root, "Log", 0.26, 0.31, PATH_WIDTH * 0.92, Vector3.ZERO, COLOR_LOG)
+		log.rotation_degrees.z = 90.0
+		for side_value in [-1.0, 1.0]:
+			var side := float(side_value)
+			var cap := _add_cylinder(root, "CutFace", 0.28, 0.28, 0.08, Vector3(side * PATH_WIDTH * 0.46, 0.0, 0.0), Color(0.58, 0.38, 0.18))
+			cap.rotation_degrees.z = 90.0
 
 	# Collision box: X-width spans path, Z-depth is obstacle thickness (both in local space)
 	_add_static_box(root, "LogCollision", Vector3(PATH_WIDTH * 0.90, 0.58, 0.55), Vector3.ZERO, {"obstacle": true})
@@ -611,12 +667,13 @@ func _obstacle_rock(pos: Vector3) -> void:
 	root.position = pos
 	_group("Obstacles").add_child(root)
 
-	var main := _add_sphere(root, "RockMain", 0.55, Vector3.ZERO, COLOR_ROCK)
-	main.scale = Vector3(1.0, 0.72, 0.88)
-	var side := _add_sphere(root, "RockSide", 0.32, Vector3(0.33, -0.12, 0.20), COLOR_STONE_DARK)
-	side.scale = Vector3(1.05, 0.75, 0.80)
-	var moss := _add_box(root, "RockMoss", Vector3(0.55, 0.06, 0.30), Vector3(-0.08, 0.38, -0.10), COLOR_MOSS)
-	moss.rotation_degrees.y = 15.0
+	if _place_glb(root, "res://assets/3d/obstacles/rock_obstacle.glb", Vector3.ZERO, Vector3(1.0, 1.0, 1.0)) == null:
+		var main := _add_sphere(root, "RockMain", 0.55, Vector3.ZERO, COLOR_ROCK)
+		main.scale = Vector3(1.0, 0.72, 0.88)
+		var side := _add_sphere(root, "RockSide", 0.32, Vector3(0.33, -0.12, 0.20), COLOR_STONE_DARK)
+		side.scale = Vector3(1.05, 0.75, 0.80)
+		var moss := _add_box(root, "RockMoss", Vector3(0.55, 0.06, 0.30), Vector3(-0.08, 0.38, -0.10), COLOR_MOSS)
+		moss.rotation_degrees.y = 15.0
 	_add_static_box(root, "RockCollision", Vector3(1.05, 0.90, 1.00), Vector3.ZERO, {"obstacle": true})
 
 func _obstacle_spikes(pos: Vector3) -> void:
@@ -625,9 +682,10 @@ func _obstacle_spikes(pos: Vector3) -> void:
 	root.position = pos
 	_group("Obstacles").add_child(root)
 
-	for i in range(3):
-		var spike := _add_cylinder(root, "Stake", 0.0, 0.15, 0.76, Vector3(-0.28 + float(i) * 0.28, 0.0, 0.0), COLOR_SPIKE)
-		spike.rotation_degrees.z = -7.0 + float(i) * 7.0
+	if _place_glb(root, "res://assets/3d/obstacles/spike_trap.glb", Vector3.ZERO, Vector3(1.0, 1.0, 1.0)) == null:
+		for i in range(3):
+			var spike := _add_cylinder(root, "Stake", 0.0, 0.15, 0.76, Vector3(-0.28 + float(i) * 0.28, 0.0, 0.0), COLOR_SPIKE)
+			spike.rotation_degrees.z = -7.0 + float(i) * 7.0
 	_add_static_box(root, "SpikeCollision", Vector3(0.95, 0.70, 0.78), Vector3(0.0, 0.0, 0.0), {"obstacle": true})
 
 func _obstacle_thorn_bush(pos: Vector3) -> void:
@@ -635,12 +693,13 @@ func _obstacle_thorn_bush(pos: Vector3) -> void:
 	root.name = "ThornBush"
 	root.position = pos
 	_group("Obstacles").add_child(root)
-	for i in range(4):
-		var leaf := _add_sphere(root, "Bramble%d" % i, 0.28, Vector3(-0.32 + float(i) * 0.20, 0.02 + float(i % 2) * 0.10, randf_range(-0.16, 0.16)), Color(0.10, 0.28, 0.08))
-		leaf.scale = Vector3(1.15, 0.68, 0.92)
-	for t in range(6):
-		var thorn := _add_cylinder(root, "Thorn%d" % t, 0.0, 0.045, 0.26, Vector3(randf_range(-0.42, 0.42), 0.18, randf_range(-0.22, 0.22)), Color(0.72, 0.18, 0.10))
-		thorn.rotation_degrees.z = randf_range(-34.0, 34.0)
+	if _place_glb(root, "res://assets/3d/environment/foliage/bushes.glb", Vector3.ZERO, Vector3(1.1, 1.1, 1.1)) == null:
+		for i in range(4):
+			var leaf := _add_sphere(root, "Bramble%d" % i, 0.28, Vector3(-0.32 + float(i) * 0.20, 0.02 + float(i % 2) * 0.10, randf_range(-0.16, 0.16)), Color(0.10, 0.28, 0.08))
+			leaf.scale = Vector3(1.15, 0.68, 0.92)
+		for t in range(6):
+			var thorn := _add_cylinder(root, "Thorn%d" % t, 0.0, 0.045, 0.26, Vector3(randf_range(-0.42, 0.42), 0.18, randf_range(-0.22, 0.22)), Color(0.72, 0.18, 0.10))
+			thorn.rotation_degrees.z = randf_range(-34.0, 34.0)
 	_add_static_box(root, "ThornCollision", Vector3(1.05, 0.78, 0.92), Vector3.ZERO, {"obstacle": true})
 
 func _obstacle_water_rock(pos: Vector3) -> void:
@@ -703,9 +762,10 @@ func _obstacle_broken_planks(pos: Vector3, heading_y: float) -> void:
 	root.position = pos
 	root.rotation.y = heading_y
 	_group("Obstacles").add_child(root)
-	for i in range(3):
-		var plank := _add_box(root, "Plank%d" % i, Vector3(0.22, 0.08, 0.92), Vector3(-0.30 + float(i) * 0.30, 0.0, randf_range(-0.12, 0.12)), COLOR_LOG)
-		plank.rotation_degrees.y = randf_range(-18.0, 18.0)
+	if _place_glb(root, "res://assets/3d/obstacles/slide_barrier.glb", Vector3.ZERO, Vector3(1.0, 1.0, 1.0)) == null:
+		for i in range(3):
+			var plank := _add_box(root, "Plank%d" % i, Vector3(0.22, 0.08, 0.92), Vector3(-0.30 + float(i) * 0.30, 0.0, randf_range(-0.12, 0.12)), COLOR_LOG)
+			plank.rotation_degrees.y = randf_range(-18.0, 18.0)
 	_add_static_box(root, "BrokenPlankCollision", Vector3(1.0, 0.55, 0.90), Vector3.ZERO, {"obstacle": true})
 
 func _area_slow(size: Vector3, color: Color, pos: Vector3) -> void:
@@ -793,6 +853,16 @@ func _spawn_coin(lane: int, row: int, is_gem: bool) -> void:
 	_coin_nodes.append(coin)
 	_group("Collectibles").add_child(coin)
 
+func _collect_coin_node(coin_node: Node3D) -> void:
+	if not is_instance_valid(coin_node):
+		return
+	coin_node.queue_free()
+	_coin_nodes.erase(coin_node)
+	EventBus.play_sfx.emit("coin")
+	GameManager.collect_coin()
+	_coin_count += 1
+	coin_collected.emit(_coin_count)
+
 func _on_coin_body_entered(body: Node3D, coin_node: Node3D, is_gem: bool) -> void:
 	if not (body is CharacterBody3D):
 		return
@@ -821,33 +891,34 @@ func _spawn_dressing(data: Dictionary) -> void:
 		return
 
 	for row in range(1, length + 4):
-		var z := -float(row) * TILE_Z + rng.randf_range(-0.8, 0.8)
+		var path_width: float = _seg_width.get(row, PATH_WIDTH)
+		var path_edge := path_width * 0.5
 		for side_value in [-1.0, 1.0]:
 			var side := float(side_value)
-			var near_x: float = side * rng.randf_range(2.85, 3.25)
-			var mid_x: float = side * rng.randf_range(3.75, 4.55)
-			var far_x: float = side * rng.randf_range(5.20, 6.20)
+			var near_x: float = side * rng.randf_range(path_edge + 0.35, path_edge + 0.85)
+			var mid_x: float = side * rng.randf_range(path_edge + 1.05, path_edge + 1.85)
+			var far_x: float = side * rng.randf_range(path_edge + 2.35, path_edge + 3.35)
 
 			if rng.randf() < 0.80:
-				_grass_clump(Vector3(near_x, 0.0, z + rng.randf_range(-0.8, 0.8)), rng)
+				_grass_clump(_row_local(row, near_x, 0.0, rng.randf_range(-0.8, 0.8)), rng)
 			if rng.randf() < 0.55:
-				_fern(Vector3(near_x + side * rng.randf_range(0.2, 0.45), 0.0, z + rng.randf_range(-0.6, 0.6)), rng)
+				_fern(_row_local(row, near_x + side * rng.randf_range(0.2, 0.45), 0.0, rng.randf_range(-0.6, 0.6)), rng)
 			if rng.randf() < 0.72:
-				_bush(Vector3(mid_x, 0.0, z + rng.randf_range(-0.9, 0.9)), rng)
+				_bush(_row_local(row, mid_x, 0.0, rng.randf_range(-0.9, 0.9)), rng)
 			if rng.randf() < 0.35:
-				_pebble_cluster(_group("RocksAndLogs"), Vector3(mid_x + side * 0.30, 0.04, z + rng.randf_range(-0.8, 0.8)), rng)
+				_pebble_cluster(_group("RocksAndLogs"), _row_local(row, mid_x + side * 0.30, 0.04, rng.randf_range(-0.8, 0.8)), rng)
 
 			if row % 2 == 0:
 				if rng.randf() < 0.45:
-					_palm_tree(Vector3(far_x, 0.0, z), rng)
+					_palm_tree(_row_local(row, far_x, 0.0), rng)
 				else:
-					_jungle_tree(Vector3(far_x, 0.0, z), rng)
+					_jungle_tree(_row_local(row, far_x, 0.0), rng)
 
 			if row % 4 == 1 and rng.randf() < 0.50:
-				_fallen_log_dressing(Vector3(side * rng.randf_range(4.15, 4.90), 0.18, z + rng.randf_range(-1.0, 1.0)), side, rng)
+				_fallen_log_dressing(_row_local(row, side * rng.randf_range(path_edge + 1.35, path_edge + 2.10), 0.18, rng.randf_range(-1.0, 1.0)), side, rng)
 
 			if row % 5 == 0 and rng.randf() < 0.65:
-				_ruin_fragment(Vector3(side * rng.randf_range(4.8, 5.6), 0.0, z), rng)
+				_ruin_fragment(_row_local(row, side * rng.randf_range(path_edge + 2.0, path_edge + 2.8), 0.0), rng)
 
 func _spawn_wildlife(data: Dictionary) -> void:
 	var length: int = data.get("length", 30)
@@ -885,12 +956,14 @@ func _grass_clump(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	root.name = "GrassClump"
 	root.position = pos
 	_group("GrassAndPlants").add_child(root)
+	_register_wind(root, 0.075, 1.35, rng.randf_range(0.0, TAU))
 
-	var blades := 3 + rng.randi_range(0, 3)
-	for i in range(blades):
-		var blade := _add_box(root, "Blade", Vector3(0.07, rng.randf_range(0.35, 0.70), 0.07), Vector3(rng.randf_range(-0.18, 0.18), 0.18, rng.randf_range(-0.16, 0.16)), _grass_color(rng))
-		blade.rotation_degrees.z = rng.randf_range(-18.0, 18.0)
-		blade.rotation_degrees.x = rng.randf_range(-10.0, 10.0)
+	if _place_glb(root, "res://assets/3d/environment/foliage/grass_clumps.glb", Vector3.ZERO, Vector3(0.55, 0.55, 0.55)) == null:
+		var blades := 3 + rng.randi_range(0, 3)
+		for i in range(blades):
+			var blade := _add_box(root, "Blade", Vector3(0.07, rng.randf_range(0.35, 0.70), 0.07), Vector3(rng.randf_range(-0.18, 0.18), 0.18, rng.randf_range(-0.16, 0.16)), _grass_color(rng))
+			blade.rotation_degrees.z = rng.randf_range(-18.0, 18.0)
+			blade.rotation_degrees.x = rng.randf_range(-10.0, 10.0)
 
 func _fern(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	var root := Node3D.new()
@@ -898,22 +971,26 @@ func _fern(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	root.position = pos
 	root.rotation_degrees.y = rng.randf_range(0.0, 360.0)
 	_group("GrassAndPlants").add_child(root)
+	_register_wind(root, 0.060, 1.12, rng.randf_range(0.0, TAU))
 
-	for i in range(5):
-		var leaf := _add_box(root, "FernLeaf", Vector3(0.10, 0.06, rng.randf_range(0.45, 0.70)), Vector3(0.0, 0.20 + float(i) * 0.04, 0.0), COLOR_FERN.lerp(COLOR_GRASS_LIGHT, rng.randf_range(0.0, 0.35)))
-		leaf.rotation_degrees.y = -55.0 + float(i) * 27.5
-		leaf.rotation_degrees.x = rng.randf_range(-18.0, -8.0)
+	if _place_glb(root, "res://assets/3d/environment/foliage/ferns.glb", Vector3.ZERO, Vector3(0.60, 0.60, 0.60)) == null:
+		for i in range(5):
+			var leaf := _add_box(root, "FernLeaf", Vector3(0.10, 0.06, rng.randf_range(0.45, 0.70)), Vector3(0.0, 0.20 + float(i) * 0.04, 0.0), COLOR_FERN.lerp(COLOR_GRASS_LIGHT, rng.randf_range(0.0, 0.35)))
+			leaf.rotation_degrees.y = -55.0 + float(i) * 27.5
+			leaf.rotation_degrees.x = rng.randf_range(-18.0, -8.0)
 
 func _bush(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	var root := Node3D.new()
 	root.name = "Bush"
 	root.position = pos
 	_group("GrassAndPlants").add_child(root)
+	_register_wind(root, 0.035, 0.88, rng.randf_range(0.0, TAU))
 
-	var blobs := 3 + rng.randi_range(0, 2)
-	for i in range(blobs):
-		var leaf := _add_sphere(root, "BushLeaf", rng.randf_range(0.35, 0.55), Vector3(rng.randf_range(-0.30, 0.30), rng.randf_range(0.25, 0.55), rng.randf_range(-0.25, 0.25)), _grass_color(rng).lerp(COLOR_LEAF, 0.35))
-		leaf.scale = Vector3(rng.randf_range(0.85, 1.25), rng.randf_range(0.62, 0.90), rng.randf_range(0.85, 1.20))
+	if _place_glb(root, "res://assets/3d/environment/foliage/bushes.glb", Vector3.ZERO, Vector3(0.70, 0.70, 0.70)) == null:
+		var blobs := 3 + rng.randi_range(0, 2)
+		for i in range(blobs):
+			var leaf := _add_sphere(root, "BushLeaf", rng.randf_range(0.35, 0.55), Vector3(rng.randf_range(-0.30, 0.30), rng.randf_range(0.25, 0.55), rng.randf_range(-0.25, 0.25)), _grass_color(rng).lerp(COLOR_LEAF, 0.35))
+			leaf.scale = Vector3(rng.randf_range(0.85, 1.25), rng.randf_range(0.62, 0.90), rng.randf_range(0.85, 1.20))
 
 func _palm_tree(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	var root := Node3D.new()
@@ -921,6 +998,10 @@ func _palm_tree(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	root.position = pos
 	root.rotation_degrees.y = rng.randf_range(0.0, 360.0)
 	_group("Trees").add_child(root)
+	_register_wind(root, 0.018, 0.48, rng.randf_range(0.0, TAU))
+
+	if _place_glb(root, "res://assets/3d/environment/trees/palms.glb", Vector3.ZERO, Vector3(1.0, 1.0, 1.0)) != null:
+		return
 
 	var height := rng.randf_range(3.4, 5.0)
 	var trunk_col := COLOR_TRUNK.lerp(Color(0.50, 0.33, 0.14), rng.randf_range(0.0, 0.30))
@@ -972,6 +1053,10 @@ func _jungle_tree(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	root.position = pos
 	root.rotation_degrees.y = rng.randf_range(0.0, 360.0)
 	_group("Trees").add_child(root)
+	_register_wind(root, 0.014, 0.42, rng.randf_range(0.0, TAU))
+
+	if _place_glb(root, "res://assets/3d/environment/trees/jungle_trees.glb", Vector3.ZERO, Vector3(1.0, 1.0, 1.0)) != null:
+		return
 
 	var height := rng.randf_range(3.0, 4.8)
 	var trunk_col := COLOR_TRUNK.lerp(Color(0.28, 0.16, 0.06), rng.randf_range(0.0, 0.40))
@@ -1027,6 +1112,8 @@ func _jungle_tree(pos: Vector3, rng: RandomNumberGenerator) -> void:
 		_vine(root, Vector3(rng.randf_range(-0.22, 0.22), canopy_start_y + 0.25, rng.randf_range(-0.18, 0.18)), rng)
 
 func _vine(parent: Node3D, pos: Vector3, rng: RandomNumberGenerator) -> void:
+	if _place_glb(parent, "res://assets/3d/environment/foliage/vines.glb", pos + Vector3(0.0, -0.40, 0.0), Vector3(0.45, 0.45, 0.45)) != null:
+		return
 	var vine := _add_box(parent, "Vine", Vector3(0.07, rng.randf_range(0.80, 1.35), 0.07), pos + Vector3(0.0, -0.40, 0.0), COLOR_FERN)
 	vine.rotation_degrees.z = rng.randf_range(-8.0, 8.0)
 
@@ -1035,9 +1122,10 @@ func _pebble_cluster(parent: Node3D, pos: Vector3, rng: RandomNumberGenerator) -
 	root.name = "Pebbles"
 	root.position = pos
 	parent.add_child(root)
-	for i in range(3):
-		var pebble := _add_sphere(root, "Pebble", rng.randf_range(0.08, 0.16), Vector3(rng.randf_range(-0.28, 0.28), 0.05, rng.randf_range(-0.22, 0.22)), COLOR_ROCK.lerp(COLOR_STONE_DARK, rng.randf_range(0.0, 0.45)))
-		pebble.scale = Vector3(1.2, 0.45, 1.0)
+	if _place_glb(root, "res://assets/3d/environment/rocks/rock_clusters.glb", Vector3.ZERO, Vector3(0.50, 0.50, 0.50)) == null:
+		for i in range(3):
+			var pebble := _add_sphere(root, "Pebble", rng.randf_range(0.08, 0.16), Vector3(rng.randf_range(-0.28, 0.28), 0.05, rng.randf_range(-0.22, 0.22)), COLOR_ROCK.lerp(COLOR_STONE_DARK, rng.randf_range(0.0, 0.45)))
+			pebble.scale = Vector3(1.2, 0.45, 1.0)
 
 func _root_strip(parent: Node3D, pos: Vector3, rng: RandomNumberGenerator) -> void:
 	var root := _add_box(parent, "RootStrip", Vector3(rng.randf_range(1.0, 1.8), 0.06, 0.08), pos, COLOR_LOG)
@@ -1049,8 +1137,9 @@ func _fallen_log_dressing(pos: Vector3, side: float, rng: RandomNumberGenerator)
 	root.position = pos
 	root.rotation_degrees.y = side * rng.randf_range(20.0, 45.0)
 	_group("RocksAndLogs").add_child(root)
-	var log := _add_cylinder(root, "SideLog", 0.18, 0.24, rng.randf_range(1.2, 2.2), Vector3.ZERO, COLOR_LOG)
-	log.rotation_degrees.x = 90.0
+	if _place_glb(root, "res://assets/3d/obstacles/fallen_log.glb", Vector3.ZERO, Vector3(0.70, 0.70, 0.70)) == null:
+		var log := _add_cylinder(root, "SideLog", 0.18, 0.24, rng.randf_range(1.2, 2.2), Vector3.ZERO, COLOR_LOG)
+		log.rotation_degrees.x = 90.0
 
 func _ruin_fragment(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	var root := Node3D.new()
@@ -1058,6 +1147,9 @@ func _ruin_fragment(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	root.position = pos
 	root.rotation_degrees.y = rng.randf_range(-18.0, 18.0)
 	_group("Ruins").add_child(root)
+
+	if _place_glb(root, "res://assets/3d/environment/rocks/rock_clusters.glb", Vector3.ZERO, Vector3(0.60, 0.60, 0.60)) != null:
+		return
 
 	_add_box(root, "BrokenStone", Vector3(0.55, rng.randf_range(0.55, 1.20), 0.45), Vector3(0.0, 0.35, 0.0), COLOR_STONE)
 	var cap := _add_box(root, "Moss", Vector3(0.60, 0.08, 0.48), Vector3(0.0, 0.95, 0.0), COLOR_MOSS)
@@ -1643,6 +1735,14 @@ func _count_total_coins(data: Dictionary) -> void:
 func get_total_coins() -> int:
 	return _total_coins
 
+func attract_coins(player_pos: Vector3, radius: float) -> void:
+	var radius_sq := radius * radius
+	for coin in _coin_nodes.duplicate():
+		if not is_instance_valid(coin):
+			continue
+		if coin.global_position.distance_squared_to(player_pos) <= radius_sq:
+			_collect_coin_node(coin)
+
 func _animate_coins(delta: float) -> void:
 	for coin in _coin_nodes.duplicate():
 		if not is_instance_valid(coin):
@@ -1841,6 +1941,85 @@ func _animate_relic_glows() -> void:
 			continue
 		mat.emission_energy_multiplier = 0.75 + sin(_time * 2.6 + glow.global_position.z) * 0.28
 
+func _register_wind(node: Node3D, strength: float, speed: float, phase: float) -> void:
+	_wind_nodes.append({
+		"node": node,
+		"base_x": node.rotation.x,
+		"base_z": node.rotation.z,
+		"strength": strength,
+		"speed": speed,
+		"phase": phase,
+	})
+
+func _animate_wind() -> void:
+	var gust := 1.0 + sin(_time * 0.37) * _gust_strength
+	for item in _wind_nodes:
+		var node := item.get("node") as Node3D
+		if node == null or not is_instance_valid(node):
+			continue
+		var phase := float(item.get("phase", 0.0))
+		var speed := float(item.get("speed", 1.0)) * _wind_speed
+		var amount := float(item.get("strength", 0.02)) * _wind_strength * gust
+		node.rotation.z = float(item.get("base_z", 0.0)) + sin(_time * speed + phase) * amount
+		node.rotation.x = float(item.get("base_x", 0.0)) + cos(_time * speed * 0.73 + phase) * amount * 0.32
+
+func add_grass_footprint(global_pos: Vector3, right: Vector3, side: int) -> void:
+	if not _grass_footprints_enabled:
+		return
+	var root := Node3D.new()
+	root.name = "FlattenedGrass"
+	root.position = to_local(global_pos + right.normalized() * 0.14 * float(side))
+	root.position.y = 0.025
+	var fwd := Vector3(right.z, 0.0, -right.x).normalized()
+	root.rotation.y = atan2(fwd.x, -fwd.z)
+	_group("ModeEffects").add_child(root)
+	for blade_index in range(3):
+		var blade := _add_box(
+			root,
+			"PressedBlade%d" % blade_index,
+			Vector3(0.075, 0.012, 0.42 - float(blade_index) * 0.045),
+			Vector3((float(blade_index) - 1.0) * 0.075, 0.0, (float(blade_index % 2) - 0.5) * 0.06),
+			Color(0.08, 0.24, 0.07, 0.82)
+		)
+		blade.rotation_degrees.y = -9.0 + float(blade_index) * 9.0
+	_grass_marks.append({"node": root, "age": 0.0, "duration": 6.5})
+	if _grass_marks.size() > 48:
+		var oldest: Dictionary = _grass_marks.pop_front()
+		var old_node := oldest.get("node") as Node3D
+		if is_instance_valid(old_node):
+			old_node.queue_free()
+
+func _animate_grass_marks(delta: float) -> void:
+	for index in range(_grass_marks.size() - 1, -1, -1):
+		var item: Dictionary = _grass_marks[index]
+		var node := item.get("node") as Node3D
+		if node == null or not is_instance_valid(node):
+			_grass_marks.remove_at(index)
+			continue
+		var age := float(item.get("age", 0.0)) + delta
+		var duration := float(item.get("duration", 6.5))
+		item["age"] = age
+		_grass_marks[index] = item
+		var alpha := clampf(1.0 - age / duration, 0.0, 1.0) * 0.82
+		for child in node.get_children():
+			if child is MeshInstance3D:
+				var mat := (child as MeshInstance3D).material_override as StandardMaterial3D
+				if mat != null:
+					var color := mat.albedo_color
+					color.a = alpha
+					mat.albedo_color = color
+		if age >= duration:
+			node.queue_free()
+			_grass_marks.remove_at(index)
+
+func _lane_x_for_row(row: int, lane: int) -> float:
+	var lane_count := clampi(int(_seg_lane_count.get(row, 3)), 1, 3)
+	if lane_count == 1:
+		return 0.0
+	if lane_count == 2:
+		return -LANE_W * 0.5 if clampi(lane, 0, 1) == 0 else LANE_W * 0.5
+	return _lane_x(clampi(lane, 0, 2))
+
 func _lane_x(lane: int) -> float:
 	match lane:
 		0:
@@ -1918,6 +2097,146 @@ func _setup_theme(id: int) -> void:
 				"moss": Color(0.55, 0.58, 0.28),
 				"surface": "sand",
 			}
+		7:  # Wildlands Settlement — worn dirt paths, dry grass, wood buildings
+			_theme = {
+				"dirt_dark":  Color(0.42, 0.28, 0.14),
+				"dirt_light": Color(0.56, 0.38, 0.20),
+				"grass_dark": Color(0.38, 0.44, 0.16),
+				"grass_light": Color(0.52, 0.62, 0.22),
+				"stone": Color(0.52, 0.46, 0.32),
+				"moss":  Color(0.34, 0.54, 0.20),
+				"surface": "dirt",
+			}
+		8:  # Brick trail — earthy path through a settlement under construction
+			_theme = {
+				"dirt_dark":  Color(0.46, 0.30, 0.14),
+				"dirt_light": Color(0.60, 0.40, 0.20),
+				"grass_dark": Color(0.30, 0.40, 0.14),
+				"grass_light": Color(0.44, 0.58, 0.20),
+				"stone": Color(0.54, 0.42, 0.28),
+				"moss":  Color(0.30, 0.50, 0.18),
+				"surface": "stone",
+			}
+		9:  # Deep jungle, thick canopy, root-tangled paths
+			_theme = {
+				"dirt_dark":  Color(0.22, 0.14, 0.07),
+				"dirt_light": Color(0.32, 0.22, 0.11),
+				"grass_dark": Color(0.06, 0.22, 0.08),
+				"grass_light": Color(0.14, 0.44, 0.16),
+				"stone": Color(0.30, 0.36, 0.28),
+				"moss":  Color(0.18, 0.48, 0.16),
+				"surface": "mud",
+			}
+		10:  # Animal crossing trail — savanna edge with tall grass
+			_theme = {
+				"dirt_dark":  Color(0.52, 0.38, 0.18),
+				"dirt_light": Color(0.66, 0.50, 0.26),
+				"grass_dark": Color(0.48, 0.50, 0.18),
+				"grass_light": Color(0.64, 0.68, 0.26),
+				"stone": Color(0.56, 0.52, 0.36),
+				"moss":  Color(0.44, 0.54, 0.22),
+				"surface": "dirt",
+			}
+		11:  # Wildlife valley — lush greens, animal presence
+			_theme = {
+				"dirt_dark":  Color(0.28, 0.18, 0.08),
+				"dirt_light": Color(0.38, 0.26, 0.13),
+				"grass_dark": Color(0.08, 0.30, 0.10),
+				"grass_light": Color(0.18, 0.58, 0.20),
+				"stone": Color(0.32, 0.40, 0.32),
+				"moss":  Color(0.16, 0.48, 0.20),
+				"surface": "dirt",
+			}
+		12:  # Water slide gorge — wet stone, blue-green moss
+			_theme = {
+				"dirt_dark":  Color(0.20, 0.22, 0.24),
+				"dirt_light": Color(0.30, 0.34, 0.38),
+				"grass_dark": Color(0.08, 0.32, 0.30),
+				"grass_light": Color(0.14, 0.52, 0.48),
+				"stone": Color(0.26, 0.42, 0.44),
+				"moss":  Color(0.14, 0.44, 0.38),
+				"surface": "mud",
+			}
+		13:  # Chase trail — open clearing, fast ground, bright savanna
+			_theme = {
+				"dirt_dark":  Color(0.56, 0.44, 0.22),
+				"dirt_light": Color(0.70, 0.56, 0.30),
+				"grass_dark": Color(0.50, 0.52, 0.20),
+				"grass_light": Color(0.66, 0.70, 0.28),
+				"stone": Color(0.58, 0.54, 0.36),
+				"moss":  Color(0.46, 0.56, 0.22),
+				"surface": "dirt",
+			}
+		14:  # Tiled ruins — warm sandstone tiles, ancient structures
+			_theme = {
+				"dirt_dark":  Color(0.48, 0.36, 0.22),
+				"dirt_light": Color(0.62, 0.48, 0.30),
+				"grass_dark": Color(0.16, 0.26, 0.12),
+				"grass_light": Color(0.26, 0.44, 0.20),
+				"stone": Color(0.62, 0.54, 0.38),
+				"moss":  Color(0.30, 0.46, 0.20),
+				"surface": "stone",
+			}
+		15:  # Market skate/river dock — bright, open, planked surfaces
+			_theme = {
+				"dirt_dark":  Color(0.44, 0.32, 0.18),
+				"dirt_light": Color(0.58, 0.44, 0.26),
+				"grass_dark": Color(0.20, 0.34, 0.14),
+				"grass_light": Color(0.30, 0.52, 0.22),
+				"stone": Color(0.50, 0.46, 0.34),
+				"moss":  Color(0.28, 0.48, 0.20),
+				"surface": "stone",
+			}
+		16:  # Animal escape — darker urgency, dense foliage
+			_theme = {
+				"dirt_dark":  Color(0.20, 0.14, 0.06),
+				"dirt_light": Color(0.30, 0.20, 0.10),
+				"grass_dark": Color(0.06, 0.20, 0.07),
+				"grass_light": Color(0.12, 0.40, 0.14),
+				"stone": Color(0.28, 0.34, 0.26),
+				"moss":  Color(0.14, 0.44, 0.16),
+				"surface": "dirt",
+			}
+		17:  # Rapids/boat — dark wet stone, river mist
+			_theme = {
+				"dirt_dark":  Color(0.18, 0.22, 0.26),
+				"dirt_light": Color(0.26, 0.32, 0.38),
+				"grass_dark": Color(0.06, 0.24, 0.24),
+				"grass_light": Color(0.12, 0.44, 0.44),
+				"stone": Color(0.24, 0.38, 0.42),
+				"moss":  Color(0.12, 0.40, 0.36),
+				"surface": "mud",
+			}
+		18:  # Relic trail — ancient stone glyphs, deep purple-grey tones
+			_theme = {
+				"dirt_dark":  Color(0.22, 0.18, 0.26),
+				"dirt_light": Color(0.32, 0.26, 0.36),
+				"grass_dark": Color(0.08, 0.14, 0.16),
+				"grass_light": Color(0.14, 0.26, 0.30),
+				"stone": Color(0.38, 0.32, 0.46),
+				"moss":  Color(0.18, 0.30, 0.36),
+				"surface": "stone",
+			}
+		19:  # Boar escape — red-brown earth, scrub brush panic run
+			_theme = {
+				"dirt_dark":  Color(0.38, 0.18, 0.10),
+				"dirt_light": Color(0.52, 0.26, 0.14),
+				"grass_dark": Color(0.30, 0.28, 0.10),
+				"grass_light": Color(0.48, 0.46, 0.18),
+				"stone": Color(0.44, 0.36, 0.24),
+				"moss":  Color(0.36, 0.42, 0.14),
+				"surface": "dirt",
+			}
+		20:  # Baobab Treasure — rich gold-amber, ancient majesty
+			_theme = {
+				"dirt_dark":  Color(0.46, 0.34, 0.16),
+				"dirt_light": Color(0.62, 0.48, 0.24),
+				"grass_dark": Color(0.16, 0.28, 0.12),
+				"grass_light": Color(0.28, 0.50, 0.22),
+				"stone": Color(0.58, 0.50, 0.30),
+				"moss":  Color(0.28, 0.50, 0.20),
+				"surface": "stone",
+			}
 		_:
 			_theme = {
 				"dirt_dark": COLOR_DIRT,
@@ -1945,7 +2264,8 @@ func _spawn_level_specific_dressing(data: Dictionary) -> void:
 
 		2:
 			for i in range(length / 3):
-				var z := -float(i * 3 + 2) * TILE_Z
+				var row := i * 3 + 2
+				var z := -float(row) * TILE_Z
 				for s in [-1.0, 1.0]:
 					var vroot := Node3D.new()
 					vroot.name = "ThickVines"
@@ -1997,7 +2317,8 @@ func _spawn_level_specific_dressing(data: Dictionary) -> void:
 
 		4:
 			for i in range(length / 4):
-				var z := -float(i * 4 + 2) * TILE_Z
+				var row := i * 4 + 2
+				var z := -float(row) * TILE_Z
 				for s in [-1.0, 1.0]:
 					var proot := Node3D.new()
 					proot.name = "AncientPillar"
@@ -2081,9 +2402,236 @@ func _spawn_level_specific_dressing(data: Dictionary) -> void:
 						rng
 					)
 
+		7, 8, 9:  # Wildlands Settlement — wooden posts, crates, tool racks
+			var stone_col: Color = _theme.get("stone", COLOR_STONE)
+			for i in range(length / 4):
+				var row := i * 4 + 2
+				var side: float = 1.0 if i % 2 == 0 else -1.0
+				if rng.randf() < 0.70:
+					# Wooden post or log stack on path edge
+					var proot := Node3D.new()
+					proot.name = "SettlementPost"
+					proot.position = _row_local(row, side * rng.randf_range(3.2, 4.4), 0.0, rng.randf_range(-0.8, 0.8))
+					_group("RocksAndLogs").add_child(proot)
+					_add_cylinder(proot, "Post", 0.08, 0.10, rng.randf_range(0.9, 1.6),
+						Vector3(0.0, 0.8, 0.0), Color(0.38, 0.22, 0.10))
+					if rng.randf() < 0.45:
+						_add_box(proot, "Plank",
+							Vector3(rng.randf_range(0.5, 0.9), 0.08, 0.10),
+							Vector3(rng.randf_range(-0.2, 0.2), rng.randf_range(0.6, 1.3), 0.0),
+							Color(0.42, 0.26, 0.12))
+				if rng.randf() < 0.45:
+					# Crate / supply box
+					var crate := _add_box(_group("RocksAndLogs"), "Crate",
+						Vector3(rng.randf_range(0.30, 0.48), rng.randf_range(0.28, 0.44), rng.randf_range(0.30, 0.48)),
+						_row_local(row, -side * rng.randf_range(3.0, 4.2), 0.20, rng.randf_range(-1.2, 1.2)),
+						Color(0.46, 0.30, 0.14))
+					crate.rotation_degrees.y = rng.randf_range(-20.0, 20.0)
+			# Campfire every ~12 rows
+			for i in range(max(1, length / 12)):
+				var cf_row := i * 12 + 6
+				var cf_side: float = 1.0 if i % 2 == 0 else -1.0
+				var cf_root := Node3D.new()
+				cf_root.name = "Campfire"
+				cf_root.position = _row_local(cf_row, cf_side * rng.randf_range(3.4, 4.8), 0.0, rng.randf_range(-0.4, 0.4))
+				_group("Animals").add_child(cf_root)
+				_add_sphere(cf_root, "Glow", 0.18, Vector3(0.0, 0.08, 0.0), Color(1.0, 0.55, 0.12))
+				_add_box(cf_root, "Log1", Vector3(0.36, 0.07, 0.09), Vector3(-0.09, 0.04, 0.0), stone_col.lerp(Color(0.28, 0.16, 0.06), 0.6))
+				_add_box(cf_root, "Log2", Vector3(0.09, 0.07, 0.36), Vector3(0.0, 0.04, -0.09), stone_col.lerp(Color(0.28, 0.16, 0.06), 0.6))
+
+		10, 11, 13:  # Wildlife valley — animal silhouettes and tall grass clumps
+			for i in range(length / 5):
+				var row := i * 5 + 3
+				var side: float = 1.0 if i % 2 == 0 else -1.0
+				# Tall grass clump
+				var gx: float = side * rng.randf_range(3.4, 5.0)
+				var groot := Node3D.new()
+				groot.name = "TallGrass"
+				groot.position = _row_local(row, gx, 0.0, rng.randf_range(-1.0, 1.0))
+				_group("GrassAndPlants").add_child(groot)
+				_register_wind(groot, 0.065, 1.28, rng.randf_range(0.0, TAU))
+				for b in range(rng.randi_range(4, 7)):
+					var blade := _add_box(groot, "Blade%d" % b,
+						Vector3(0.05, rng.randf_range(0.65, 1.10), 0.04),
+						Vector3(rng.randf_range(-0.22, 0.22), 0.45, rng.randf_range(-0.22, 0.22)),
+						_theme.get("grass_light", COLOR_GRASS_LIGHT).lerp(Color(0.55, 0.60, 0.18), rng.randf_range(0.0, 0.5)))
+					blade.rotation_degrees.z = rng.randf_range(-18.0, 18.0)
+			# Wildlife silhouettes — antelope, warthog, bird
+			if length > 15:
+				for n in range(min(3, length / 12)):
+					var arow := 6 + n * (length / 3)
+					var side2: float = 1.0 if n % 2 == 0 else -1.0
+					var aroot := Node3D.new()
+					aroot.name = "Antelope"
+					aroot.position = _row_local(arow, side2 * rng.randf_range(5.0, 6.2), 0.0, 0.0)
+					_group("Animals").add_child(aroot)
+					# Simple antelope silhouette: body + legs + neck + head + horns
+					_add_box(aroot, "Body", Vector3(0.48, 0.22, 0.18), Vector3(0.0, 0.55, 0.0), Color(0.52, 0.38, 0.18))
+					_add_cylinder(aroot, "Neck", 0.06, 0.07, 0.28, Vector3(0.18, 0.75, 0.0), Color(0.52, 0.38, 0.18))
+					_add_sphere(aroot, "Head", 0.09, Vector3(0.26, 0.96, 0.0), Color(0.52, 0.38, 0.18))
+					for f in range(4):
+						var fx: float = -0.16 + float(f % 2) * 0.32
+						var fz: float = -0.06 + float(f / 2) * 0.12
+						_add_cylinder(aroot, "Leg%d" % f, 0.04, 0.04, 0.48,
+							Vector3(fx, 0.24, fz), Color(0.42, 0.28, 0.12))
+					# Horn
+					_add_cylinder(aroot, "Horn", 0.025, 0.01, 0.22, Vector3(0.24, 1.12, 0.0), Color(0.76, 0.68, 0.44))
+
+		12:  # Water slide gorge — moss-dripping walls, spray puffs
+			var stone_col_w: Color = _theme.get("stone", COLOR_STONE)
+			for i in range(length / 3):
+				var row := i * 3 + 2
+				for s in [-1.0, 1.0]:
+					# Mossy gorge wall slab
+					if rng.randf() < 0.65:
+						var slab := _add_box(_group("Ruins"), "GorgeWall",
+							Vector3(0.30, rng.randf_range(1.2, 2.2), 0.20),
+							_row_local(row, s * rng.randf_range(3.0, 3.8), 1.0, rng.randf_range(-0.6, 0.6)),
+							stone_col_w.lerp(_theme.get("moss", COLOR_MOSS), rng.randf_range(0.3, 0.7)))
+						slab.rotation_degrees.y = rng.randf_range(-6.0, 6.0)
+					# Water spray puff
+					if rng.randf() < 0.50:
+						_add_sphere(_group("GrassAndPlants"), "Spray",
+							rng.randf_range(0.10, 0.18),
+							_row_local(row, s * rng.randf_range(1.5, 2.5), rng.randf_range(0.12, 0.45), rng.randf_range(-0.4, 0.4)),
+							Color(0.75, 0.92, 1.0, 0.65))
+
+		14, 15:  # Market dock — wooden plank stalls, hanging lanterns
+			var plank_col := Color(0.38, 0.24, 0.10)
+			var light_col := Color(1.00, 0.88, 0.46)
+			for i in range(length / 5):
+				var row := i * 5 + 2
+				var side: float = 1.0 if i % 2 == 0 else -1.0
+				if rng.randf() < 0.65:
+					# Market stall frame
+					var stall := Node3D.new()
+					stall.name = "MarketStall"
+					stall.position = _row_local(row, side * rng.randf_range(3.8, 5.0), 0.0, rng.randf_range(-0.9, 0.9))
+					_group("Ruins").add_child(stall)
+					for p in range(2):
+						_add_cylinder(stall, "Post%d" % p, 0.06, 0.07, 1.8,
+							Vector3(-0.38 + float(p) * 0.76, 0.9, 0.0), plank_col)
+					_add_box(stall, "Roof",
+						Vector3(0.92, 0.07, 0.52), Vector3(0.0, 1.88, 0.0), plank_col.lightened(0.15))
+					# Hanging lantern
+					_add_sphere(stall, "Lantern", 0.09, Vector3(0.0, 1.72, 0.0), light_col)
+			# Reed clusters along the lower/market edge
+			for i in range(length / 3):
+				var reed_row := i * 3 + 1
+				if rng.randf() < 0.55:
+					var rroot := Node3D.new()
+					rroot.name = "RiverReed"
+					rroot.position = _row_local(reed_row, (1.0 if i % 2 == 0 else -1.0) * rng.randf_range(4.0, 5.2), 0.0, rng.randf_range(-0.4, 0.4))
+					_group("GrassAndPlants").add_child(rroot)
+					_register_wind(rroot, 0.055, 1.15, rng.randf_range(0.0, TAU))
+					for r in range(rng.randi_range(3, 5)):
+						var stem := _add_box(rroot, "Stem%d" % r,
+							Vector3(0.04, rng.randf_range(0.50, 0.90), 0.04),
+							Vector3(rng.randf_range(-0.15, 0.15), 0.35, rng.randf_range(-0.15, 0.15)),
+							Color(0.30, 0.52, 0.28))
+						stem.rotation_degrees.z = rng.randf_range(-10.0, 10.0)
+					_add_sphere(rroot, "Top", 0.05, Vector3(0.0, 0.92, 0.0), Color(0.46, 0.32, 0.12))
+
+		16, 19:  # Escape/panic run — fallen logs across path sides, warning markers
+			for i in range(length / 4):
+				var row := i * 4 + 2
+				var side: float = 1.0 if i % 2 == 0 else -1.0
+				if rng.randf() < 0.55:
+					# Fallen log across path edge
+					var flog := _add_box(_group("RocksAndLogs"), "FallenLog",
+						Vector3(rng.randf_range(0.65, 0.95), 0.14, 0.18),
+						_row_local(row, side * rng.randf_range(2.9, 3.8), 0.07, rng.randf_range(-0.8, 0.8)),
+						COLOR_LOG)
+					flog.rotation_degrees.y = rng.randf_range(-25.0, 25.0)
+				if rng.randf() < 0.35:
+					# Disturbed earth mound
+					var mound := _add_sphere(_group("Terrain"), "Mound",
+						rng.randf_range(0.28, 0.44),
+						_row_local(row, -side * rng.randf_range(3.2, 4.5), 0.04, rng.randf_range(-1.2, 1.2)),
+						_theme.get("dirt_dark", COLOR_DIRT))
+					mound.scale.y = 0.30
+
+		17:  # Rapids/boat — dark river boulders, mist wisps on banks
+			for i in range(length / 3):
+				var row := i * 3 + 1
+				for s in [-1.0, 1.0]:
+					# River boulder
+					if rng.randf() < 0.60:
+						var boul := _add_sphere(_group("RocksAndLogs"), "RiverBoulder",
+							rng.randf_range(0.22, 0.42),
+							_row_local(row, s * rng.randf_range(2.8, 4.2), 0.10, rng.randf_range(-0.9, 0.9)),
+							_theme.get("stone", COLOR_STONE).darkened(0.25))
+						boul.scale.y = 0.55
+					# Mist wisp
+					if rng.randf() < 0.40:
+						var wisp := _add_sphere(_group("GrassAndPlants"), "Mist",
+							rng.randf_range(0.18, 0.32),
+							_row_local(row, s * rng.randf_range(3.5, 5.0), rng.randf_range(0.2, 0.7), rng.randf_range(-0.6, 0.6)),
+							Color(0.78, 0.88, 0.96, 0.38))
+						wisp.scale = Vector3(2.2, 0.55, 1.4)
+
+		18:  # Relic trail — glowing stone tablets, purple-grey ruins
+			for i in range(length / 4):
+				var row := i * 4 + 2
+				for s in [-1.0, 1.0]:
+					if rng.randf() < 0.60:
+						var troot := Node3D.new()
+						troot.name = "RelicTablet"
+						troot.position = _row_local(row, s * rng.randf_range(3.5, 4.8), 0.0, rng.randf_range(-0.7, 0.7))
+						troot.rotation_degrees.y = rng.randf_range(-15.0, 15.0)
+						_group("Ruins").add_child(troot)
+						var stone_c: Color = _theme.get("stone", COLOR_STONE)
+						_add_box(troot, "Slab", Vector3(0.28, 0.66, 0.09), Vector3(0.0, 0.33, 0.0), stone_c)
+						# Glowing glyph
+						var gm := _add_box(troot, "Glyph", Vector3(0.16, 0.16, 0.06), Vector3(0.0, 0.44, 0.02), Color(0.72, 0.44, 1.0))
+						var gmat := StandardMaterial3D.new()
+						gmat.albedo_color = Color(0.72, 0.44, 1.0)
+						gmat.emission_enabled = true
+						gmat.emission = Color(0.60, 0.26, 0.98)
+						gmat.emission_energy_multiplier = 1.2
+						gm.material_override = gmat
+						_relic_glows.append(gm)
+
+		20:  # Baobab Treasure — huge baobab trunks, scattered gold relics
+			for i in range(length / 6):
+				var row := i * 6 + 3
+				var side: float = 1.0 if i % 2 == 0 else -1.0
+				# Baobab trunk silhouette
+				var broot := Node3D.new()
+				broot.name = "Baobab"
+				broot.position = _row_local(row, side * rng.randf_range(5.0, 6.5), 0.0, rng.randf_range(-1.5, 1.5))
+				_group("Trees").add_child(broot)
+				var trunk_h: float = rng.randf_range(2.2, 3.0)
+				_add_cylinder(broot, "Trunk", 0.55, 0.70, trunk_h,
+					Vector3(0.0, trunk_h * 0.5, 0.0), Color(0.40, 0.24, 0.10))
+				# Crown branches
+				for b in range(rng.randi_range(3, 5)):
+					var ang := deg_to_rad(float(b) * 72.0 + rng.randf_range(-20.0, 20.0))
+					var blen: float = rng.randf_range(0.7, 1.2)
+					var branch := _add_cylinder(broot, "Branch%d" % b, 0.10, 0.07, blen,
+						Vector3(cos(ang) * blen * 0.5, trunk_h + 0.3, sin(ang) * blen * 0.5),
+						Color(0.35, 0.20, 0.08))
+					branch.rotation_degrees.z = rng.randf_range(35.0, 55.0) * sign(cos(ang))
+			# Gold relic glints scattered across the approach
+			for i in range(length / 5):
+				var row := i * 5 + 4
+				if rng.randf() < 0.55:
+					var grelic := _add_box(_group("Ruins"), "GoldRelic",
+						Vector3(0.18, 0.06, 0.18),
+						_row_local(row, rng.randf_range(-3.5, 3.5), 0.03, rng.randf_range(-1.0, 1.0)),
+						Color(0.96, 0.82, 0.18))
+					var grmat := StandardMaterial3D.new()
+					grmat.albedo_color = Color(0.96, 0.82, 0.18)
+					grmat.emission_enabled = true
+					grmat.emission = Color(0.88, 0.70, 0.08)
+					grmat.emission_energy_multiplier = 0.7
+					grelic.material_override = grmat
+					_relic_glows.append(grelic)
+
 func _spawn_path_variation(data: Dictionary) -> void:
-	if _level_id == 6:
-		return  # Savanna has open sky — no jungle arches or root strips
+	# Open-sky levels: no jungle arches or root-crossing strips
+	if _level_id in [6, 10, 13, 16, 19]:
+		return
 	var length: int = data.get("length", 30)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = int(data.get("seed", 42)) + 5555
@@ -2208,6 +2756,7 @@ func _dry_grass_tuft(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	root.name = "DryGrass"
 	root.position = pos
 	_group("GrassAndPlants").add_child(root)
+	_register_wind(root, 0.065, 1.18, rng.randf_range(0.0, TAU))
 	var blades := 2 + rng.randi_range(0, 3)
 	for i in range(blades):
 		var c := COLOR_DRY_GRASS.lerp(COLOR_SANDY_SOIL, rng.randf_range(0.0, 0.35))
@@ -2237,6 +2786,7 @@ func _acacia_tree(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	root.position = pos
 	root.rotation_degrees.y = rng.randf_range(0.0, 360.0)
 	_group("Trees").add_child(root)
+	_register_wind(root, 0.016, 0.45, rng.randf_range(0.0, TAU))
 	var trunk_h := rng.randf_range(1.4, 2.2)
 	_add_cylinder(root, "Trunk", 0.09, 0.13, trunk_h,
 		Vector3(0.0, trunk_h * 0.5, 0.0), COLOR_ACACIA_BARK)
@@ -2368,6 +2918,8 @@ func _add_static_box(parent: Node3D, node_name: String, size: Vector3, pos: Vect
 func _set_color(mesh: MeshInstance3D, color: Color) -> void:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = color
+	if color.a < 0.999:
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
 	mat.roughness = 0.92
 	mesh.material_override = mat

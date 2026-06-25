@@ -1,5 +1,44 @@
 # CHANGELOG — Jungle Escape: Lost Path
 
+## [Unreleased] - Level Dressing, Trails, Audio, and Resource Icons
+
+### Added
+- Added distinct runtime color themes and procedural side dressing for Levels 7-20: settlements, wildlife grass, gorge spray, market stalls, fallen logs, rapids mist, glowing relic tablets, and baobab treasure dressing.
+- Added/verified 10-node world-space player trail particles for leaf, firefly, sparkle, dust, and splash trail types.
+- Added/verified `jump.wav`, `slide.wav`, and `land.wav` as 22050 Hz 16-bit mono WAV effects.
+- Added/verified 32×32 RGBA icons for Sand Shoes, water tokens, fish tokens, river relics, animal badges, and trade tokens.
+
+### Changed
+- Level-specific dressing now uses row-local path coordinates so side props follow curved, variable-width tracks.
+- `Constants.RESOURCES` now includes PNG `icon_path` entries for all generated resource icons, including the older material/relic resources.
+- `LevelComplete3D.gd` uses TextureRect resource icons where a PNG path exists, with emoji fallback retained.
+- `LevelSelect.gd` uses the Sand Shoes PNG icon in the Sand Shoes required popup, with emoji fallback retained.
+
+### Validation
+- Verified the six new UI icons plus existing resource icons are valid 32×32 RGBA PNG files.
+- Verified `jump.wav`, `slide.wav`, and `land.wav` are valid 22050 Hz 16-bit mono WAV files with requested durations.
+- Godot headless project parse/import completed without touched-script errors.
+
+## [Unreleased] - Living Variable-Lane Track System
+
+### Added
+- Added 27 project-authored GLB track assets spanning nine surfaces with one-, two-, and three-lane variants.
+- Added per-level wind strength, wind speed, gust strength, and grass-footprint settings.
+- Added fading pressed-grass marks generated from the player's alternating footsteps.
+- Added `tools/generate_track_assets.py` and `tools/update_track_lanes.py` with built-in validation.
+
+### Changed
+- All 20 3D level JSON files now declare lane count per path module and use varied single-, double-, and triple-lane sections.
+- Player lateral movement now adapts its lane offsets when trails narrow or widen.
+- Obstacle, coin, and collectable lanes were remapped to stay valid on every track section.
+- Vegetation now follows curved trail edges, while trees and plants sway using per-level wind and gust settings.
+- `LevelManager3D.gd` now loads the matching surface/lane track GLB and retains procedural geometry only as a load-failure fallback.
+
+### Validation
+- Structurally validated and Godot-imported all 27 track GLBs.
+- Validated all 20 level files for module length, lane topology, asset existence, and item placement.
+- Godot registered the changed gameplay global classes; full scene execution remains blocked by the pre-existing `GameManager.gd` Time API parse error.
+
 ## [Unreleased] - Correct Character Preview and Gameplay Assets
 
 ### Changed

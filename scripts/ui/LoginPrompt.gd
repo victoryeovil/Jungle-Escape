@@ -36,6 +36,34 @@ func _ready() -> void:
 	_btn_skip.pressed.connect(_on_skip)
 	SupabaseClient.auth_success.connect(_on_auth_success)
 	SupabaseClient.auth_error.connect(_on_auth_error)
+	_add_header_back_btn()
+
+func _add_header_back_btn() -> void:
+	var hdr := ColorRect.new()
+	hdr.color = Color(0.02, 0.04, 0.02, 0.95)
+	hdr.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	hdr.size = Vector2(480, 52)
+	hdr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(hdr)
+	move_child(hdr, get_child_count() - 1)
+
+	var btn := Button.new()
+	btn.text = "←  Back"
+	btn.position = Vector2(8, 6)
+	btn.custom_minimum_size = Vector2(90, 40)
+	btn.focus_mode = Control.FOCUS_NONE
+	btn.add_theme_font_size_override("font_size", 15)
+	btn.add_theme_color_override("font_color", Color(0.96, 0.82, 0.24))
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.04, 0.06, 0.02, 0.85)
+	sb.border_color = Color(0.60, 0.46, 0.14, 0.80)
+	sb.border_width_left = 1; sb.border_width_right = 1
+	sb.border_width_top = 1; sb.border_width_bottom = 1
+	sb.corner_radius_top_left = 6; sb.corner_radius_top_right = 6
+	sb.corner_radius_bottom_left = 6; sb.corner_radius_bottom_right = 6
+	btn.add_theme_stylebox_override("normal", sb)
+	btn.pressed.connect(func() -> void: GameManager.go_to_menu())
+	hdr.add_child(btn)
 
 # ── Initial choice buttons ────────────────────────────────────────────────────
 

@@ -138,6 +138,28 @@ func hide_junction_prompt() -> void:
 	if _junction_lbl != null:
 		_junction_lbl.visible = false
 
+func show_tribal_routes(routes: Array) -> void:
+	if _junction_lbl == null:
+		return
+	var REWARD_ICONS := {
+		"coins": "🪙", "gems": "💎", "map_piece": "🗺", "animal_badge": "★",
+		"sunstone_shards": "✦", "relic_keys": "🗝", "food": "🥫", "wood": "🪵",
+		"bricks": "🧱", "water_token": "💧", "fish_token": "🐟",
+		"river_relic": "⚱", "trade_token": "🔶",
+	}
+	var parts: Array[String] = []
+	for raw_route in routes:
+		if not (raw_route is Dictionary):
+			continue
+		var route: Dictionary = raw_route
+		var direction := str(route.get("direction", "right"))
+		var reward := str(route.get("reward", "coins"))
+		var icon: String = REWARD_ICONS.get(reward, "●")
+		var dir_arrow: String = "←" if direction == "left" else ("→" if direction == "right" else "↑")
+		parts.append("%s %s %s" % [dir_arrow, icon, str(route.get("label", "Route"))])
+	_junction_lbl.text = "✦ TRACKER VISION\n" + "   ".join(parts)
+	_junction_lbl.visible = true
+
 func show_route_chosen(route_label: String) -> void:
 	if _route_lbl == null:
 		return

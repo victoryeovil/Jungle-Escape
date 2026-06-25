@@ -43,21 +43,21 @@ static func world_levels(world: Dictionary) -> Array:
 const SKINS := [
 	{
 		"id": "explorer", "name": "Kairo",
-		"preview_path": "res://assets/3d/characters/kairo/kairo_source_preview.jpg",
+		"preview_path": "res://assets/3d/characters/kairo/kairo_source_preview.png",
 		"scene_path": "res://assets/3d/characters/kairo/Kairo.tscn",
 		"cost_coins": 0, "cost_gems": 0, "unlock_method": "default", "available_after_level": 0,
 		"stats": {"speed": 3, "agility": 3},
 		"special": "Balanced — holds his own on any route",
 		"lore": "A seasoned explorer, Kairo has charted dozens of lost jungle trails.",
 		"color_variants": [
-			{"id": "default", "name": "Classic",     "modulate": Color(1.00, 1.00, 1.00)},
-			{"id": "sand",    "name": "Desert Sand",  "modulate": Color(1.00, 0.88, 0.68)},
-			{"id": "night",   "name": "Night Run",    "modulate": Color(0.62, 0.68, 1.00)},
+			{"id": "default", "name": "Classic",      "modulate": Color(1.00, 1.00, 1.00)},
+			{"id": "sand",    "name": "Desert Sand",   "modulate": Color(1.00, 0.88, 0.68)},
+			{"id": "forest",  "name": "Deep Forest",   "modulate": Color(0.68, 0.90, 0.62)},
 		],
 	},
 	{
 		"id": "jungle_girl", "name": "Zuri",
-		"preview_path": "res://assets/3d/characters/zuri/zuri_source_preview.jpg",
+		"preview_path": "res://assets/3d/characters/zuri/zuri_source_preview.png",
 		"scene_path": "res://assets/3d/characters/zuri/Zuri.tscn",
 		"cost_coins": 0, "cost_gems": 0, "unlock_method": "default", "available_after_level": 0,
 		"stats": {"speed": 4, "agility": 4},
@@ -181,20 +181,20 @@ const TEASER_MESSAGES := [
 
 # ── Resources (collectibles beyond coins/gems) ──────────────────────────────
 const RESOURCES: Array = [
-	{ "id": "bricks",          "name": "Bricks",          "icon": "🧱" },
-	{ "id": "wood",            "name": "Wood",             "icon": "🪵" },
-	{ "id": "tiles",           "name": "Tiles",            "icon": "🔲" },
-	{ "id": "windows",         "name": "Windows",          "icon": "🪟" },
-	{ "id": "food",            "name": "Food",             "icon": "🥫" },
-	{ "id": "tools",           "name": "Tools",            "icon": "🔧" },
-	{ "id": "relic_keys",      "name": "Relic Keys",       "icon": "🗝" },
-	{ "id": "sunstone_shards", "name": "Sunstone Shards",  "icon": "✦" },
-	{ "id": "map_pieces",      "name": "Map Pieces",       "icon": "🗺" },
-	{ "id": "water_token",     "name": "Water Tokens",     "icon": "~" },
-	{ "id": "fish_token",      "name": "Fish Tokens",      "icon": "><>" },
-	{ "id": "river_relic",     "name": "River Relics",     "icon": "R" },
-	{ "id": "animal_badge",    "name": "Animal Badges",    "icon": "*" },
-	{ "id": "trade_token",     "name": "Trade Tokens",     "icon": "o" },
+	{ "id": "bricks",          "name": "Bricks",          "icon": "🧱", "icon_path": "res://assets/ui/icons/icon_bricks.png" },
+	{ "id": "wood",            "name": "Wood",             "icon": "🪵", "icon_path": "res://assets/ui/icons/icon_wood.png" },
+	{ "id": "tiles",           "name": "Tiles",            "icon": "🔲", "icon_path": "res://assets/ui/icons/icon_tiles.png" },
+	{ "id": "windows",         "name": "Windows",          "icon": "🪟", "icon_path": "res://assets/ui/icons/icon_windows.png" },
+	{ "id": "food",            "name": "Food",             "icon": "🥫", "icon_path": "res://assets/ui/icons/icon_food.png" },
+	{ "id": "tools",           "name": "Tools",            "icon": "🔧", "icon_path": "res://assets/ui/icons/icon_tools.png" },
+	{ "id": "relic_keys",      "name": "Relic Keys",       "icon": "🗝", "icon_path": "res://assets/ui/icons/icon_relic_key.png" },
+	{ "id": "sunstone_shards", "name": "Sunstone Shards",  "icon": "✦", "icon_path": "res://assets/ui/icons/icon_sunstone_shard.png" },
+	{ "id": "map_pieces",      "name": "Map Pieces",       "icon": "🗺", "icon_path": "res://assets/ui/icons/icon_map_piece.png" },
+	{ "id": "water_token",  "name": "Water Tokens",  "icon": "💧", "icon_path": "res://assets/ui/icons/water_token_icon.png" },
+	{ "id": "fish_token",   "name": "Fish Tokens",   "icon": "🐟", "icon_path": "res://assets/ui/icons/fish_token_icon.png" },
+	{ "id": "river_relic",  "name": "River Relics",  "icon": "⚱",  "icon_path": "res://assets/ui/icons/river_relic_icon.png" },
+	{ "id": "animal_badge", "name": "Animal Badges", "icon": "★",  "icon_path": "res://assets/ui/icons/animal_badge_icon.png" },
+	{ "id": "trade_token",  "name": "Trade Tokens",  "icon": "🔶", "icon_path": "res://assets/ui/icons/trade_token_icon.png" },
 ]
 
 # ── Upgrades ────────────────────────────────────────────────────────────────
@@ -206,6 +206,7 @@ const UPGRADES: Array = [
 		"unlock_after_level": 5,
 		"cost": { "coins": 150 },
 		"icon": "👟",
+		"icon_path": "res://assets/ui/icons/sand_shoes_icon.png",
 	},
 ]
 

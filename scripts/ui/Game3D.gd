@@ -38,6 +38,13 @@ func _ready() -> void:
 	level_mgr.junction_entered.connect(_on_junction_entered)
 	level_mgr.junction_exited.connect(_on_junction_exited)
 	player.junction_route_chosen.connect(_on_junction_route_chosen)
+	player.attract_coins_request.connect(func(pos: Vector3, radius: float) -> void:
+		level_mgr.attract_coins(pos, radius)
+	)
+	player.tribal_path_reveal.connect(func(routes: Array) -> void:
+		hud.call("show_tribal_routes", routes)
+	)
+	player.grass_step.connect(level_mgr.add_grass_footprint)
 	hud.call("setup", _level_id)
 	GameManager.state = GameManager.GameState.PLAYING
 	EventBus.play_music.emit("gameplay")
@@ -182,8 +189,8 @@ func _process(delta: float) -> void:
 	if to_player.length_squared() > 0.01:
 		cam_pivot.rotation.y = atan2(-to_player.x, -to_player.z)
 
-func _on_path_segment_entered(row: int, center: Vector3, fwd: Vector3, right: Vector3, surface: String, mode: String, width: float) -> void:
-	player.set_path_guidance(row, center, fwd, right, surface, mode, width)
+func _on_path_segment_entered(row: int, center: Vector3, fwd: Vector3, right: Vector3, surface: String, mode: String, width: float, lanes: int) -> void:
+	player.set_path_guidance(row, center, fwd, right, surface, mode, width, lanes)
 	var next_mode := mode if not mode.is_empty() else "run"
 	if next_mode == _active_mode:
 		return
@@ -276,6 +283,8 @@ func _on_player_died() -> void:
 	if _dead:
 		return
 	_dead = true
+	if GameManager.in_daily_challenge:
+		GameManager._challenge_fail_count += 1
 	EventBus.play_sfx.emit("game_over")
 	GameManager.state = GameManager.GameState.GAME_OVER
 	get_tree().paused = true
@@ -299,6 +308,10 @@ func _on_finish_reached() -> void:
 	var stars := _calc_stars(coins, level_mgr.get_total_coins())
 	SaveManager.complete_level(_level_id, stars, coins)
 	_award_level_resources(_level_id)
+	# Provide challenge context before level_completed fires
+	GameManager._challenge_completion_stars = stars
+	GameManager._challenge_total_coins = level_mgr.get_total_coins()
+	EventBus.level_completed.emit(_level_id, stars, coins, 0)
 	GameManager.state = GameManager.GameState.LEVEL_COMPLETE
 	get_tree().paused = true
 	var rewards := _level_resource_rewards(_level_id)

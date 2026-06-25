@@ -1,259 +1,271 @@
 {
-    "id":  2,
-    "length":  33,
-    "seed":  34,
-    "name":  "Deep Forest Bend",
-    "turns":  [
-                  {
-                      "row":  20,
-                      "dir":  -1
-                  }
-              ],
-    "obstacles":  [
-                      {
-                          "type":  "rock",
-                          "lane":  1,
-                          "row":  4
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  0,
-                          "row":  6
-                      },
-                      {
-                          "type":  "spike",
-                          "lane":  2,
-                          "row":  8
-                      },
-                      {
-                          "type":  "log",
-                          "lane":  1,
-                          "row":  10
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  2,
-                          "row":  12
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  0,
-                          "row":  13
-                      },
-                      {
-                          "type":  "spike",
-                          "lane":  1,
-                          "row":  16
-                      },
-                      {
-                          "type":  "log",
-                          "lane":  1,
-                          "row":  19
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  1,
-                          "row":  22
-                      },
-                      {
-                          "type":  "spike",
-                          "lane":  0,
-                          "row":  24
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  2,
-                          "row":  26
-                      },
-                      {
-                          "type":  "log",
-                          "lane":  1,
-                          "row":  29
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  0,
-                          "row":  31
-                      }
-                  ],
-    "coins":  [
-                  {
-                      "lane":  1,
-                      "row":  2
-                  },
-                  {
-                      "lane":  2,
-                      "row":  3
-                  },
-                  {
-                      "lane":  0,
-                      "row":  3
-                  },
-                  {
-                      "lane":  2,
-                      "row":  5
-                  },
-                  {
-                      "lane":  0,
-                      "row":  7
-                  },
-                  {
-                      "lane":  1,
-                      "row":  9
-                  },
-                  {
-                      "lane":  0,
-                      "row":  11
-                  },
-                  {
-                      "lane":  2,
-                      "row":  11
-                  },
-                  {
-                      "lane":  1,
-                      "row":  14
-                  },
-                  {
-                      "lane":  0,
-                      "row":  15
-                  },
-                  {
-                      "lane":  2,
-                      "row":  15
-                  },
-                  {
-                      "lane":  1,
-                      "row":  17
-                  },
-                  {
-                      "lane":  2,
-                      "row":  18
-                  },
-                  {
-                      "lane":  0,
-                      "row":  20
-                  },
-                  {
-                      "lane":  1,
-                      "row":  21
-                  },
-                  {
-                      "lane":  2,
-                      "row":  23
-                  },
-                  {
-                      "lane":  1,
-                      "row":  25
-                  },
-                  {
-                      "lane":  0,
-                      "row":  27
-                  },
-                  {
-                      "lane":  2,
-                      "row":  27
-                  },
-                  {
-                      "lane":  1,
-                      "row":  28
-                  },
-                  {
-                      "lane":  0,
-                      "row":  30
-                  },
-                  {
-                      "lane":  1,
-                      "row":  32
-                  },
-                  {
-                      "gem":  true,
-                      "lane":  0,
-                      "row":  32
-                  },
-                  {
-                      "gem":  true,
-                      "lane":  2,
-                      "row":  32
-                  }
-              ],
-    "collectables":  [
-                         {
-                             "type":  "wood",
-                             "lane":  2,
-                             "row":  4
-                         },
-                         {
-                             "type":  "food",
-                             "lane":  2,
-                             "row":  14
-                         },
-                         {
-                             "type":  "wood",
-                             "lane":  0,
-                             "row":  18
-                         }
-                     ],
-    "difficulty":  "Easy-Medium",
-    "gameplay_modes":  [
-                           "runner",
-                           "junction"
-                       ],
-    "path_modules":  [
-                         {
-                             "type":  "straight_short",
-                             "rows":  5,
-                             "width":  "normal",
-                             "surface":  "dirt",
-                             "mode":  "run"
-                         },
-                         {
-                             "type":  "s_curve",
-                             "rows":  8,
-                             "width":  "normal",
-                             "surface":  "dirt",
-                             "mode":  "run"
-                         },
-                         {
-                             "type":  "narrow_passage",
-                             "rows":  5,
-                             "width":  "narrow",
-                             "surface":  "dirt",
-                             "mode":  "run"
-                         },
-                         {
-                             "type":  "junction_two_way",
-                             "rows":  5,
-                             "width":  "wide",
-                             "surface":  "dirt",
-                             "mode":  "run",
-                             "routes":  [
-                                            {
-                                                "direction":  "left",
-                                                "label":  "Safe Route",
-                                                "reward":  "coins"
-                                            },
-                                            {
-                                                "direction":  "right",
-                                                "label":  "Reward Route",
-                                                "reward":  "map_piece"
-                                            }
-                                        ],
-                             "id":  "l02_forest_split"
-                         },
-                         {
-                             "type":  "wide_curve_right",
-                             "rows":  6,
-                             "width":  "wide",
-                             "surface":  "dirt",
-                             "mode":  "run"
-                         },
-                         {
-                             "type":  "finish_gate_approach",
-                             "rows":  4,
-                             "width":  "normal",
-                             "surface":  "stone",
-                             "mode":  "run"
-                         }
-                     ],
-    "path_identity":  "Deep Forest Bend uses runner, junction"
+  "id": 2,
+  "length": 33,
+  "seed": 34,
+  "name": "Deep Forest Bend",
+  "turns": [
+    {
+      "row": 20,
+      "dir": -1
+    }
+  ],
+  "obstacles": [
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 4
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 6
+    },
+    {
+      "type": "spike",
+      "lane": 0,
+      "row": 8
+    },
+    {
+      "type": "log",
+      "lane": 0,
+      "row": 10
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 12
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 13
+    },
+    {
+      "type": "spike",
+      "lane": 0,
+      "row": 16
+    },
+    {
+      "type": "log",
+      "lane": 1,
+      "row": 19
+    },
+    {
+      "type": "rock",
+      "lane": 1,
+      "row": 22
+    },
+    {
+      "type": "spike",
+      "lane": 0,
+      "row": 24
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 26
+    },
+    {
+      "type": "log",
+      "lane": 1,
+      "row": 29
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 31
+    }
+  ],
+  "coins": [
+    {
+      "lane": 0,
+      "row": 2
+    },
+    {
+      "lane": 0,
+      "row": 3
+    },
+    {
+      "lane": 0,
+      "row": 3
+    },
+    {
+      "lane": 1,
+      "row": 5
+    },
+    {
+      "lane": 0,
+      "row": 7
+    },
+    {
+      "lane": 1,
+      "row": 9
+    },
+    {
+      "lane": 0,
+      "row": 11
+    },
+    {
+      "lane": 1,
+      "row": 11
+    },
+    {
+      "lane": 0,
+      "row": 14
+    },
+    {
+      "lane": 0,
+      "row": 15
+    },
+    {
+      "lane": 0,
+      "row": 15
+    },
+    {
+      "lane": 0,
+      "row": 17
+    },
+    {
+      "lane": 2,
+      "row": 18
+    },
+    {
+      "lane": 0,
+      "row": 20
+    },
+    {
+      "lane": 1,
+      "row": 21
+    },
+    {
+      "lane": 0,
+      "row": 23
+    },
+    {
+      "lane": 0,
+      "row": 25
+    },
+    {
+      "lane": 0,
+      "row": 27
+    },
+    {
+      "lane": 0,
+      "row": 27
+    },
+    {
+      "lane": 0,
+      "row": 28
+    },
+    {
+      "lane": 0,
+      "row": 30
+    },
+    {
+      "lane": 1,
+      "row": 32
+    },
+    {
+      "gem": true,
+      "lane": 0,
+      "row": 32
+    },
+    {
+      "gem": true,
+      "lane": 2,
+      "row": 32
+    }
+  ],
+  "collectables": [
+    {
+      "type": "wood",
+      "lane": 0,
+      "row": 4
+    },
+    {
+      "type": "food",
+      "lane": 0,
+      "row": 14
+    },
+    {
+      "type": "wood",
+      "lane": 0,
+      "row": 18
+    }
+  ],
+  "difficulty": "Easy-Medium",
+  "gameplay_modes": [
+    "runner",
+    "junction"
+  ],
+  "path_modules": [
+    {
+      "type": "straight_short",
+      "rows": 5,
+      "width": "single",
+      "surface": "dirt",
+      "mode": "run",
+      "lanes": 1
+    },
+    {
+      "type": "s_curve",
+      "rows": 8,
+      "width": "double",
+      "surface": "grass",
+      "mode": "run",
+      "lanes": 2
+    },
+    {
+      "type": "narrow_passage",
+      "rows": 5,
+      "width": "single",
+      "surface": "dirt",
+      "mode": "run",
+      "lanes": 1
+    },
+    {
+      "type": "junction_two_way",
+      "rows": 5,
+      "width": "triple",
+      "surface": "dirt",
+      "mode": "run",
+      "routes": [
+        {
+          "direction": "left",
+          "label": "Safe Route",
+          "reward": "coins"
+        },
+        {
+          "direction": "right",
+          "label": "Reward Route",
+          "reward": "map_piece"
+        }
+      ],
+      "id": "l02_forest_split",
+      "lanes": 3
+    },
+    {
+      "type": "wide_curve_right",
+      "rows": 6,
+      "width": "single",
+      "surface": "dirt",
+      "mode": "run",
+      "lanes": 1
+    },
+    {
+      "type": "finish_gate_approach",
+      "rows": 4,
+      "width": "triple",
+      "surface": "stone",
+      "mode": "run",
+      "lanes": 3
+    }
+  ],
+  "path_identity": "Deep Forest Bend uses runner, junction; variable 1/2/3-lane living trail",
+  "environment": {
+    "wind_strength": 0.76,
+    "wind_speed": 1.08,
+    "gust_strength": 0.34,
+    "grass_footprints": true
+  }
 }

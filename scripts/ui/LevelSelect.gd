@@ -1421,13 +1421,23 @@ func _build_sand_shoes_popup() -> void:
 	_cr(_sand_popup, Vector2(0,   0), Vector2(420,   3), Color(0.88, 0.70, 0.22))
 	_cr(_sand_popup, Vector2(0, 335), Vector2(420,   3), Color(0.88, 0.70, 0.22))
 
-	var icon := Label.new()
-	icon.text = "👟"
-	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	icon.add_theme_font_size_override("font_size", 42)
-	icon.size = Vector2(420, 62); icon.position = Vector2(0, 14)
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_sand_popup.add_child(icon)
+	var _shoes_icon := "res://assets/ui/icons/sand_shoes_icon.png"
+	if ResourceLoader.exists(_shoes_icon):
+		var tex := load(_shoes_icon) as Texture2D
+		if tex != null:
+			var tr := TextureRect.new()
+			tr.texture = tex
+			tr.custom_minimum_size = Vector2(56, 56)
+			tr.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+			tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			tr.position = Vector2(182, 14)
+			tr.size = Vector2(56, 56)
+			tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			_sand_popup.add_child(tr)
+		else:
+			_add_shoes_emoji_label(_sand_popup)
+	else:
+		_add_shoes_emoji_label(_sand_popup)
 
 	var title := Label.new()
 	title.text = "Sand Shoes Required"
@@ -1703,10 +1713,13 @@ func _load_map_texture() -> Texture2D:
 		var tex := load(MAP_ART_PATH)
 		if tex is Texture2D:
 			return tex as Texture2D
-
 	var img := Image.new()
-	if img.load(MAP_ART_PATH) == OK:
+	if img.load(MAP_ART_PATH) == OK and not img.is_empty():
 		return ImageTexture.create_from_image(img)
+	var abs_path := ProjectSettings.globalize_path(MAP_ART_PATH)
+	var img2 := Image.new()
+	if img2.load(abs_path) == OK and not img2.is_empty():
+		return ImageTexture.create_from_image(img2)
 	return null
 
 func _using_reference_map() -> bool:
@@ -1883,6 +1896,16 @@ func _add_shoes_badge(node_pos: Vector2, right_side: bool, parent: Node) -> void
 	lbl.size         = Vector2(BW, BH)
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	badge.add_child(lbl)
+
+func _add_shoes_emoji_label(parent: Node) -> void:
+	var lbl := Label.new()
+	lbl.text = "👟"
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_size_override("font_size", 42)
+	lbl.size = Vector2(420, 62)
+	lbl.position = Vector2(0, 14)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(lbl)
 
 func _cr(parent: Node, pos: Vector2, size: Vector2, color: Color) -> ColorRect:
 	var r := ColorRect.new()

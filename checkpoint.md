@@ -1,4 +1,40 @@
-# CHECKPOINT - Session 30
+# CHECKPOINT - Session 32
+
+---
+
+## Session 32 - Level Dressing, Trails, Audio, and Resource Icons
+
+### Completed
+- Created/runtime-wired Level 7-20 dressing themes: settlement props/campfires, wildlife silhouettes/tall grass, gorge walls/spray, market stalls/lanterns/reeds, fallen logs/mounds, river boulders/mist, glowing relic tablets, and baobab/gold relic finale dressing.
+- Updated Level 7-20 dressing placement to follow row-local curved trail coordinates and variable track widths.
+- Confirmed `Player3D.gd` builds a 10-node world-space ring-buffer trail for leaf, firefly, sparkle, dust, and splash trail types; emissive trails fade their glow as older nodes shrink.
+- Confirmed `jump.wav`, `slide.wav`, and `land.wav` exist as 22050 Hz 16-bit mono WAV effects with the requested durations.
+- Confirmed Sand Shoes, water token, fish token, river relic, animal badge, and trade token icons exist as 32×32 RGBA PNGs.
+- Added `icon_path` fields for all generated resources in `Constants.RESOURCES`; `LevelComplete3D.gd` renders TextureRect resource icons with emoji fallback, and `LevelSelect.gd` uses the Sand Shoes PNG popup icon.
+- Updated `MISSING_3D_ASSETS.md`, `ASSET_LICENSES.md`, `LEVEL_DESIGN.md`, and `CHANGELOG.md`.
+
+### Validation
+- Verified requested PNG dimensions/color type and WAV sample format/durations with Python.
+- Ran Godot 4.6.3 headless project parse/import; no touched-script errors were reported.
+
+---
+
+## Session 31 - Living Variable-Lane Track System
+
+### Completed
+- Added 27 original modular track GLBs: one-, two-, and three-lane variants for dirt, grass, mud, stone, wood, sand, skating, water-slide, and boat surfaces.
+- Added `lanes` and per-level wind/environment settings to all 20 active 3D level JSON files.
+- Updated player lane movement, path collisions, obstacle placement, coins, and collectables to respect each section's active one-, two-, or three-lane topology.
+- Added wind and gust animation for grass, ferns, bushes, palms, jungle trees, dry grass, and acacias.
+- Added alternating pressed-grass marks that appear under the player on grass tracks and fade after 6.5 seconds.
+- Updated vegetation placement so jungle dressing follows curved path edges and changing trail widths.
+- Added deterministic track generation and JSON migration/validation tools.
+
+### Validation
+- All 27 GLBs passed generator structural validation and imported successfully with Godot 4.6.3.
+- All 20 JSON files passed row-total, lane-count, asset-path, and object-lane validation.
+- Godot registered the changed `LevelManager3D` and `Player3D` global classes without errors.
+- Full gameplay-scene execution is still blocked by a pre-existing `GameManager.gd` Time API parse error at lines 284 and 289.
 
 ---
 

@@ -1,270 +1,281 @@
 {
-    "id":  10,
-    "length":  38,
-    "seed":  130,
-    "name":  "Lost Paw Trail",
-    "turns":  [
-                  {
-                      "row":  20,
-                      "dir":  -1
-                  }
-              ],
-    "obstacles":  [
-                      {
-                          "type":  "rock",
-                          "lane":  1,
-                          "row":  3
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  0,
-                          "row":  6
-                      },
-                      {
-                          "type":  "branch",
-                          "lane":  2,
-                          "row":  9
-                      },
-                      {
-                          "type":  "spike",
-                          "lane":  1,
-                          "row":  13
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  0,
-                          "row":  16
-                      },
-                      {
-                          "type":  "branch",
-                          "lane":  1,
-                          "row":  20
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  2,
-                          "row":  23
-                      },
-                      {
-                          "type":  "spike",
-                          "lane":  0,
-                          "row":  26
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  1,
-                          "row":  29
-                      },
-                      {
-                          "type":  "branch",
-                          "lane":  2,
-                          "row":  32
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  0,
-                          "row":  35
-                      }
-                  ],
-    "coins":  [
-                  {
-                      "lane":  1,
-                      "row":  2
-                  },
-                  {
-                      "lane":  2,
-                      "row":  2
-                  },
-                  {
-                      "lane":  0,
-                      "row":  4
-                  },
-                  {
-                      "lane":  2,
-                      "row":  5
-                  },
-                  {
-                      "lane":  1,
-                      "row":  7
-                  },
-                  {
-                      "lane":  0,
-                      "row":  8
-                  },
-                  {
-                      "lane":  2,
-                      "row":  10
-                  },
-                  {
-                      "lane":  1,
-                      "row":  11
-                  },
-                  {
-                      "lane":  0,
-                      "row":  12
-                  },
-                  {
-                      "lane":  2,
-                      "row":  14
-                  },
-                  {
-                      "lane":  0,
-                      "row":  15
-                  },
-                  {
-                      "lane":  1,
-                      "row":  17
-                  },
-                  {
-                      "lane":  2,
-                      "row":  18
-                  },
-                  {
-                      "lane":  0,
-                      "row":  19
-                  },
-                  {
-                      "lane":  2,
-                      "row":  21
-                  },
-                  {
-                      "lane":  1,
-                      "row":  22
-                  },
-                  {
-                      "lane":  0,
-                      "row":  24
-                  },
-                  {
-                      "lane":  2,
-                      "row":  25
-                  },
-                  {
-                      "lane":  1,
-                      "row":  27
-                  },
-                  {
-                      "lane":  0,
-                      "row":  28
-                  },
-                  {
-                      "lane":  1,
-                      "row":  30
-                  },
-                  {
-                      "lane":  2,
-                      "row":  31
-                  },
-                  {
-                      "lane":  0,
-                      "row":  33
-                  },
-                  {
-                      "lane":  1,
-                      "row":  34
-                  },
-                  {
-                      "lane":  2,
-                      "row":  36
-                  },
-                  {
-                      "gem":  true,
-                      "lane":  1,
-                      "row":  37
-                  },
-                  {
-                      "gem":  true,
-                      "lane":  0,
-                      "row":  38
-                  }
-              ],
-    "collectables":  [
-                         {
-                             "type":  "food",
-                             "lane":  2,
-                             "row":  3
-                         },
-                         {
-                             "type":  "medicine_pack",
-                             "lane":  1,
-                             "row":  6
-                         },
-                         {
-                             "type":  "food",
-                             "lane":  0,
-                             "row":  11
-                         },
-                         {
-                             "type":  "dog_token",
-                             "lane":  2,
-                             "row":  16
-                         },
-                         {
-                             "type":  "food",
-                             "lane":  1,
-                             "row":  23
-                         },
-                         {
-                             "type":  "medicine_pack",
-                             "lane":  1,
-                             "row":  32
-                         }
-                     ],
-    "difficulty":  "Medium-Hard",
-    "gameplay_modes":  [
-                           "tracking",
-                           "dog clue",
-                           "junction"
-                       ],
-    "path_modules":  [
-                         {
-                             "type":  "mud_path",
-                             "rows":  8,
-                             "width":  "normal",
-                             "surface":  "mud",
-                             "mode":  "tracking"
-                         },
-                         {
-                             "type":  "gentle_curve_left",
-                             "rows":  7,
-                             "width":  "normal",
-                             "surface":  "mud",
-                             "mode":  "tracking"
-                         },
-                         {
-                             "type":  "junction_two_way",
-                             "rows":  5,
-                             "width":  "wide",
-                             "surface":  "mud",
-                             "mode":  "tracking",
-                             "routes":  [
-                                            {
-                                                "direction":  "left",
-                                                "label":  "Paw Print Route",
-                                                "reward":  "dog_token"
-                                            },
-                                            {
-                                                "direction":  "right",
-                                                "label":  "False Trail",
-                                                "reward":  "coins"
-                                            }
-                                        ],
-                             "id":  "l10_paw_split"
-                         },
-                         {
-                             "type":  "narrow_passage",
-                             "rows":  6,
-                             "width":  "narrow",
-                             "surface":  "mud",
-                             "mode":  "tracking"
-                         },
-                         {
-                             "type":  "finish_gate_approach",
-                             "rows":  12,
-                             "width":  "normal",
-                             "surface":  "stone",
-                             "mode":  "run"
-                         }
-                     ],
-    "path_identity":  "Lost Paw Trail uses tracking, dog clue, junction"
+  "id": 10,
+  "length": 38,
+  "seed": 130,
+  "name": "Lost Paw Trail",
+  "turns": [
+    {
+      "row": 20,
+      "dir": -1
+    }
+  ],
+  "obstacles": [
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 3
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 6
+    },
+    {
+      "type": "branch",
+      "lane": 1,
+      "row": 9
+    },
+    {
+      "type": "spike",
+      "lane": 1,
+      "row": 13
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 16
+    },
+    {
+      "type": "branch",
+      "lane": 0,
+      "row": 20
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 23
+    },
+    {
+      "type": "spike",
+      "lane": 0,
+      "row": 26
+    },
+    {
+      "type": "rock",
+      "lane": 1,
+      "row": 29
+    },
+    {
+      "type": "branch",
+      "lane": 2,
+      "row": 32
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 35
+    }
+  ],
+  "coins": [
+    {
+      "lane": 0,
+      "row": 2
+    },
+    {
+      "lane": 0,
+      "row": 2
+    },
+    {
+      "lane": 0,
+      "row": 4
+    },
+    {
+      "lane": 0,
+      "row": 5
+    },
+    {
+      "lane": 0,
+      "row": 7
+    },
+    {
+      "lane": 0,
+      "row": 8
+    },
+    {
+      "lane": 0,
+      "row": 10
+    },
+    {
+      "lane": 1,
+      "row": 11
+    },
+    {
+      "lane": 0,
+      "row": 12
+    },
+    {
+      "lane": 0,
+      "row": 14
+    },
+    {
+      "lane": 0,
+      "row": 15
+    },
+    {
+      "lane": 1,
+      "row": 17
+    },
+    {
+      "lane": 2,
+      "row": 18
+    },
+    {
+      "lane": 0,
+      "row": 19
+    },
+    {
+      "lane": 0,
+      "row": 21
+    },
+    {
+      "lane": 0,
+      "row": 22
+    },
+    {
+      "lane": 0,
+      "row": 24
+    },
+    {
+      "lane": 0,
+      "row": 25
+    },
+    {
+      "lane": 1,
+      "row": 27
+    },
+    {
+      "lane": 0,
+      "row": 28
+    },
+    {
+      "lane": 1,
+      "row": 30
+    },
+    {
+      "lane": 2,
+      "row": 31
+    },
+    {
+      "lane": 0,
+      "row": 33
+    },
+    {
+      "lane": 1,
+      "row": 34
+    },
+    {
+      "lane": 2,
+      "row": 36
+    },
+    {
+      "gem": true,
+      "lane": 1,
+      "row": 37
+    },
+    {
+      "gem": true,
+      "lane": 0,
+      "row": 38
+    }
+  ],
+  "collectables": [
+    {
+      "type": "food",
+      "lane": 0,
+      "row": 3
+    },
+    {
+      "type": "medicine_pack",
+      "lane": 0,
+      "row": 6
+    },
+    {
+      "type": "food",
+      "lane": 0,
+      "row": 11
+    },
+    {
+      "type": "dog_token",
+      "lane": 2,
+      "row": 16
+    },
+    {
+      "type": "food",
+      "lane": 0,
+      "row": 23
+    },
+    {
+      "type": "medicine_pack",
+      "lane": 1,
+      "row": 32
+    }
+  ],
+  "difficulty": "Medium-Hard",
+  "gameplay_modes": [
+    "tracking",
+    "dog clue",
+    "junction"
+  ],
+  "path_modules": [
+    {
+      "type": "mud_path",
+      "rows": 8,
+      "width": "single",
+      "surface": "mud",
+      "mode": "tracking",
+      "lanes": 1
+    },
+    {
+      "type": "gentle_curve_left",
+      "rows": 7,
+      "width": "double",
+      "surface": "mud",
+      "mode": "tracking",
+      "lanes": 2
+    },
+    {
+      "type": "junction_two_way",
+      "rows": 5,
+      "width": "triple",
+      "surface": "mud",
+      "mode": "tracking",
+      "routes": [
+        {
+          "direction": "left",
+          "label": "Paw Print Route",
+          "reward": "dog_token"
+        },
+        {
+          "direction": "right",
+          "label": "False Trail",
+          "reward": "coins"
+        }
+      ],
+      "id": "l10_paw_split",
+      "lanes": 3
+    },
+    {
+      "type": "narrow_passage",
+      "rows": 6,
+      "width": "single",
+      "surface": "mud",
+      "mode": "tracking",
+      "lanes": 1
+    },
+    {
+      "type": "finish_gate_approach",
+      "rows": 12,
+      "width": "triple",
+      "surface": "stone",
+      "mode": "run",
+      "lanes": 3
+    }
+  ],
+  "path_identity": "Lost Paw Trail uses tracking, dog clue, junction; variable 1/2/3-lane living trail",
+  "environment": {
+    "wind_strength": 0.58,
+    "wind_speed": 1.08,
+    "gust_strength": 0.26,
+    "grass_footprints": true
+  }
 }

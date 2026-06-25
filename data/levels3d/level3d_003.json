@@ -1,285 +1,297 @@
 {
-    "id":  3,
-    "length":  40,
-    "seed":  51,
-    "name":  "River of Echoes",
-    "turns":  [
-                  {
-                      "row":  18,
-                      "dir":  1
-                  }
-              ],
-    "obstacles":  [
-                      {
-                          "type":  "spike",
-                          "lane":  1,
-                          "row":  3
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  0,
-                          "row":  5
-                      },
-                      {
-                          "type":  "log",
-                          "lane":  1,
-                          "row":  7
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  2,
-                          "row":  9
-                      },
-                      {
-                          "type":  "spike",
-                          "lane":  0,
-                          "row":  11
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  1,
-                          "row":  13
-                      },
-                      {
-                          "type":  "spike",
-                          "lane":  2,
-                          "row":  14
-                      },
-                      {
-                          "type":  "log",
-                          "lane":  1,
-                          "row":  17
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  0,
-                          "row":  19
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  2,
-                          "row":  19
-                      },
-                      {
-                          "type":  "spike",
-                          "lane":  1,
-                          "row":  21
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  0,
-                          "row":  23
-                      },
-                      {
-                          "type":  "log",
-                          "lane":  1,
-                          "row":  25
-                      },
-                      {
-                          "type":  "spike",
-                          "lane":  2,
-                          "row":  27
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  1,
-                          "row":  29
-                      },
-                      {
-                          "type":  "spike",
-                          "lane":  0,
-                          "row":  30
-                      },
-                      {
-                          "type":  "log",
-                          "lane":  1,
-                          "row":  33
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  2,
-                          "row":  35
-                      },
-                      {
-                          "type":  "spike",
-                          "lane":  1,
-                          "row":  37
-                      },
-                      {
-                          "type":  "rock",
-                          "lane":  0,
-                          "row":  38
-                      }
-                  ],
-    "coins":  [
-                  {
-                      "lane":  1,
-                      "row":  2
-                  },
-                  {
-                      "lane":  0,
-                      "row":  4
-                  },
-                  {
-                      "lane":  2,
-                      "row":  4
-                  },
-                  {
-                      "lane":  1,
-                      "row":  6
-                  },
-                  {
-                      "lane":  2,
-                      "row":  8
-                  },
-                  {
-                      "lane":  0,
-                      "row":  10
-                  },
-                  {
-                      "lane":  2,
-                      "row":  12
-                  },
-                  {
-                      "lane":  0,
-                      "row":  12
-                  },
-                  {
-                      "lane":  1,
-                      "row":  15
-                  },
-                  {
-                      "lane":  2,
-                      "row":  16
-                  },
-                  {
-                      "lane":  0,
-                      "row":  16
-                  },
-                  {
-                      "lane":  1,
-                      "row":  18
-                  },
-                  {
-                      "lane":  0,
-                      "row":  20
-                  },
-                  {
-                      "lane":  2,
-                      "row":  22
-                  },
-                  {
-                      "lane":  1,
-                      "row":  24
-                  },
-                  {
-                      "lane":  0,
-                      "row":  26
-                  },
-                  {
-                      "lane":  1,
-                      "row":  28
-                  },
-                  {
-                      "lane":  2,
-                      "row":  31
-                  },
-                  {
-                      "lane":  0,
-                      "row":  32
-                  },
-                  {
-                      "lane":  1,
-                      "row":  34
-                  },
-                  {
-                      "lane":  2,
-                      "row":  36
-                  },
-                  {
-                      "lane":  0,
-                      "row":  36
-                  },
-                  {
-                      "lane":  1,
-                      "row":  39
-                  },
-                  {
-                      "gem":  true,
-                      "lane":  0,
-                      "row":  39
-                  },
-                  {
-                      "gem":  true,
-                      "lane":  2,
-                      "row":  39
-                  }
-              ],
-    "collectables":  [
-                         {
-                             "type":  "food",
-                             "lane":  2,
-                             "row":  6
-                         },
-                         {
-                             "type":  "sunstone_shard",
-                             "lane":  2,
-                             "row":  20
-                         },
-                         {
-                             "type":  "food",
-                             "lane":  1,
-                             "row":  31
-                         }
-                     ],
-    "difficulty":  "Medium",
-    "gameplay_modes":  [
-                           "runner",
-                           "river edge"
-                       ],
-    "path_modules":  [
-                         {
-                             "type":  "straight_short",
-                             "rows":  5,
-                             "width":  "normal",
-                             "surface":  "mud",
-                             "mode":  "run"
-                         },
-                         {
-                             "type":  "gentle_curve_right",
-                             "rows":  7,
-                             "width":  "normal",
-                             "surface":  "mud",
-                             "mode":  "run"
-                         },
-                         {
-                             "type":  "bridge_crossing",
-                             "rows":  5,
-                             "width":  "bridge",
-                             "surface":  "wood",
-                             "mode":  "run"
-                         },
-                         {
-                             "type":  "wide_curve_left",
-                             "rows":  7,
-                             "width":  "wide",
-                             "surface":  "mud",
-                             "mode":  "run"
-                         },
-                         {
-                             "type":  "mud_path",
-                             "rows":  6,
-                             "width":  "normal",
-                             "surface":  "mud",
-                             "mode":  "tracking"
-                         },
-                         {
-                             "type":  "finish_gate_approach",
-                             "rows":  10,
-                             "width":  "normal",
-                             "surface":  "stone",
-                             "mode":  "run"
-                         }
-                     ],
-    "path_identity":  "River of Echoes uses runner, river edge"
+  "id": 3,
+  "length": 40,
+  "seed": 51,
+  "name": "River of Echoes",
+  "turns": [
+    {
+      "row": 18,
+      "dir": 1
+    }
+  ],
+  "obstacles": [
+    {
+      "type": "spike",
+      "lane": 0,
+      "row": 3
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 5
+    },
+    {
+      "type": "log",
+      "lane": 1,
+      "row": 7
+    },
+    {
+      "type": "rock",
+      "lane": 2,
+      "row": 9
+    },
+    {
+      "type": "spike",
+      "lane": 0,
+      "row": 11
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 13
+    },
+    {
+      "type": "spike",
+      "lane": 1,
+      "row": 14
+    },
+    {
+      "type": "log",
+      "lane": 0,
+      "row": 17
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 19
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 19
+    },
+    {
+      "type": "spike",
+      "lane": 0,
+      "row": 21
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 23
+    },
+    {
+      "type": "log",
+      "lane": 0,
+      "row": 25
+    },
+    {
+      "type": "spike",
+      "lane": 0,
+      "row": 27
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 29
+    },
+    {
+      "type": "spike",
+      "lane": 0,
+      "row": 30
+    },
+    {
+      "type": "log",
+      "lane": 0,
+      "row": 33
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 35
+    },
+    {
+      "type": "spike",
+      "lane": 0,
+      "row": 37
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 38
+    }
+  ],
+  "coins": [
+    {
+      "lane": 1,
+      "row": 2
+    },
+    {
+      "lane": 0,
+      "row": 4
+    },
+    {
+      "lane": 1,
+      "row": 4
+    },
+    {
+      "lane": 1,
+      "row": 6
+    },
+    {
+      "lane": 2,
+      "row": 8
+    },
+    {
+      "lane": 0,
+      "row": 10
+    },
+    {
+      "lane": 1,
+      "row": 12
+    },
+    {
+      "lane": 0,
+      "row": 12
+    },
+    {
+      "lane": 0,
+      "row": 15
+    },
+    {
+      "lane": 1,
+      "row": 16
+    },
+    {
+      "lane": 0,
+      "row": 16
+    },
+    {
+      "lane": 0,
+      "row": 18
+    },
+    {
+      "lane": 0,
+      "row": 20
+    },
+    {
+      "lane": 0,
+      "row": 22
+    },
+    {
+      "lane": 1,
+      "row": 24
+    },
+    {
+      "lane": 0,
+      "row": 26
+    },
+    {
+      "lane": 1,
+      "row": 28
+    },
+    {
+      "lane": 0,
+      "row": 31
+    },
+    {
+      "lane": 0,
+      "row": 32
+    },
+    {
+      "lane": 1,
+      "row": 34
+    },
+    {
+      "lane": 1,
+      "row": 36
+    },
+    {
+      "lane": 0,
+      "row": 36
+    },
+    {
+      "lane": 0,
+      "row": 39
+    },
+    {
+      "gem": true,
+      "lane": 0,
+      "row": 39
+    },
+    {
+      "gem": true,
+      "lane": 0,
+      "row": 39
+    }
+  ],
+  "collectables": [
+    {
+      "type": "food",
+      "lane": 2,
+      "row": 6
+    },
+    {
+      "type": "sunstone_shard",
+      "lane": 0,
+      "row": 20
+    },
+    {
+      "type": "food",
+      "lane": 0,
+      "row": 31
+    }
+  ],
+  "difficulty": "Medium",
+  "gameplay_modes": [
+    "runner",
+    "river edge"
+  ],
+  "path_modules": [
+    {
+      "type": "straight_short",
+      "rows": 5,
+      "width": "double",
+      "surface": "mud",
+      "mode": "run",
+      "lanes": 2
+    },
+    {
+      "type": "gentle_curve_right",
+      "rows": 7,
+      "width": "triple",
+      "surface": "mud",
+      "mode": "run",
+      "lanes": 3
+    },
+    {
+      "type": "bridge_crossing",
+      "rows": 5,
+      "width": "double",
+      "surface": "wood",
+      "mode": "run",
+      "lanes": 2
+    },
+    {
+      "type": "wide_curve_left",
+      "rows": 7,
+      "width": "single",
+      "surface": "mud",
+      "mode": "run",
+      "lanes": 1
+    },
+    {
+      "type": "mud_path",
+      "rows": 6,
+      "width": "double",
+      "surface": "mud",
+      "mode": "tracking",
+      "lanes": 2
+    },
+    {
+      "type": "finish_gate_approach",
+      "rows": 10,
+      "width": "double",
+      "surface": "stone",
+      "mode": "run",
+      "lanes": 2
+    }
+  ],
+  "path_identity": "River of Echoes uses runner, river edge; variable 1/2/3-lane living trail",
+  "environment": {
+    "wind_strength": 0.85,
+    "wind_speed": 1.21,
+    "gust_strength": 0.18,
+    "grass_footprints": true
+  }
 }

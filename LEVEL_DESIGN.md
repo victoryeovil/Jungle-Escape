@@ -4,6 +4,8 @@
 
 The active 3D runner levels live at `data/levels3d/level3d_NNN.json`. Each level now includes a `path_modules` array. The runtime reads these modules in `LevelManager3D.gd` and converts them into curved row transforms, path widths, surfaces, gameplay modes, route signs, junction triggers, and mode-specific graphics.
 
+Every path module declares `lanes: 1`, `2`, or `3`. Lane offsets, obstacle/collectable placement, collision width, and the selected track GLB all change together. Each level also declares an `environment` object containing `wind_strength`, `wind_speed`, `gust_strength`, and `grass_footprints`.
+
 ### Supported Path Modules
 
 `straight_short`, `straight_long`, `gentle_curve_left`, `gentle_curve_right`, `wide_curve_left`, `wide_curve_right`, `s_curve`, `narrow_passage`, `bridge_crossing`, `water_slide_entry`, `water_slide_curve`, `water_slide_drop`, `boat_entry_dock`, `boat_river_straight`, `boat_river_curve`, `boat_rapids`, `ruins_corridor`, `sand_dune_curve`, `mud_path`, `tree_root_jump_section`, `animal_chase_lane`, `animal_escape_section`, `junction_two_way`, `junction_three_way`, and `finish_gate_approach`.
@@ -44,13 +46,30 @@ Normal sections keep controls simple: left/right move lanes, up jumps, down slid
 19. Boar Escape - survival escape mode through mud, thorns, planks, and safe finish.
 20. Treasure Beneath the Baobab - combined chase, water slide, treasure junction, ruins, and boat bend.
 
+### Runtime Level Dressing Themes
+
+Levels 7-20 now use level-specific color themes and procedural side dressing in `LevelManager3D.gd`:
+
+- Levels 7-9: settlement posts, crates, and campfires.
+- Levels 10-11 and 13: wind-reactive tall grass and wildlife silhouettes.
+- Level 12: mossy gorge walls and spray.
+- Levels 14-15: market stalls, hanging lanterns, and reeds.
+- Levels 16 and 19: fallen logs and disturbed earth mounds.
+- Level 17: river boulders and mist wisps.
+- Level 18: glowing relic tablets.
+- Level 20: baobab trunks and gold relic glints.
+
+The dressing is placed through row-local trail coordinates so props follow curved paths and variable trail widths instead of assuming a straight three-lane corridor.
+
 ### Design Rules For 3D Levels
 
-1. Every 3D level must include at least one curve and at least two path widths.
+1. Every 3D level must include at least one curve and at least two lane counts or path widths.
 2. Junctions must show signs and route arrows before the trigger zone.
 3. Animal encounters use tracking, observation, chase, or escape; the player does not attack animals.
 4. Water-slide and boat sections must use their own surface, camera, HUD prompt, and visible mode graphics.
 5. Later levels should combine earlier mechanics rather than only adding more obstacles.
+6. A lane-count change must remap obstacles, coins, and collectables so no item is placed outside the active trail.
+7. Grass-surface modules should show temporary pressed-grass marks behind the player, while vegetation wind remains subtle enough to preserve obstacle readability.
 
 ## Grid Format
 
