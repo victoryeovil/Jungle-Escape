@@ -26,6 +26,9 @@ func show_result(stars: int, coins: int, level_id: int = -1, resources: Dictiona
 	lbl_coins.text = "+0 Coins"
 	var active_level := level_id if level_id > 0 else GameManager.current_level_id
 	lbl_story.text = _story_message(active_level)
+	var teaser := _next_level_teaser(active_level)
+	if not teaser.is_empty():
+		lbl_story.text += "\n\n" + teaser
 	if active_level == 3 and SaveManager.is_lives_intro_pending():
 		SaveManager.mark_lives_intro_seen()
 	_apply_register_gate(active_level)
@@ -33,6 +36,26 @@ func show_result(stars: int, coins: int, level_id: int = -1, resources: Dictiona
 	visible = true
 	_animate_stars(stars)
 	_animate_coins(coins)
+
+# "Next carrot" teaser — surface what's waiting one level ahead at the moment
+# of highest engagement.
+func _next_level_teaser(level_id: int) -> String:
+	if level_id >= 20:
+		return ""
+	var path := "res://data/levels3d/level3d_%03d.json" % (level_id + 1)
+	if not FileAccess.file_exists(path):
+		return ""
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return ""
+	var raw: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if not (raw is Dictionary):
+		return ""
+	var next_name := str((raw as Dictionary).get("name", ""))
+	if next_name.is_empty():
+		return ""
+	return "▶ Next: %s awaits…" % next_name
 
 func _apply_register_gate(level_id: int) -> void:
 	if level_id != 3 or SupabaseClient.has_registration_key():

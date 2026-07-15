@@ -99,6 +99,8 @@ var _robot_shield_active: bool = false   # Robot: absorbs one hit
 var _magnet_timer: float = 0.0           # Treasure: coin attract pulse
 var _golden_coin_counter: int = 0        # Golden: bonus coin every 3
 var _invincible_timer: float = 0.0       # post-revive grace period
+var _was_on_floor: bool = true
+var _sand_trail: GPUParticles3D = null   # assets/3d/vfx/sand_trail.tscn
 
 signal died
 signal sand_blocked   # emitted when player tries to jump on sand without Sand Shoes
@@ -106,6 +108,7 @@ signal junction_route_chosen(junction_id: String, direction: String, route: Dict
 signal attract_coins_request(pos: Vector3, radius: float)  # Treasure: magnet pull
 signal tribal_path_reveal(routes: Array)                   # Tribal: shows route rewards
 signal grass_step(pos: Vector3, right: Vector3, side: int)
+signal vfx_requested(kind: String, pos: Vector3)           # routed to LevelManager3D.spawn_vfx
 
 const TRAIL_SIZE := 10   # number of trail particles
 
@@ -118,7 +121,23 @@ func _ready() -> void:
 	_cache_collision_shape()
 	_apply_selected_character_model()
 	_setup_trail()
+	_setup_sand_trail()
 	_update_character_animation(true)
+
+func _setup_sand_trail() -> void:
+	const SAND_TRAIL_PATH := "res://assets/3d/vfx/sand_trail.tscn"
+	if not ResourceLoader.exists(SAND_TRAIL_PATH):
+		return
+	var packed := load(SAND_TRAIL_PATH) as PackedScene
+	if packed == null:
+		return
+	_sand_trail = packed.instantiate() as GPUParticles3D
+	if _sand_trail == null:
+		return
+	_sand_trail.one_shot = false
+	_sand_trail.emitting = false
+	_sand_trail.position = Vector3(0.0, 0.12, 0.35)
+	add_child(_sand_trail)
 
 func _physics_process(delta: float) -> void:
 	if _is_dead:
@@ -157,6 +176,15 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 	_update_grass_steps()
+
+	# Landing feedback — dust puff + thud when touching down from a jump/fall
+	var on_floor_now := is_on_floor()
+	if on_floor_now and not _was_on_floor and state != State.DEAD:
+		EventBus.play_sfx.emit("land")
+		vfx_requested.emit("dust", global_position)
+	_was_on_floor = on_floor_now
+	if _sand_trail != null:
+		_sand_trail.emitting = on_floor_now and (_current_surface == "sand" or _movement_mode == "skating")
 
 	# Auto-execute a queued turn — fires within one full tile (3 m) of the corner
 	if _queued_turn != 0:
@@ -216,6 +244,7 @@ func slide() -> void:
 		_slide_timer = SLIDE_DURATION * (0.55 if _skin_id == "jungle_girl" else 1.0)
 		_set_slide_collision(true)
 		EventBus.play_sfx.emit("slide")
+		vfx_requested.emit("dust", global_position)
 		_update_character_animation(true)
 
 func move_lane(direction: int) -> void:
@@ -330,6 +359,8 @@ func _set_movement_mode(mode: String) -> void:
 		next_mode = "skating"
 	if _movement_mode == next_mode:
 		return
+	if next_mode in ["water_slide", "boat"]:
+		EventBus.play_sfx.emit("splash")
 	_movement_mode = next_mode
 	_set_mode_vehicle(next_mode)
 	_refresh_outfit()
@@ -482,7 +513,14 @@ func _detect_surface() -> void:
 		var col := get_slide_collision(i)
 		var collider := col.get_collider()
 		if collider != null and collider.has_meta("surface"):
-			_current_surface = str(collider.get_meta("surface"))
+			var surface := str(collider.get_meta("surface"))
+			if surface != _current_surface:
+				match surface:
+					"wood":
+						EventBus.play_sfx.emit("wood_step")
+					"mud":
+						EventBus.play_sfx.emit("mud")
+			_current_surface = surface
 			return
 
 func _apply_selected_character_model() -> void:

@@ -186,4 +186,4 @@ static func _obstacle_for(surface: String, lanes: int, rng: RandomNumberGenerato
 			if lanes == 1:
 				# single-lane rows: only jump/slide obstacles are fair
 				return "log" if rng.randf() < 0.6 else "branch"
-			return ["rock", "log", "spike", "branch", "thorn_bush", "rock"][rng.randi_range(0, 5)]
+			return ["rock", "log", "spike", "branch", "thorn_bush", "boulder"][rng.randi_range(0, 5)]

@@ -174,3 +174,37 @@ FROM user_accounts ua
 WHERE ua.deletion_requested_at IS NOT NULL
   AND ua.deletion_requested_at + INTERVAL '14 days' > NOW()
 ORDER BY ua.deletion_requested_at;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- 7. ENDLESS RUN LEADERBOARD (public read, owner write)
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS endless_scores (
+  user_id         UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  display_name    TEXT        NOT NULL DEFAULT 'Explorer',
+  best_distance_m INTEGER     NOT NULL DEFAULT 0 CHECK (best_distance_m >= 0),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE endless_scores ENABLE ROW LEVEL SECURITY;
+
+-- Anyone (including anon) may read the leaderboard
+DROP POLICY IF EXISTS "public_read_endless" ON endless_scores;
+CREATE POLICY "public_read_endless" ON endless_scores
+  FOR SELECT USING (true);
+
+-- Players may only write their own row
+DROP POLICY IF EXISTS "owner_write_endless" ON endless_scores;
+CREATE POLICY "owner_write_endless" ON endless_scores
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "owner_update_endless" ON endless_scores;
+CREATE POLICY "owner_update_endless" ON endless_scores
+  FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP TRIGGER IF EXISTS trg_endless_scores_updated_at ON endless_scores;
+CREATE TRIGGER trg_endless_scores_updated_at
+  BEFORE UPDATE ON endless_scores
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE INDEX IF NOT EXISTS idx_endless_scores_distance
+  ON endless_scores (best_distance_m DESC);

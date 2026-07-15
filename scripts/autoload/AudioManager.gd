@@ -1,7 +1,12 @@
 extends Node
 
-var _sfx_player: AudioStreamPlayer
+const SFX_POOL_SIZE := 4   # concurrent sounds — one player would cut itself off
+
+var _sfx_pool: Array[AudioStreamPlayer] = []
+var _sfx_pool_index: int = 0
 var _music_player: AudioStreamPlayer
+var _coin_combo: int = 0
+var _last_coin_ms: int = 0
 
 # Populated at runtime — only entries whose files exist on disk are added.
 var _sfx_map: Dictionary = {}
@@ -44,9 +49,11 @@ func _ready() -> void:
 	_ensure_bus("SFX")
 	_ensure_bus("Music")
 
-	_sfx_player = AudioStreamPlayer.new()
-	_sfx_player.bus = "SFX"
-	add_child(_sfx_player)
+	for i in range(SFX_POOL_SIZE):
+		var p := AudioStreamPlayer.new()
+		p.bus = "SFX"
+		add_child(p)
+		_sfx_pool.append(p)
 
 	_music_player = AudioStreamPlayer.new()
 	_music_player.bus = "Music"
@@ -77,9 +84,20 @@ func _load_sounds() -> void:
 func _play_sfx(sfx_name: String) -> void:
 	if not SaveManager.get_setting("sfx_on", true):
 		return
-	if _sfx_map.has(sfx_name):
-		_sfx_player.stream = _sfx_map[sfx_name]
-		_sfx_player.play()
+	if not _sfx_map.has(sfx_name):
+		return
+	var player := _sfx_pool[_sfx_pool_index]
+	_sfx_pool_index = (_sfx_pool_index + 1) % SFX_POOL_SIZE
+	player.stream = _sfx_map[sfx_name]
+	# Coin streaks rise in pitch — quick pickups feel like a combo
+	if sfx_name == "coin":
+		var now := Time.get_ticks_msec()
+		_coin_combo = _coin_combo + 1 if now - _last_coin_ms < 1200 else 0
+		_last_coin_ms = now
+		player.pitch_scale = 1.0 + 0.05 * float(mini(_coin_combo, 10))
+	else:
+		player.pitch_scale = 1.0
+	player.play()
 
 func _play_music(track_name: String) -> void:
 	if not SaveManager.get_setting("music_on", true):
@@ -96,7 +114,8 @@ func _stop_music() -> void:
 func _apply_settings() -> void:
 	var sfx_vol: float = SaveManager.get_setting("sfx_volume", 1.0)
 	var music_vol: float = SaveManager.get_setting("music_volume", 0.7)
-	_sfx_player.volume_db = linear_to_db(sfx_vol)
+	for p in _sfx_pool:
+		p.volume_db = linear_to_db(sfx_vol)
 	_music_player.volume_db = linear_to_db(music_vol)
 	if not SaveManager.get_setting("music_on", true):
 		_music_player.stop()

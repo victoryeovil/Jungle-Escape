@@ -122,10 +122,15 @@ func _build_title() -> void:
 # ── BUTTONS ──────────────────────────────────────────────────────────────────
 
 func _build_buttons() -> void:
-	var y := 262.0
-	const GAP := 11.0
+	var y := 240.0
+	const GAP := 10.0
 
 	_nav_btn("BtnPlay",            "✦   BEGIN JOURNEY",         y, _on_play);           y += H + GAP
+	var endless_label := "∞   ENDLESS RUN"
+	var best_m := int(SaveManager.get_setting("endless_best_m", 0))
+	if best_m > 0:
+		endless_label += "      Best %d m" % best_m
+	_nav_btn("BtnEndless",         endless_label,               y, _on_endless);         y += H + GAP
 	_nav_btn("BtnContinue",        "›   CONTINUE EXPEDITION",   y, _on_continue);        y += H + GAP
 	_nav_btn("BtnShop",            "◎   CHOOSE EXPLORER",       y, _on_shop);            y += H + GAP
 	_nav_btn("BtnDaily",           "☀   DAILY EXPEDITION",      y, _on_daily_challenge); y += H + GAP
@@ -202,6 +207,11 @@ func _on_play() -> void:
 	print("[NAV][MainMenu] open_level_select start; target_exists=true")
 	GameManager.go_to_level_select()
 	print("[NAV][MainMenu] scene change requested successfully")
+
+func _on_endless() -> void:
+	EventBus.play_sfx.emit("button")
+	get_tree().paused = false
+	GameManager.go_to_endless()
 
 func _on_continue() -> void:
 	EventBus.play_sfx.emit("button")

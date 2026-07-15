@@ -38,6 +38,23 @@ func _ready() -> void:
 		])
 		remove_child(mgr)
 		mgr.free()
+	# Endless mode: generate + build a few stages too
+	for stage in [1, 3, 6]:
+		var edata := EndlessLevel.generate(stage, 12345)
+		var emgr := LevelManager3D.new()
+		add_child(emgr)
+		var et0 := Time.get_ticks_msec()
+		emgr.build(edata)
+		var estats := {"nodes": 0, "mesh": 0, "multimesh": 0, "mm_instances": 0, "areas": 0, "bodies": 0}
+		_walk(emgr, estats)
+		print("OK  endless stage %d  len=%3d  build=%4dms  nodes=%5d  meshinst=%4d  multimesh=%2d (x%4d)  obstacles=%d coins=%d" % [
+			stage, int(edata.get("length", 0)), Time.get_ticks_msec() - et0,
+			estats["nodes"], estats["mesh"], estats["multimesh"], estats["mm_instances"],
+			(edata.get("obstacles", []) as Array).size(), (edata.get("coins", []) as Array).size(),
+		])
+		remove_child(emgr)
+		emgr.free()
+
 	print("DONE failures=%d" % failures)
 	get_tree().quit(1 if failures > 0 else 0)
 

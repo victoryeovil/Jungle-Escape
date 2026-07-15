@@ -65,6 +65,9 @@ func _ready() -> void:
 		hud.call("show_tribal_routes", routes)
 	)
 	player.grass_step.connect(level_mgr.add_grass_footprint)
+	player.vfx_requested.connect(func(kind: String, pos: Vector3) -> void:
+		level_mgr.spawn_vfx(kind, pos)
+	)
 	hud.call("setup", _level_id)
 	GameManager.state = GameManager.GameState.PLAYING
 	EventBus.play_music.emit("gameplay")
@@ -524,6 +527,7 @@ func _on_player_died() -> void:
 	if GameManager.in_daily_challenge:
 		GameManager._challenge_fail_count += 1
 	EventBus.play_sfx.emit("game_over")
+	level_mgr.spawn_vfx("hit", player.global_position + Vector3(0.0, 0.9, 0.0))
 	# Brief slow-motion beat so the player sees what killed them
 	Engine.time_scale = 0.35
 	await get_tree().create_timer(0.5, true, false, true).timeout
@@ -558,6 +562,20 @@ func _on_player_died() -> void:
 			message += "\n\nNo Expedition Lives were available."
 	game_over.call("show_fail", message, can_revive, REVIVE_GEM_COST)
 
+func _advance_endless_stage() -> void:
+	_stage_rows_done += _stage_length
+	_stage += 1
+	_active_mode = "run"
+	_apply_level_atmosphere(EndlessLevel.theme_for_stage(_stage))
+	_build_endless_stage()
+	player.reset(1)
+	player.global_position = Vector3(0.0, 0.5, 0.0)
+	player.set_run_speed(EndlessLevel.speed_for_stage(_stage))
+	_cam_xz = Vector2(0.0, 4.5)
+	_finished = false
+	hud.call("show_hint", "STAGE %d" % _stage, 1.8)
+	EventBus.play_sfx.emit("gate_open")
+
 func _on_revive_requested() -> void:
 	if _revive_used or not SaveManager.spend_gems(REVIVE_GEM_COST):
 		return
@@ -578,9 +596,18 @@ func _exit_tree() -> void:
 	Engine.time_scale = 1.0
 
 func _on_finish_reached() -> void:
-	if _finished:
+	if _finished or _dead:
+		return
+	if _endless:
+		# Seamless stage chain — deferred so the finish Area3D isn't freed
+		# while its body_entered signal is still being flushed.
+		if not _finished:
+			_finished = true
+			_advance_endless_stage.call_deferred()
 		return
 	_finished = true
+	if _level_id == 1:
+		SaveManager.set_setting("tutorial_seen", true)
 	player.play_victory()
 	player._is_dead = true
 	EventBus.play_sfx.emit("level_complete")

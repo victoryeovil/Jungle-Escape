@@ -243,6 +243,36 @@ func download_save(callback: Callable) -> void:
 		)
 	)
 
+# ── Endless Run leaderboard ───────────────────────────────────────────────────
+
+# Upserts the player's best endless distance. Table: endless_scores
+# (user_id PK, display_name, best_distance_m) — see supabase_schema.sql.
+func submit_endless_score(distance_m: int) -> void:
+	if not is_authenticated() or _URL.is_empty() or distance_m <= 0:
+		return
+	_refresh_if_needed(func():
+		_http("POST", "/rest/v1/endless_scores",
+			{"user_id": _user_id, "display_name": _display_name, "best_distance_m": distance_m},
+			["Prefer: resolution=merge-duplicates"],
+			func(_r): pass
+		)
+	)
+
+# Fetches the top N endless distances. callback receives an Array of
+# {display_name, best_distance_m} rows (empty on failure).
+func fetch_endless_top(limit: int, callback: Callable) -> void:
+	if _URL.is_empty():
+		callback.call([])
+		return
+	_refresh_if_needed(func():
+		_http("GET",
+			"/rest/v1/endless_scores?select=display_name,best_distance_m&order=best_distance_m.desc&limit=" + str(limit),
+			{}, [],
+			func(r):
+				callback.call(r if r is Array else [])
+		)
+	)
+
 # ── Account row (created/refreshed on every login) ────────────────────────────
 
 func _ensure_account_row() -> void:

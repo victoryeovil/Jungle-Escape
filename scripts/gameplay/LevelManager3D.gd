@@ -757,6 +757,8 @@ func _spawn_obstacle(kind: String, lane: int, row: int) -> void:
 			_obstacle_whirlpool(lane_pos + Vector3(0.0, 0.08, 0.0))
 		"crate":
 			_obstacle_crate(lane_pos + Vector3(0.0, 0.38, 0.0))
+		"boulder":
+			_obstacle_boulder(lane_pos + Vector3(0.0, 0.30, 0.0))
 		"broken_plank", "falling_plank":
 			_obstacle_broken_planks(lane_pos + Vector3(0.0, 0.24, 0.0), heading_y)
 		"mud":
@@ -873,10 +875,11 @@ func _obstacle_crocodile_zone(pos: Vector3, heading_y: float) -> void:
 	root.rotation.y = heading_y
 	_group("Obstacles").add_child(root)
 	_add_box(root, "RedWarningWater", Vector3(1.1, 0.035, 1.1), Vector3.ZERO, Color(0.50, 0.05, 0.04, 0.65))
-	var body := _add_box(root, "CrocodileBack", Vector3(0.76, 0.16, 0.24), Vector3(0.0, 0.12, 0.0), Color(0.10, 0.28, 0.10))
-	body.rotation_degrees.y = 10.0
-	for i in range(4):
-		_add_box(root, "BackRidge%d" % i, Vector3(0.08, 0.09, 0.08), Vector3(-0.24 + float(i) * 0.16, 0.25, 0.0), Color(0.05, 0.16, 0.05))
+	if _place_glb(root, "res://assets/3d/wildlife/crocodile.glb", Vector3(0.0, 0.06, 0.0), Vector3(0.55, 0.55, 0.55)) == null:
+		var body := _add_box(root, "CrocodileBack", Vector3(0.76, 0.16, 0.24), Vector3(0.0, 0.12, 0.0), Color(0.10, 0.28, 0.10))
+		body.rotation_degrees.y = 10.0
+		for i in range(4):
+			_add_box(root, "BackRidge%d" % i, Vector3(0.08, 0.09, 0.08), Vector3(-0.24 + float(i) * 0.16, 0.25, 0.0), Color(0.05, 0.16, 0.05))
 	_add_static_box(root, "CrocodileCollision", Vector3(1.0, 0.70, 1.0), Vector3.ZERO, {"obstacle": true})
 
 func _obstacle_whirlpool(pos: Vector3) -> void:
@@ -917,7 +920,18 @@ func _area_slow(size: Vector3, color: Color, pos: Vector3) -> void:
 	root.name = "MudPatch"
 	root.position = pos
 	_group("Obstacles").add_child(root)
-	_add_box(root, "Mud", size, Vector3.ZERO, color)
+	if _place_glb(root, "res://assets/3d/obstacles/mud_patch.glb", Vector3.ZERO, Vector3(size.x / 3.0, 1.0, size.z / 3.0)) == null:
+		_add_box(root, "Mud", size, Vector3.ZERO, color)
+
+func _obstacle_boulder(pos: Vector3) -> void:
+	var root := Node3D.new()
+	root.name = "Boulder"
+	root.position = pos
+	_group("Obstacles").add_child(root)
+	if _place_glb(root, "res://assets/3d/obstacles/rolling_boulder.glb", Vector3.ZERO, Vector3(0.9, 0.9, 0.9)) == null:
+		var rock := _add_sphere(root, "BoulderRock", 0.62, Vector3(0.0, 0.15, 0.0), COLOR_STONE_DARK)
+		rock.scale = Vector3(1.0, 0.95, 1.0)
+	_add_static_box(root, "BoulderCollision", Vector3(1.20, 1.15, 1.15), Vector3(0.0, 0.15, 0.0), {"obstacle": true})
 
 func _remove_ground_at(row: int) -> void:
 	if _path_tiles.has(row):
@@ -930,16 +944,16 @@ func _remove_ground_at(row: int) -> void:
 	var sf: Vector3 = _seg_fwd.get(row, Vector3(0.0, 0.0, -1.0))
 	var gap_center := sp + sf * (TILE_Z * 0.5)
 
-	# Visual gap: dark water strip
+	# Visual gap: river-gap kit asset, falling back to a dark water strip
 	var gap_vis := Node3D.new()
 	gap_vis.name = "RiverGap_%02d" % row
 	gap_vis.position = gap_center
 	gap_vis.rotation.y = atan2(sf.x, -sf.z)
 	_group("Terrain").add_child(gap_vis)
-	_add_box(gap_vis, "Water", Vector3(PATH_WIDTH, 0.08, TILE_Z), Vector3(0.0, -0.22, 0.0), Color(0.06, 0.18, 0.24))
-	# Water shimmer strips
-	_add_box(gap_vis, "Shimmer1", Vector3(PATH_WIDTH * 0.6, 0.02, TILE_Z * 0.25), Vector3(-0.4, -0.15, TILE_Z * 0.1), Color(0.14, 0.44, 0.62, 0.60))
-	_add_box(gap_vis, "Shimmer2", Vector3(PATH_WIDTH * 0.4, 0.02, TILE_Z * 0.20), Vector3(0.6, -0.15, -TILE_Z * 0.15), Color(0.14, 0.44, 0.62, 0.50))
+	if _place_glb(gap_vis, "res://assets/3d/obstacles/river_gap/river_gap_kit.glb", Vector3(0.0, -0.20, 0.0), Vector3.ONE) == null:
+		_add_box(gap_vis, "Water", Vector3(PATH_WIDTH, 0.08, TILE_Z), Vector3(0.0, -0.22, 0.0), Color(0.06, 0.18, 0.24))
+		_add_box(gap_vis, "Shimmer1", Vector3(PATH_WIDTH * 0.6, 0.02, TILE_Z * 0.25), Vector3(-0.4, -0.15, TILE_Z * 0.1), Color(0.14, 0.44, 0.62, 0.60))
+		_add_box(gap_vis, "Shimmer2", Vector3(PATH_WIDTH * 0.4, 0.02, TILE_Z * 0.20), Vector3(0.6, -0.15, -TILE_Z * 0.15), Color(0.14, 0.44, 0.62, 0.50))
 
 	# Kill zone — triggers player death when falling into the gap
 	var kill := Area3D.new()
@@ -1014,6 +1028,7 @@ func _on_coin_body_entered(body: Node3D, coin_node: Node3D, is_gem: bool) -> voi
 		return
 	if body.has_method("play_collect"):
 		body.call("play_collect")
+	spawn_vfx("pickup", coin_node.global_position)
 	coin_node.queue_free()
 	_coin_nodes.erase(coin_node)
 	if is_gem:
@@ -1063,6 +1078,22 @@ func _spawn_dressing(data: Dictionary) -> void:
 
 			if row % 8 == 0 and rng.randf() < 0.50:
 				_ruin_fragment(_row_local(row, side * rng.randf_range(path_edge + 2.0, path_edge + 2.8), 0.0), rng)
+
+			# Dense jungle wall in the far background — one MultiMesh draw call
+			if row % 5 == 0:
+				var cluster_xf := Transform3D(
+					Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3.ONE * rng.randf_range(0.9, 1.4)),
+					_row_local(row, side * rng.randf_range(7.5, 11.0), 0.0, rng.randf_range(-1.2, 1.2))
+				)
+				_batch_glb("res://assets/3d/environment/trees/tree_cluster_bg.glb", cluster_xf)
+
+			# Worn trail-edge pieces bordering dirt/grass paths
+			if row % 4 == 2 and rng.randf() < 0.45 and str(_seg_surface.get(row, "dirt")) in ["dirt", "grass", "mud"]:
+				var edge_xf := Transform3D(
+					Basis(Vector3.UP, _row_heading_y(row)).scaled(Vector3(0.7, 0.7, 0.7)),
+					_row_local(row, side * (path_edge + 0.12), 0.005, rng.randf_range(-0.8, 0.8))
+				)
+				_batch_glb("res://assets/3d/environment/path/dirt_path_edge.glb", edge_xf)
 
 func _spawn_wildlife(data: Dictionary) -> void:
 	var length: int = data.get("length", 30)
@@ -1415,6 +1446,13 @@ func _spawn_module_landmarks(data: Dictionary) -> void:
 				_spawn_river_reeds(row, rng)
 			if not spawned_boat:
 				_spawn_dock_marker(row)
+				# A collapsed crossing upstream tells the story of why you row
+				var wreck := Node3D.new()
+				wreck.name = "CollapsedBridge"
+				wreck.position = _row_local(row + 3, (_seg_width.get(row, PATH_WIDTH) * 0.5 + 2.2) * (1.0 if row % 2 == 0 else -1.0), 0.0)
+				wreck.rotation.y = _row_heading_y(row + 3) + 0.5
+				_group("Ruins").add_child(wreck)
+				_place_glb(wreck, "res://assets/3d/environment/bridges/broken_bridge.glb", Vector3.ZERO, Vector3(0.9, 0.9, 0.9))
 				spawned_boat = true
 		elif mode == "skating" and not spawned_skating:
 			_spawn_warning_marker(row, "SKATE RUN")
@@ -1698,8 +1736,23 @@ func _spawn_ruins_wall(row: int, rng: RandomNumberGenerator) -> void:
 		root.rotation.y = _row_heading_y(row)
 		_group("Ruins").add_child(root)
 		_add_box(root, "Wall", Vector3(0.28, rng.randf_range(0.80, 1.35), 1.15), Vector3(0.0, 0.45, 0.0), _theme.get("stone", COLOR_STONE))
+	# Ancient pressure plates set into the corridor floor (decorative dread)
+	if row % 4 == 0 and rng.randf() < 0.65:
+		var plate_lane := rng.randi_range(-1, 1)
+		var plate_xf := Transform3D(
+			Basis(Vector3.UP, _row_heading_y(row)).scaled(Vector3(0.8, 0.8, 0.8)),
+			_row_local(row, float(plate_lane) * 0.9, ROAD_TOP_Y + 0.01)
+		)
+		_batch_glb("res://assets/3d/obstacles/pressure_plate.glb", plate_xf)
 
 func _spawn_sand_ridges(row: int, rng: RandomNumberGenerator) -> void:
+	# Sand dune asset flanking the path
+	var dune_side := 1.0 if row % 4 == 0 else -1.0
+	var dune_xf := Transform3D(
+		Basis(Vector3.UP, _row_heading_y(row) + rng.randf_range(-0.4, 0.4)).scaled(Vector3.ONE * rng.randf_range(0.8, 1.3)),
+		_row_local(row, dune_side * (_seg_width.get(row, PATH_WIDTH) * 0.5 + rng.randf_range(1.2, 2.4)), 0.0)
+	)
+	_batch_glb("res://assets/3d/obstacles/sand_dune.glb", dune_xf)
 	var root := Node3D.new()
 	root.name = "SandRidges"
 	root.position = _row_center(row)
@@ -1850,7 +1903,9 @@ func _on_turn_body_exited(body: Node3D) -> void:
 		turn_zone_exited.emit()
 
 func _goal_glb_path() -> String:
-	if _level_id <= 4:
+	if _level_id == 6:
+		return "res://assets/3d/goals/wildlands_altar.glb"
+	elif _level_id <= 4:
 		return "res://assets/3d/goals/jungle_gate.glb"
 	elif _level_id <= 8:
 		return "res://assets/3d/goals/vine_ruin_arch.glb"
@@ -1876,11 +1931,22 @@ func _spawn_finish(data: Dictionary) -> void:
 	_group("Ruins").add_child(altar_root)
 	_place_glb(altar_root, "res://assets/3d/rewards/relic_altar.glb", Vector3.ZERO, Vector3(0.8, 0.8, 0.8))
 
+	# Finale: the treasure the whole campaign hunts for sits at the last gate
+	if _level_id == 20:
+		var chest_root := Node3D.new()
+		chest_root.name = "BaobabTreasure"
+		chest_root.position = altar_pos + Vector3(0.0, 0.15, 0.0)
+		chest_root.rotation.y = heading_y + PI
+		_group("FinishGate").add_child(chest_root)
+		_place_glb(chest_root, "res://assets/3d/rewards/treasure_chest.glb", Vector3.ZERO, Vector3(1.1, 1.1, 1.1))
+		_attach_looping_vfx(chest_root, "finish", Vector3(0.0, 0.5, 0.0))
+
 	var root := Node3D.new()
 	root.name = "TempleFinishGate"
 	root.position = gate_pos
 	root.rotation.y = heading_y
 	_group("FinishGate").add_child(root)
+	_attach_looping_vfx(root, "finish", Vector3(0.0, 1.4, 0.0))
 
 	if _place_glb(root, _goal_glb_path(), Vector3.ZERO, Vector3(1.2, 1.2, 1.2)) != null:
 		var area := Area3D.new()
@@ -1928,6 +1994,7 @@ func _torch(parent: Node3D, pos: Vector3) -> void:
 	var flame := _add_sphere(root, "Flame", 0.16, Vector3(0.0, 0.18, 0.0), COLOR_TORCH)
 	flame.scale = Vector3(0.75, 1.25, 0.75)
 	_torch_flames.append(flame)
+	_attach_looping_vfx(root, "torch", Vector3(0.0, 0.30, 0.0))
 
 func _on_finish_entered(body: Node3D) -> void:
 	if body is CharacterBody3D:
@@ -2093,6 +2160,7 @@ func _on_collectable_body_entered(body: Node3D, coll_node: Node3D, res_type: Str
 		return
 	if body.has_method("play_collect"):
 		body.call("play_collect")
+	spawn_vfx("pickup", coll_node.global_position)
 	coll_node.queue_free()
 	_collectable_nodes.erase(coll_node)
 	match res_type:
@@ -2100,6 +2168,8 @@ func _on_collectable_body_entered(body: Node3D, coll_node: Node3D, res_type: Str
 			EventBus.play_sfx.emit("key")
 		"sunstone_shard":
 			EventBus.play_sfx.emit("gem")
+		"food":
+			EventBus.play_sfx.emit("fruit")
 		_:
 			EventBus.play_sfx.emit("coin")
 	GameManager.collect_resource(res_type, 1)
@@ -2931,6 +3001,13 @@ func _spawn_wildlands_dressing(data: Dictionary, rng: RandomNumberGenerator) -> 
 			# Far trees sparse
 			if row % 3 == 0 and rng.randf() < 0.40:
 				_acacia_tree(_row_local(row, far_x, 0.0, rng.randf_range(-0.6, 0.6)), rng)
+			# Rolling dunes on the horizon side
+			if row % 5 == 2 and rng.randf() < 0.55:
+				var dune_xf := Transform3D(
+					Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3.ONE * rng.randf_range(1.2, 2.0)),
+					_row_local(row, side * rng.randf_range(6.5, 9.0), 0.0)
+				)
+				_batch_glb("res://assets/3d/obstacles/sand_dune.glb", dune_xf)
 
 func _wildlife_glb(animal: String, pos: Vector3, s: Vector3, rot_y: float = 0.0) -> void:
 	var root := Node3D.new()
@@ -3069,6 +3146,49 @@ func _warthog_silhouette(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	# Tail (upright when running)
 	var tail := _add_box(root, "Tail", Vector3(0.04, 0.18, 0.04), Vector3(-0.28, 0.34, 0.0), c)
 	tail.rotation_degrees.z = 15.0
+
+# ─── VFX (one-shot GPUParticles3D scenes from assets/3d/vfx) ─────────────────
+
+const VFX_SCENES := {
+	"pickup": "res://assets/3d/vfx/pickup_sparkle.tscn",
+	"hit":    "res://assets/3d/vfx/hit_burst.tscn",
+	"dust":   "res://assets/3d/vfx/dust_puff.tscn",
+	"finish": "res://assets/3d/vfx/finish_glow.tscn",
+	"torch":  "res://assets/3d/vfx/torch_flame.tscn",
+	"sand":   "res://assets/3d/vfx/sand_trail.tscn",
+}
+
+# Fire-and-forget burst at a world position; frees itself when done.
+func spawn_vfx(kind: String, world_pos: Vector3) -> void:
+	var path: String = VFX_SCENES.get(kind, "")
+	if path.is_empty() or not ResourceLoader.exists(path):
+		return
+	var packed := load(path) as PackedScene
+	if packed == null:
+		return
+	var fx := packed.instantiate() as GPUParticles3D
+	if fx == null:
+		return
+	add_child(fx)
+	fx.global_position = world_pos
+	fx.emitting = true
+	fx.finished.connect(fx.queue_free)
+
+# Continuous emitter attached to a parent (torch flames, finish gate glow).
+func _attach_looping_vfx(parent: Node3D, kind: String, offset: Vector3) -> void:
+	var path: String = VFX_SCENES.get(kind, "")
+	if path.is_empty() or not ResourceLoader.exists(path):
+		return
+	var packed := load(path) as PackedScene
+	if packed == null:
+		return
+	var fx := packed.instantiate() as GPUParticles3D
+	if fx == null:
+		return
+	fx.one_shot = false
+	fx.position = offset
+	parent.add_child(fx)
+	fx.emitting = true
 
 func _place_glb(parent: Node3D, path: String, offset: Vector3, s: Vector3) -> Node3D:
 	if not ResourceLoader.exists(path):
