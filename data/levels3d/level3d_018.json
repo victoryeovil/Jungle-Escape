@@ -42,12 +42,12 @@
     {
       "type": "spike",
       "lane": 2,
-      "row": 20
+      "row": 18
     },
     {
       "type": "rock",
       "lane": 1,
-      "row": 23
+      "row": 24
     },
     {
       "type": "spike",
@@ -82,12 +82,12 @@
     {
       "type": "spike",
       "lane": 0,
-      "row": 47
+      "row": 46
     },
     {
       "type": "branch",
       "lane": 2,
-      "row": 49
+      "row": 39
     }
   ],
   "coins": [
@@ -140,7 +140,7 @@
       "row": 16
     },
     {
-      "lane": 2,
+      "lane": 0,
       "row": 18
     },
     {
@@ -157,7 +157,7 @@
     },
     {
       "lane": 0,
-      "row": 24
+      "row": 25
     },
     {
       "lane": 0,
@@ -222,28 +222,28 @@
     {
       "gem": true,
       "lane": 1,
-      "row": 49
+      "row": 48
     },
     {
       "gem": true,
       "lane": 0,
-      "row": 50
+      "row": 48
     }
   ],
   "collectables": [
     {
       "type": "relic_key",
       "lane": 0,
-      "row": 4
+      "row": 5
     },
     {
       "type": "map_piece",
       "lane": 0,
-      "row": 7
+      "row": 8
     },
     {
       "type": "animal_badge",
-      "lane": 0,
+      "lane": 1,
       "row": 14
     },
     {
@@ -254,12 +254,12 @@
     {
       "type": "map_piece",
       "lane": 0,
-      "row": 27
+      "row": 28
     },
     {
       "type": "relic_key",
       "lane": 0,
-      "row": 37
+      "row": 38
     },
     {
       "type": "animal_badge",

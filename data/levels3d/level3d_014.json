@@ -68,12 +68,12 @@
     {
       "type": "rock",
       "lane": 0,
-      "row": 39
+      "row": 38
     },
     {
       "type": "branch",
       "lane": 1,
-      "row": 41
+      "row": 19
     }
   ],
   "coins": [
@@ -191,29 +191,29 @@
     },
     {
       "lane": 0,
-      "row": 41
+      "row": 40
     },
     {
       "gem": true,
       "lane": 1,
-      "row": 42
+      "row": 40
     },
     {
       "gem": true,
       "lane": 2,
-      "row": 42
+      "row": 40
     }
   ],
   "collectables": [
     {
       "type": "animal_badge",
       "lane": 0,
-      "row": 4
+      "row": 5
     },
     {
       "type": "bricks",
       "lane": 0,
-      "row": 7
+      "row": 8
     },
     {
       "type": "tiles",
@@ -227,7 +227,7 @@
     },
     {
       "type": "bricks",
-      "lane": 0,
+      "lane": 1,
       "row": 24
     },
     {

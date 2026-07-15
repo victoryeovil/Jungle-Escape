@@ -28,7 +28,7 @@
     {
       "type": "branch",
       "lane": 1,
-      "row": 13
+      "row": 20
     },
     {
       "type": "rock",
@@ -48,7 +48,7 @@
     {
       "type": "branch",
       "lane": 1,
-      "row": 28
+      "row": 24
     }
   ],
   "coins": [
@@ -135,18 +135,18 @@
     {
       "gem": true,
       "lane": 0,
-      "row": 29
+      "row": 28
     },
     {
       "gem": true,
       "lane": 0,
-      "row": 29
+      "row": 28
     }
   ],
   "collectables": [
     {
       "type": "wood",
-      "lane": 1,
+      "lane": 0,
       "row": 4
     },
     {

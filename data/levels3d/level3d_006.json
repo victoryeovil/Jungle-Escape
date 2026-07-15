@@ -63,7 +63,7 @@
     {
       "type": "rock",
       "lane": 2,
-      "row": 37
+      "row": 36
     }
   ],
   "coins": [
@@ -156,13 +156,13 @@
       "row": 34
     },
     {
-      "lane": 2,
+      "lane": 0,
       "row": 36
     },
     {
       "gem": true,
       "lane": 1,
-      "row": 39
+      "row": 38
     }
   ],
   "collectables": [
@@ -188,7 +188,7 @@
     },
     {
       "type": "food",
-      "lane": 0,
+      "lane": 1,
       "row": 26
     }
   ],

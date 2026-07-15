@@ -60,7 +60,7 @@
     },
     {
       "lane": 0,
-      "row": 7
+      "row": 8
     },
     {
       "lane": 0,
@@ -116,7 +116,7 @@
     },
     {
       "lane": 0,
-      "row": 28
+      "row": 29
     },
     {
       "lane": 2,
@@ -144,17 +144,17 @@
     },
     {
       "lane": 1,
-      "row": 39
+      "row": 38
     },
     {
       "gem": true,
       "lane": 0,
-      "row": 40
+      "row": 38
     },
     {
       "gem": true,
       "lane": 2,
-      "row": 40
+      "row": 38
     }
   ],
   "collectables": [

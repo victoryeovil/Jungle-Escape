@@ -6,6 +6,11 @@ const LANE_W: float = 1.8
 const PATH_WIDTH: float = LANE_W * 3.25
 const SIDE_GROUND_WIDTH: float = 3.8
 const MAX_WIND_NODES: int = 35   # mobile performance cap
+const ROAD_SAMPLES_PER_ROW: int = 3   # ribbon slices per row — smooth curves
+const ROAD_TOP_Y: float = 0.03
+const ROAD_CHUNK_ROWS: int = 10       # max rows per ribbon chunk (frustum culling)
+const PROP_CULL_DISTANCE: float = 62.0
+const ROAD_CULL_DISTANCE: float = 95.0
 
 const COLOR_DIRT := Color(0.47, 0.31, 0.16)
 const COLOR_DIRT_LIGHT := Color(0.61, 0.42, 0.22)
@@ -67,6 +72,10 @@ var _wind_strength: float = 0.72
 var _wind_speed: float = 1.0
 var _gust_strength: float = 0.26
 var _grass_footprints_enabled: bool = true
+var _mat_cache: Dictionary = {}          # quantized color -> shared StandardMaterial3D
+var _ribbon_mat: StandardMaterial3D = null
+var _glb_batches: Dictionary = {}        # glb path -> Array[Transform3D] for MultiMesh
+var _gap_rows: Dictionary = {}           # rows removed by "gap" obstacles
 
 func build(data: Dictionary) -> void:
 	level_data = data
@@ -94,6 +103,11 @@ func build(data: Dictionary) -> void:
 	_turn_rows.clear()
 	_junction_rows.clear()
 	_junction_defs.clear()
+	_glb_batches.clear()
+	_gap_rows.clear()
+	for ob in data.get("obstacles", []):
+		if ob is Dictionary and str(ob.get("type", "")) == "gap":
+			_gap_rows[int(ob.get("row", 0))] = true
 	var environment: Dictionary = data.get("environment", {})
 	_wind_strength = float(environment.get("wind_strength", 0.72))
 	_wind_speed = float(environment.get("wind_speed", 1.0))
@@ -120,6 +134,8 @@ func build(data: Dictionary) -> void:
 	_spawn_turn_zones(data)
 	_spawn_finish(data)
 	_count_total_coins(data)
+	_flush_glb_batches()
+	_apply_distance_culling()
 
 func _process(delta: float) -> void:
 	_time += delta
@@ -145,6 +161,7 @@ func _create_level_groups() -> void:
 		"Ruins",
 		"RouteSigns",
 		"ModeEffects",
+		"Batched",
 		"FinishGate"
 	]:
 		var group := Node3D.new()
@@ -415,7 +432,6 @@ func _spawn_ground(data: Dictionary) -> void:
 		var lane_count: int = int(_seg_lane_count.get(i, 3))
 		var surface := str(_seg_surface.get(i, _theme.get("surface", "dirt")))
 		var mode := str(_seg_mode.get(i, "run"))
-		var module_kind := str(_seg_module.get(i, "straight_short"))
 
 		var segment := Node3D.new()
 		segment.name = "PathSegment_%02d" % i
@@ -424,99 +440,238 @@ func _spawn_ground(data: Dictionary) -> void:
 		_group("JunglePath").add_child(segment)
 		_path_tiles[i] = segment
 
-		var track_asset := _place_glb(segment, _track_asset_path(surface, lane_count), Vector3(0.0, 0.01, 0.0), Vector3.ONE)
-		if track_asset != null:
-			var scale_x := path_width / _base_track_width(lane_count)
-			track_asset.scale.x = scale_x * (-1.0 if i % 2 else 1.0)
-		else:
-			var path_col := _surface_path_color(surface, module_kind, rng)
-			_add_box(segment, "DirtPath",
-				Vector3(path_width, 0.16, TILE_Z + 0.08),
-				Vector3(0.0, -0.08, 0.0),
-				path_col
-			)
+		# Collision slightly wider/longer than the tile so rotated boxes overlap
+		# on curves — the player can never slip through a seam between rows.
 		_add_static_box(segment, "PathCollision",
-			Vector3(path_width, 0.16, TILE_Z + 0.08),
+			Vector3(path_width + 0.6, 0.16, TILE_Z + 0.30),
 			Vector3(0.0, -0.08, 0.0),
 			{"surface": surface}
 		)
 		_add_path_guide(segment, i, path_width, surface, mode, lane_count)
 
-		if track_asset == null and (surface == "water_slide" or surface == "boat"):
-			_add_box(segment, "WaterShimmerA",
-				Vector3(path_width * 0.55, 0.025, TILE_Z * 0.18),
-				Vector3(-path_width * 0.08, 0.015, -TILE_Z * 0.16),
-				Color(0.42, 0.86, 1.0, 0.75)
-			)
-			_add_box(segment, "WaterShimmerB",
-				Vector3(path_width * 0.38, 0.025, TILE_Z * 0.15),
-				Vector3(path_width * 0.10, 0.02, TILE_Z * 0.18),
-				Color(0.78, 0.96, 1.0, 0.55)
-			)
-		elif track_asset == null and surface == "skating":
-			for lane_edge_value in [-0.9, 0.9]:
-				var lane_edge := float(lane_edge_value)
-				_add_box(segment, "SkateLaneStripe",
-					Vector3(0.055, 0.025, TILE_Z * 0.94),
-					Vector3(lane_edge, 0.018, 0.0),
-					Color(0.15, 0.88, 1.0, 0.82)
-				)
-			for outer_edge_value in [-1.0, 1.0]:
-				var outer_edge := float(outer_edge_value)
-				_add_box(segment, "SkateEdgeGlow",
-					Vector3(0.09, 0.035, TILE_Z * 0.96),
-					Vector3(outer_edge * path_width * 0.43, 0.022, 0.0),
-					Color(0.52, 0.24, 0.94, 0.72)
-				)
-			if i % 2 == 0:
-				_add_box(segment, "SkateBoostMark",
-					Vector3(1.10, 0.03, 0.18),
-					Vector3(0.0, 0.026, 0.18),
-					Color(0.92, 0.76, 0.20, 0.78)
-				)
-		elif track_asset == null and surface == "wood":
-			for plank_i in range(3):
-				_add_box(segment, "BridgePlank%d" % plank_i,
-					Vector3(path_width * 0.92, 0.05, 0.08),
-					Vector3(0.0, 0.03, -0.8 + float(plank_i) * 0.8),
-					COLOR_LOG.lerp(Color(0.58, 0.38, 0.18), 0.35)
-				)
-
-		# Grass tiles as children so they rotate with path direction
-		var side_offset := path_width * 0.5 + SIDE_GROUND_WIDTH * 0.5
-		_add_box(segment, "GrassLeft",
-			Vector3(SIDE_GROUND_WIDTH, 0.12, TILE_Z + 0.08),
-			Vector3(-side_offset, -0.12, 0.0), _grass_color(rng))
-		_add_box(segment, "GrassRight",
-			Vector3(SIDE_GROUND_WIDTH, 0.12, TILE_Z + 0.08),
-			Vector3(side_offset, -0.12, 0.0), _grass_color(rng))
-
-		if i % 2 == 0:
+		if i % 2 == 0 and i < length:
 			_spawn_path_edge_details(i, rng)
 
-func _surface_path_color(surface: String, module_kind: String, rng: RandomNumberGenerator) -> Color:
+	_build_road_ribbon(data)
+
+# ─── Smooth road ribbon ──────────────────────────────────────────────────────
+# The visible road is one continuous vertex-colored ribbon that follows a
+# Catmull-Rom smoothed centerline, so curves render as smooth arcs instead of
+# angled 3 m tiles, widths taper smoothly between modules, and the whole road
+# costs a handful of draw calls instead of one per row.
+
+func _build_road_ribbon(data: Dictionary) -> void:
+	var length: int = int(data.get("length", 30)) + 5
+	# Boundary b lies between rows b-1 and b, at _seg_pos[b].
+	var pts: Array[Vector3] = []
+	var widths := PackedFloat32Array()
+	for b in range(length + 1):
+		pts.append(_seg_pos.get(b, Vector3(0.0, 0.0, -float(b) * TILE_Z)))
+		var w_a: float = _seg_width.get(clampi(b - 1, 0, length - 1), PATH_WIDTH)
+		var w_b: float = _seg_width.get(clampi(b, 0, length - 1), PATH_WIDTH)
+		widths.append((w_a + w_b) * 0.5)
+
+	var chunk_start := 0
+	while chunk_start < length:
+		if _gap_rows.has(chunk_start):
+			chunk_start += 1
+			continue
+		var surface := str(_seg_surface.get(chunk_start, _theme.get("surface", "dirt")))
+		var chunk_end := chunk_start + 1
+		while chunk_end < length \
+				and str(_seg_surface.get(chunk_end, _theme.get("surface", "dirt"))) == surface \
+				and chunk_end - chunk_start < ROAD_CHUNK_ROWS \
+				and not _gap_rows.has(chunk_end):
+			chunk_end += 1
+		_commit_road_chunk(pts, widths, chunk_start, chunk_end, length, surface)
+		chunk_start = chunk_end
+
+func _catmull(p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3, t: float) -> Vector3:
+	var t2 := t * t
+	var t3 := t2 * t
+	return 0.5 * (
+		(2.0 * p1)
+		+ (-p0 + p2) * t
+		+ (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2
+		+ (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t3
+	)
+
+func _commit_road_chunk(pts: Array[Vector3], widths: PackedFloat32Array, row_start: int, row_end: int, total_rows: int, surface: String) -> void:
+	var slice_count := (row_end - row_start) * ROAD_SAMPLES_PER_ROW + 1
+	var centers: Array[Vector3] = []
+	var half_widths := PackedFloat32Array()
+	var dists := PackedFloat32Array()
+	for s in range(slice_count):
+		var f := float(s) / float(ROAD_SAMPLES_PER_ROW)
+		var row := row_start + int(f)
+		var u := f - floorf(f)
+		if s == slice_count - 1:
+			row = row_end - 1
+			u = 1.0
+		var p0 := pts[maxi(row - 1, 0)]
+		var p1 := pts[row]
+		var p2 := pts[mini(row + 1, total_rows)]
+		var p3 := pts[mini(row + 2, total_rows)]
+		centers.append(_catmull(p0, p1, p2, p3, u))
+		half_widths.append(lerpf(widths[row], widths[mini(row + 1, total_rows)], smoothstep(0.0, 1.0, u)) * 0.5)
+		dists.append((float(row) + u) * TILE_Z)
+
+	# Road cross-section (normalized lateral positions) + grass shoulders.
+	var road_lats: Array[float] = [-1.0, -0.55, -0.2, 0.2, 0.55, 1.0]
+	var shoulder_fracs: Array[float] = [0.0, 0.4, 1.0]
+	var verts_per_slice := road_lats.size() + shoulder_fracs.size() * 2
+
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for s in range(slice_count):
+		var tangent: Vector3
+		if s == 0:
+			tangent = centers[1] - centers[0]
+		elif s == slice_count - 1:
+			tangent = centers[s] - centers[s - 1]
+		else:
+			tangent = centers[s + 1] - centers[s - 1]
+		tangent.y = 0.0
+		tangent = tangent.normalized()
+		var right := Vector3(-tangent.z, 0.0, tangent.x)
+		var c := centers[s]
+		var hw := half_widths[s]
+		var dist := dists[s]
+
+		for lat in road_lats:
+			st.set_color(_road_vertex_color(surface, lat, dist, hw))
+			st.set_normal(Vector3.UP)
+			st.add_vertex(c + right * (lat * hw) + Vector3(0.0, ROAD_TOP_Y, 0.0))
+		for side in [-1.0, 1.0]:
+			for frac in shoulder_fracs:
+				var y := ROAD_TOP_Y * 0.55 if frac <= 0.01 else 0.0
+				st.set_color(_shoulder_vertex_color(frac, dist, side))
+				st.set_normal(Vector3.UP)
+				st.add_vertex(c + right * (side * (hw + frac * SIDE_GROUND_WIDTH)) + Vector3(0.0, y, 0.0))
+
+	# Vertex layout per slice: road 0..5, left shoulder 6..8, right shoulder 9..11
+	var strips: Array = [
+		[0, 1], [1, 2], [2, 3], [3, 4], [4, 5],
+		[7, 6], [8, 7],
+		[9, 10], [10, 11],
+	]
+	for s in range(slice_count - 1):
+		var base := s * verts_per_slice
+		var nxt := (s + 1) * verts_per_slice
+		for pair in strips:
+			var a: int = base + pair[0]
+			var b: int = base + pair[1]
+			var a2: int = nxt + pair[0]
+			var b2: int = nxt + pair[1]
+			st.add_index(a)
+			st.add_index(a2)
+			st.add_index(b)
+			st.add_index(b)
+			st.add_index(a2)
+			st.add_index(b2)
+
+	var mesh_inst := MeshInstance3D.new()
+	mesh_inst.name = "Road_%02d_%s" % [row_start, surface]
+	mesh_inst.mesh = st.commit()
+	mesh_inst.material_override = _ribbon_material()
+	mesh_inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mesh_inst.visibility_range_end = ROAD_CULL_DISTANCE
+	mesh_inst.visibility_range_end_margin = 8.0
+	mesh_inst.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+	_group("JunglePath").add_child(mesh_inst)
+
+func _ribbon_material() -> StandardMaterial3D:
+	if _ribbon_mat == null:
+		_ribbon_mat = StandardMaterial3D.new()
+		_ribbon_mat.vertex_color_use_as_albedo = true
+		_ribbon_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
+		_ribbon_mat.roughness = 0.95
+		_ribbon_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return _ribbon_mat
+
+func _hash01(x: float) -> float:
+	return fposmod(sin(x * 12.9898) * 43758.5453, 1.0)
+
+func _road_vertex_color(surface: String, lat: float, dist: float, hw: float) -> Color:
+	var center := 1.0 - absf(lat)                      # 1 centre → 0 edge
+	var speckle := _hash01(dist * 0.71 + lat * 3.17)   # per-vertex variation
 	match surface:
-		"water_slide":
-			return Color(0.05, 0.42, 0.62).lerp(Color(0.16, 0.70, 0.92), rng.randf_range(0.0, 0.35))
-		"boat":
-			return Color(0.04, 0.22, 0.32).lerp(Color(0.05, 0.44, 0.62), rng.randf_range(0.0, 0.28))
-		"skating":
-			return Color(0.16, 0.20, 0.28).lerp(Color(0.32, 0.38, 0.50), rng.randf_range(0.0, 0.30))
-		"stone":
-			return Color(0.36, 0.35, 0.30).lerp(_theme.get("stone", COLOR_STONE), rng.randf_range(0.0, 0.35))
 		"wood":
-			return COLOR_LOG.lerp(Color(0.58, 0.36, 0.14), rng.randf_range(0.0, 0.40))
+			# Plank bands with dark seams between them
+			var plank := floorf(dist / 0.5)
+			var plank_tone := _hash01(plank * 7.31)
+			var col := COLOR_LOG.lerp(Color(0.58, 0.38, 0.18), 0.20 + plank_tone * 0.45)
+			if fposmod(dist, 0.5) < 0.055:
+				col = col.darkened(0.42)
+			return col.darkened((1.0 - center) * 0.10)
+		"stone":
+			# Paver bands: each band gets its own tone, dark mortar seams
+			var band := floorf(dist / 0.9)
+			var band_tone := _hash01(band * 3.77 + floorf(lat * 2.0) * 11.3)
+			var stone_c: Color = _theme.get("stone", COLOR_STONE)
+			var col := stone_c.lerp(COLOR_STONE_DARK, 0.15 + band_tone * 0.35)
+			if fposmod(dist, 0.9) < 0.07:
+				col = col.darkened(0.38)
+			return col.lightened(center * 0.06 + speckle * 0.05)
 		"sand":
-			return Color(0.74, 0.60, 0.34).lerp(Color(0.92, 0.76, 0.46), rng.randf_range(0.0, 0.35))
+			var ripple := sin(dist * 2.2 + lat * 1.4) * 0.5 + 0.5
+			var col := Color(0.78, 0.64, 0.38).lerp(Color(0.90, 0.76, 0.48), ripple * 0.5 + speckle * 0.25)
+			return col.darkened((1.0 - center) * 0.08)
 		"mud":
-			return COLOR_MUD.lerp(Color(0.42, 0.27, 0.12), rng.randf_range(0.0, 0.25))
+			var col := COLOR_MUD.lerp(Color(0.40, 0.27, 0.13), speckle * 0.35)
+			# Wet worn ruts either side of centre
+			if absf(absf(lat) - 0.38) < 0.18:
+				col = col.darkened(0.22)
+			return col
 		"grass":
-			return _grass_color(rng).lerp(Color(0.22, 0.42, 0.12), 0.30)
+			# Trail worn through grass — dirt shows along the centre
+			var g: Color = _grass_theme_color(speckle)
+			var dirt: Color = _theme.get("dirt_light", COLOR_DIRT_LIGHT)
+			return g.lerp(dirt, clampf(center * 1.25 - 0.15, 0.0, 0.85))
+		"water_slide":
+			var deep := Color(0.05, 0.42, 0.62)
+			var glint := Color(0.30, 0.78, 0.95)
+			var col := deep.lerp(glint, speckle * 0.45 + center * 0.20)
+			if absf(lat) > 0.86:
+				col = col.lerp(Color(0.86, 0.97, 1.0), 0.65)   # foam edges
+			return col
+		"boat":
+			var river := Color(0.04, 0.24, 0.34)
+			var col := river.lerp(Color(0.08, 0.44, 0.58), speckle * 0.35 + center * 0.12)
+			if absf(lat) > 0.90:
+				col = col.lerp(Color(0.72, 0.90, 0.94), 0.5)   # bank foam
+			return col
+		"skating":
+			var col := Color(0.18, 0.22, 0.30).lerp(Color(0.34, 0.40, 0.52), speckle * 0.30)
+			var x_abs := absf(lat) * hw
+			if absf(x_abs - 0.9) < 0.09:
+				col = Color(0.15, 0.88, 1.0)                   # lane glow lines
+			elif absf(lat) > 0.93:
+				col = Color(0.52, 0.24, 0.94)                  # edge glow
+			return col
 		_:
+			# Dirt trail: packed lighter centre, darker margins, subtle patches
 			var dirt_d: Color = _theme.get("dirt_dark", COLOR_DIRT)
 			var dirt_l: Color = _theme.get("dirt_light", COLOR_DIRT_LIGHT)
-			var tint := 0.18 if module_kind == "narrow_passage" else 0.35
-			return dirt_d.lerp(dirt_l, rng.randf_range(0.0, tint))
+			var col := dirt_d.lerp(dirt_l, 0.20 + center * 0.42 + speckle * 0.18)
+			if _hash01(floorf(dist / 2.1) * 5.9) < 0.18:
+				col = col.darkened(0.10)
+			return col
+
+func _grass_theme_color(t: float) -> Color:
+	var dark: Color = _theme.get("grass_dark", COLOR_GRASS_DARK)
+	var light: Color = _theme.get("grass_light", COLOR_GRASS_LIGHT)
+	return dark.lerp(light, 0.20 + t * 0.55)
+
+func _shoulder_vertex_color(frac: float, dist: float, side: float) -> Color:
+	var h := _hash01(dist * 0.53 + frac * 5.7 + side * 2.3)
+	var col := _grass_theme_color(h)
+	if frac <= 0.01:
+		# Inner edge blends toward the path so the border reads soft, not cut
+		col = col.lerp(_theme.get("dirt_dark", COLOR_DIRT), 0.42)
+	elif frac >= 0.99:
+		col = col.darkened(0.18)   # fade into the jungle depth
+	return col
 
 func _add_path_guide(segment: Node3D, row: int, path_width: float, surface: String, mode: String, lane_count: int) -> void:
 	var area := Area3D.new()
@@ -538,19 +693,6 @@ func _on_path_segment_body_entered(body: Node3D, row: int, surface: String, mode
 	var fwd: Vector3 = _seg_fwd.get(row, Vector3(0.0, 0.0, -1.0))
 	var right: Vector3 = _seg_right.get(row, Vector3(1.0, 0.0, 0.0))
 	path_segment_entered.emit(row, center, fwd, right, surface, mode, path_width, lane_count)
-
-func _track_asset_path(surface: String, lane_count: int) -> String:
-	var safe_surface := surface if surface in ["dirt", "grass", "mud", "stone", "wood", "sand", "skating", "water_slide", "boat"] else "dirt"
-	return "res://assets/3d/environment/tracks/%s/track_%s_%dlane.glb" % [safe_surface, safe_surface, clampi(lane_count, 1, 3)]
-
-func _base_track_width(lane_count: int) -> float:
-	match clampi(lane_count, 1, 3):
-		1:
-			return 2.60
-		2:
-			return 4.45
-		_:
-			return 6.25
 
 func _spawn_path_edge_details(row: int, rng: RandomNumberGenerator) -> void:
 	var parent := _group("GrassAndPlants")
@@ -642,8 +784,9 @@ func _obstacle_log(pos: Vector3, heading_y: float = 0.0) -> void:
 
 	# Collision box: X-width spans path, Z-depth is obstacle thickness (both in local space)
 	_add_static_box(root, "LogCollision", Vector3(PATH_WIDTH * 0.90, 0.58, 0.55), Vector3.ZERO, {"obstacle": true})
-	_grass_clump(Vector3(-2.75, 0.0, pos.z + 0.35), RandomNumberGenerator.new())
-	_grass_clump(Vector3(2.75, 0.0, pos.z - 0.35), RandomNumberGenerator.new())
+	var side_basis := Basis(Vector3.UP, heading_y)
+	_grass_clump(pos + side_basis * Vector3(-2.75, -pos.y, 0.35), RandomNumberGenerator.new())
+	_grass_clump(pos + side_basis * Vector3(2.75, -pos.y, -0.35), RandomNumberGenerator.new())
 
 func _obstacle_low_branch(pos: Vector3, heading_y: float = 0.0) -> void:
 	var root := Node3D.new()
@@ -933,10 +1076,10 @@ func _spawn_wildlife(data: Dictionary) -> void:
 	for i in range(3):
 		var row := 4 + i * 6
 		_butterfly(
-			Vector3(
+			_row_local(row,
 				(-1.0 if i % 2 == 0 else 1.0) * rng.randf_range(2.7, 3.5),
 				rng.randf_range(0.8, 1.25),
-				-float(row) * TILE_Z + rng.randf_range(-0.8, 0.8)
+				rng.randf_range(-0.8, 0.8)
 			),
 			rng
 		)
@@ -944,23 +1087,28 @@ func _spawn_wildlife(data: Dictionary) -> void:
 	for i in range(2):
 		var row := 6 + i * 8
 		_bird(
-			Vector3(-5.8, rng.randf_range(2.9, 3.8), -float(row) * TILE_Z),
-			Vector3(5.8, rng.randf_range(3.0, 4.0), -float(row + 2) * TILE_Z),
+			_row_local(row, -5.8, rng.randf_range(2.9, 3.8), 0.0),
+			_row_local(row + 2, 5.8, rng.randf_range(3.0, 4.0), 0.0),
 			rng
 		)
 
 	if length > 24:
-		_butterfly(Vector3(3.1, 1.0, -float(length - 4) * TILE_Z), rng)
+		_butterfly(_row_local(length - 4, 3.1, 1.0, 0.0), rng)
 
 	# Ambient jungle wildlife at path edges
 	if length > 12:
-		_wildlife_glb("monkey",      Vector3(rng.randf_range(3.2, 4.5), 1.8, -float(rng.randi_range(5, length - 5)) * TILE_Z), Vector3(0.55, 0.55, 0.55), rng.randf_range(0.0, 360.0))
-		_wildlife_glb("weaver_bird", Vector3(-rng.randf_range(3.0, 4.2), 2.5, -float(rng.randi_range(8, length - 4)) * TILE_Z), Vector3(0.35, 0.35, 0.35), rng.randf_range(0.0, 360.0))
+		_wildlife_glb("monkey",      _row_local(rng.randi_range(5, length - 5), rng.randf_range(3.2, 4.5), 1.8), Vector3(0.55, 0.55, 0.55), rng.randf_range(0.0, 360.0))
+		_wildlife_glb("weaver_bird", _row_local(rng.randi_range(8, length - 4), -rng.randf_range(3.0, 4.2), 2.5), Vector3(0.35, 0.35, 0.35), rng.randf_range(0.0, 360.0))
 	if length > 18:
-		_wildlife_glb("frog",        Vector3(rng.randf_range(2.8, 3.8), 0.05, -float(rng.randi_range(6, length - 6)) * TILE_Z), Vector3(0.45, 0.45, 0.45), rng.randf_range(0.0, 360.0))
-		_wildlife_glb("snake",       Vector3(-rng.randf_range(3.0, 4.0), 0.02, -float(rng.randi_range(10, length - 5)) * TILE_Z), Vector3(0.50, 0.50, 0.50), rng.randf_range(0.0, 360.0))
+		_wildlife_glb("frog",        _row_local(rng.randi_range(6, length - 6), rng.randf_range(2.8, 3.8), 0.05), Vector3(0.45, 0.45, 0.45), rng.randf_range(0.0, 360.0))
+		_wildlife_glb("snake",       _row_local(rng.randi_range(10, length - 5), -rng.randf_range(3.0, 4.0), 0.02), Vector3(0.50, 0.50, 0.50), rng.randf_range(0.0, 360.0))
 
 func _grass_clump(pos: Vector3, rng: RandomNumberGenerator) -> void:
+	# Once the wind budget is spent, remaining clumps join a single MultiMesh
+	if _wind_nodes.size() >= MAX_WIND_NODES:
+		var xf := Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3(0.55, 0.55, 0.55)), pos)
+		if _batch_glb("res://assets/3d/environment/foliage/grass_clumps.glb", xf):
+			return
 	var root := Node3D.new()
 	root.name = "GrassClump"
 	root.position = pos
@@ -975,6 +1123,10 @@ func _grass_clump(pos: Vector3, rng: RandomNumberGenerator) -> void:
 			blade.rotation_degrees.x = rng.randf_range(-10.0, 10.0)
 
 func _fern(pos: Vector3, rng: RandomNumberGenerator) -> void:
+	if _wind_nodes.size() >= MAX_WIND_NODES:
+		var xf := Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3(0.60, 0.60, 0.60)), pos)
+		if _batch_glb("res://assets/3d/environment/foliage/ferns.glb", xf):
+			return
 	var root := Node3D.new()
 	root.name = "Fern"
 	root.position = pos
@@ -989,6 +1141,10 @@ func _fern(pos: Vector3, rng: RandomNumberGenerator) -> void:
 			leaf.rotation_degrees.x = rng.randf_range(-18.0, -8.0)
 
 func _bush(pos: Vector3, rng: RandomNumberGenerator) -> void:
+	if _wind_nodes.size() >= MAX_WIND_NODES:
+		var xf := Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3(0.70, 0.70, 0.70)), pos)
+		if _batch_glb("res://assets/3d/environment/foliage/bushes.glb", xf):
+			return
 	var root := Node3D.new()
 	root.name = "Bush"
 	root.position = pos
@@ -1002,15 +1158,16 @@ func _bush(pos: Vector3, rng: RandomNumberGenerator) -> void:
 			leaf.scale = Vector3(rng.randf_range(0.85, 1.25), rng.randf_range(0.62, 0.90), rng.randf_range(0.85, 1.20))
 
 func _palm_tree(pos: Vector3, rng: RandomNumberGenerator) -> void:
+	# Trees are the heaviest GLBs — always batched into one MultiMesh draw call
+	var batch_xf := Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)), pos)
+	if _batch_glb("res://assets/3d/environment/trees/palms.glb", batch_xf):
+		return
 	var root := Node3D.new()
 	root.name = "PalmTree"
 	root.position = pos
 	root.rotation_degrees.y = rng.randf_range(0.0, 360.0)
 	_group("Trees").add_child(root)
 	_register_wind(root, 0.018, 0.48, rng.randf_range(0.0, TAU))
-
-	if _place_glb(root, "res://assets/3d/environment/trees/palms.glb", Vector3.ZERO, Vector3(1.0, 1.0, 1.0)) != null:
-		return
 
 	var height := rng.randf_range(3.4, 5.0)
 	var trunk_col := COLOR_TRUNK.lerp(Color(0.50, 0.33, 0.14), rng.randf_range(0.0, 0.30))
@@ -1057,15 +1214,15 @@ func _palm_tree(pos: Vector3, rng: RandomNumberGenerator) -> void:
 		_vine(root, Vector3(rng.randf_range(-0.16, 0.16), height * 0.68, rng.randf_range(-0.14, 0.14)), rng)
 
 func _jungle_tree(pos: Vector3, rng: RandomNumberGenerator) -> void:
+	var batch_xf := Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)), pos)
+	if _batch_glb("res://assets/3d/environment/trees/jungle_trees.glb", batch_xf):
+		return
 	var root := Node3D.new()
 	root.name = "JungleTree"
 	root.position = pos
 	root.rotation_degrees.y = rng.randf_range(0.0, 360.0)
 	_group("Trees").add_child(root)
 	_register_wind(root, 0.014, 0.42, rng.randf_range(0.0, TAU))
-
-	if _place_glb(root, "res://assets/3d/environment/trees/jungle_trees.glb", Vector3.ZERO, Vector3(1.0, 1.0, 1.0)) != null:
-		return
 
 	var height := rng.randf_range(3.0, 4.8)
 	var trunk_col := COLOR_TRUNK.lerp(Color(0.28, 0.16, 0.06), rng.randf_range(0.0, 0.40))
@@ -1127,6 +1284,9 @@ func _vine(parent: Node3D, pos: Vector3, rng: RandomNumberGenerator) -> void:
 	vine.rotation_degrees.z = rng.randf_range(-8.0, 8.0)
 
 func _pebble_cluster(parent: Node3D, pos: Vector3, rng: RandomNumberGenerator) -> void:
+	var batch_xf := Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3(0.50, 0.50, 0.50)), pos)
+	if _batch_glb("res://assets/3d/environment/rocks/rock_clusters.glb", batch_xf):
+		return
 	var root := Node3D.new()
 	root.name = "Pebbles"
 	root.position = pos
@@ -1141,24 +1301,27 @@ func _root_strip(parent: Node3D, pos: Vector3, rng: RandomNumberGenerator) -> vo
 	root.rotation_degrees.y = rng.randf_range(-22.0, 22.0)
 
 func _fallen_log_dressing(pos: Vector3, side: float, rng: RandomNumberGenerator) -> void:
+	var yaw := deg_to_rad(side * rng.randf_range(20.0, 45.0))
+	var batch_xf := Transform3D(Basis(Vector3.UP, yaw).scaled(Vector3(0.70, 0.70, 0.70)), pos)
+	if _batch_glb("res://assets/3d/obstacles/fallen_log.glb", batch_xf):
+		return
 	var root := Node3D.new()
 	root.name = "SideFallenLog"
 	root.position = pos
 	root.rotation_degrees.y = side * rng.randf_range(20.0, 45.0)
 	_group("RocksAndLogs").add_child(root)
-	if _place_glb(root, "res://assets/3d/obstacles/fallen_log.glb", Vector3.ZERO, Vector3(0.70, 0.70, 0.70)) == null:
-		var log := _add_cylinder(root, "SideLog", 0.18, 0.24, rng.randf_range(1.2, 2.2), Vector3.ZERO, COLOR_LOG)
-		log.rotation_degrees.x = 90.0
+	var log := _add_cylinder(root, "SideLog", 0.18, 0.24, rng.randf_range(1.2, 2.2), Vector3.ZERO, COLOR_LOG)
+	log.rotation_degrees.x = 90.0
 
 func _ruin_fragment(pos: Vector3, rng: RandomNumberGenerator) -> void:
+	var batch_xf := Transform3D(Basis(Vector3.UP, deg_to_rad(rng.randf_range(-18.0, 18.0))).scaled(Vector3(0.60, 0.60, 0.60)), pos)
+	if _batch_glb("res://assets/3d/environment/rocks/rock_clusters.glb", batch_xf):
+		return
 	var root := Node3D.new()
 	root.name = "MossyRuin"
 	root.position = pos
 	root.rotation_degrees.y = rng.randf_range(-18.0, 18.0)
 	_group("Ruins").add_child(root)
-
-	if _place_glb(root, "res://assets/3d/environment/rocks/rock_clusters.glb", Vector3.ZERO, Vector3(0.60, 0.60, 0.60)) != null:
-		return
 
 	_add_box(root, "BrokenStone", Vector3(0.55, rng.randf_range(0.55, 1.20), 0.45), Vector3(0.0, 0.35, 0.0), COLOR_STONE)
 	var cap := _add_box(root, "Moss", Vector3(0.60, 0.08, 0.48), Vector3(0.0, 0.95, 0.0), COLOR_MOSS)
@@ -1779,6 +1942,17 @@ func _count_total_coins(data: Dictionary) -> void:
 func get_total_coins() -> int:
 	return _total_coins
 
+func get_row_center(row: int) -> Vector3:
+	return _row_center(row)
+
+# Revive support: despawn obstacles around the respawn point so a revived
+# player is never dropped straight into the hazard that killed them.
+func clear_obstacles_near(world_pos: Vector3, radius: float) -> void:
+	var radius_sq := radius * radius
+	for child in _group("Obstacles").get_children():
+		if child is Node3D and (child as Node3D).global_position.distance_squared_to(world_pos) <= radius_sq:
+			child.queue_free()
+
 func attract_coins(player_pos: Vector3, radius: float) -> void:
 	var radius_sq := radius * radius
 	for coin in _coin_nodes.duplicate():
@@ -1788,9 +1962,10 @@ func attract_coins(player_pos: Vector3, radius: float) -> void:
 			_collect_coin_node(coin)
 
 func _animate_coins(delta: float) -> void:
-	for coin in _coin_nodes.duplicate():
+	for index in range(_coin_nodes.size() - 1, -1, -1):
+		var coin := _coin_nodes[index]
 		if not is_instance_valid(coin):
-			_coin_nodes.erase(coin)
+			_coin_nodes.remove_at(index)
 			continue
 		coin.rotate_y(delta * 4.0)
 		var base_y := float(coin.get_meta("base_y", 0.80))
@@ -1930,9 +2105,10 @@ func _on_collectable_body_entered(body: Node3D, coll_node: Node3D, res_type: Str
 	GameManager.collect_resource(res_type, 1)
 
 func _animate_collectables(delta: float) -> void:
-	for item in _collectable_nodes.duplicate():
+	for index in range(_collectable_nodes.size() - 1, -1, -1):
+		var item := _collectable_nodes[index]
 		if not is_instance_valid(item):
-			_collectable_nodes.erase(item)
+			_collectable_nodes.remove_at(index)
 			continue
 		item.rotate_y(delta * 2.2)
 		var base_y := float(item.get_meta("base_y", 0.90))
@@ -2028,6 +2204,8 @@ func add_grass_footprint(global_pos: Vector3, right: Vector3, side: int) -> void
 			Color(0.08, 0.24, 0.07, 0.82)
 		)
 		blade.rotation_degrees.y = -9.0 + float(blade_index) * 9.0
+		# Footprints fade their alpha per-node — they must not share the cached material
+		blade.material_override = (blade.material_override as StandardMaterial3D).duplicate()
 	_grass_marks.append({"node": root, "age": 0.0, "duration": 6.5})
 	if _grass_marks.size() > 48:
 		var oldest: Dictionary = _grass_marks.pop_front()
@@ -2302,20 +2480,19 @@ func _spawn_level_specific_dressing(data: Dictionary) -> void:
 	match _level_id:
 		1:
 			for i in range(3):
-				_butterfly(Vector3(
+				_butterfly(_row_local(
+					rng.randi_range(6, length - 4),
 					(1.0 if i % 2 == 0 else -1.0) * rng.randf_range(1.8, 2.8),
-					rng.randf_range(0.9, 1.4),
-					-float(rng.randi_range(6, length - 4)) * TILE_Z
+					rng.randf_range(0.9, 1.4)
 				), rng)
 
 		2:
 			for i in range(length / 3):
 				var row := i * 3 + 2
-				var z := -float(row) * TILE_Z
 				for s in [-1.0, 1.0]:
 					var vroot := Node3D.new()
 					vroot.name = "ThickVines"
-					vroot.position = Vector3(s * rng.randf_range(2.7, 3.4), 0.0, z + rng.randf_range(-0.9, 0.9))
+					vroot.position = _row_local(row, s * rng.randf_range(2.7, 3.4), 0.0, rng.randf_range(-0.9, 0.9))
 					_group("GrassAndPlants").add_child(vroot)
 					for k in range(3):
 						var seg := _add_box(vroot, "Seg%d" % k,
@@ -2329,7 +2506,7 @@ func _spawn_level_specific_dressing(data: Dictionary) -> void:
 				var side: float = 1.0 if i % 2 == 0 else -1.0
 				var mroot := Node3D.new()
 				mroot.name = "MonkeySilhouette"
-				mroot.position = Vector3(side * rng.randf_range(5.2, 5.8), rng.randf_range(2.1, 2.7), -float(row) * TILE_Z)
+				mroot.position = _row_local(row, side * rng.randf_range(5.2, 5.8), rng.randf_range(2.1, 2.7))
 				_group("Animals").add_child(mroot)
 				_add_sphere(mroot, "Body", 0.22, Vector3.ZERO, Color(0.24, 0.14, 0.06))
 				_add_sphere(mroot, "Head", 0.14, Vector3(0.0, 0.30, 0.0), Color(0.21, 0.12, 0.05))
@@ -2337,12 +2514,12 @@ func _spawn_level_specific_dressing(data: Dictionary) -> void:
 
 		3:
 			for i in range(length / 2):
-				var z := -float(i * 2 + 2) * TILE_Z
+				var row := i * 2 + 2
 				for s in [-1.0, 1.0]:
 					if rng.randf() < 0.65:
 						var rroot := Node3D.new()
 						rroot.name = "Reed"
-						rroot.position = Vector3(s * rng.randf_range(3.0, 3.8), 0.0, z + rng.randf_range(-0.8, 0.8))
+						rroot.position = _row_local(row, s * rng.randf_range(3.0, 3.8), 0.0, rng.randf_range(-0.8, 0.8))
 						_group("GrassAndPlants").add_child(rroot)
 						for r in range(4):
 							var reed := _add_box(rroot, "Stem%d" % r,
@@ -2356,7 +2533,7 @@ func _spawn_level_specific_dressing(data: Dictionary) -> void:
 						var wstone := _add_sphere(
 							_group("RocksAndLogs"), "WaterStone",
 							rng.randf_range(0.10, 0.22),
-							Vector3(s * rng.randf_range(2.5, 3.5), 0.04, z + rng.randf_range(-0.9, 0.9)),
+							_row_local(row, s * rng.randf_range(2.5, 3.5), 0.04, rng.randf_range(-0.9, 0.9)),
 							Color(0.26, 0.40, 0.46)
 						)
 						wstone.scale = Vector3(1.4, 0.35, 1.0)
@@ -2364,11 +2541,10 @@ func _spawn_level_specific_dressing(data: Dictionary) -> void:
 		4:
 			for i in range(length / 4):
 				var row := i * 4 + 2
-				var z := -float(row) * TILE_Z
 				for s in [-1.0, 1.0]:
 					var proot := Node3D.new()
 					proot.name = "AncientPillar"
-					proot.position = Vector3(s * rng.randf_range(3.5, 4.5), 0.0, z + rng.randf_range(-0.6, 0.6))
+					proot.position = _row_local(row, s * rng.randf_range(3.5, 4.5), 0.0, rng.randf_range(-0.6, 0.6))
 					proot.rotation_degrees.y = rng.randf_range(-12.0, 12.0)
 					_group("Ruins").add_child(proot)
 					var shaft_h: float = rng.randf_range(0.8, 1.6)
@@ -2385,7 +2561,7 @@ func _spawn_level_specific_dressing(data: Dictionary) -> void:
 					if rng.randf() < 0.45:
 						var groot := Node3D.new()
 						groot.name = "RelicGlyph"
-						groot.position = Vector3(s * rng.randf_range(4.0, 5.2), rng.randf_range(0.3, 0.8), z + rng.randf_range(-0.5, 0.5))
+						groot.position = _row_local(row, s * rng.randf_range(4.0, 5.2), rng.randf_range(0.3, 0.8), rng.randf_range(-0.5, 0.5))
 						_group("Ruins").add_child(groot)
 						var gm := _add_box(groot, "Face", Vector3(0.22, 0.22, 0.06), Vector3.ZERO, Color(0.95, 0.78, 0.22))
 						var gmat := StandardMaterial3D.new()
@@ -2402,12 +2578,12 @@ func _spawn_level_specific_dressing(data: Dictionary) -> void:
 			var pillar_interval := 3
 			for i in range(length / pillar_interval):
 				var row := i * pillar_interval + 1
-				var z := -float(row) * TILE_Z
 				var stone_col: Color = _theme.get("stone", COLOR_STONE)
 				for s in [-1.0, 1.0]:
 					var proot := Node3D.new()
 					proot.name = "TemplePillar"
-					proot.position = Vector3(s * 3.05, 0.0, z)
+					proot.position = _row_local(row, s * 3.05, 0.0)
+					proot.rotation.y = _row_heading_y(row)
 					_group("Ruins").add_child(proot)
 					_add_box(proot, "Base", Vector3(0.62, 0.22, 0.62), Vector3(0.0, 0.11, 0.0), stone_col)
 					_add_cylinder(proot, "Shaft", 0.20, 0.22, 2.2, Vector3(0.0, 1.22, 0.0), stone_col)
@@ -2419,32 +2595,30 @@ func _spawn_level_specific_dressing(data: Dictionary) -> void:
 			# Acacia trees every 5 rows on both sides
 			for i in range(length / 5):
 				var row := i * 5 + 2
-				var z := -float(row) * TILE_Z
 				for s in [-1.0, 1.0]:
 					if rng.randf() < 0.65:
 						_acacia_tree(
-							Vector3(s * rng.randf_range(4.5, 5.8), 0.0, z + rng.randf_range(-1.0, 1.0)),
+							_row_local(row, s * rng.randf_range(4.5, 5.8), 0.0, rng.randf_range(-1.0, 1.0)),
 							rng
 						)
 			# Distant elephant silhouette mid-level
 			var eleph_row := length / 2
 			_elephant_silhouette(
-				Vector3(rng.randf_range(-5.5, 5.5), 0.0, -float(eleph_row) * TILE_Z - 3.0),
+				_row_local(eleph_row + 1, rng.randf_range(-5.5, 5.5), 0.0),
 				rng
 			)
 			# Warthog silhouette near end
 			if length > 20:
 				_warthog_silhouette(
-					Vector3(rng.randf_range(-2.5, 2.5), 0.0, -float(length - 6) * TILE_Z),
+					_row_local(length - 6, rng.randf_range(4.0, 5.2), 0.0),
 					rng
 				)
 			# Sandy rock clusters along the sides
 			for i in range(length / 3):
 				var row := i * 3 + 1
-				var z := -float(row) * TILE_Z
 				if rng.randf() < 0.50:
 					_sandy_rock_cluster(
-						Vector3((-1.0 if i % 2 == 0 else 1.0) * rng.randf_range(3.2, 4.8), 0.0, z + rng.randf_range(-0.8, 0.8)),
+						_row_local(row, (-1.0 if i % 2 == 0 else 1.0) * rng.randf_range(3.2, 4.8), 0.0, rng.randf_range(-0.8, 0.8)),
 						rng
 					)
 
@@ -2685,12 +2859,13 @@ func _spawn_path_variation(data: Dictionary) -> void:
 
 	# Leaning root-arch landmarks over path edges every 8 rows
 	for row in range(5, length - 2, 8):
-		var z := -float(row) * TILE_Z
+		var row_hw: float = _seg_width.get(row, PATH_WIDTH) * 0.5
 		for s in [-1.0, 1.0]:
 			var arch_h := rng.randf_range(1.5, 2.1)
 			var aroot := Node3D.new()
 			aroot.name = "PathArch"
-			aroot.position = Vector3(s * (PATH_WIDTH * 0.50 + 0.12), 0.0, z + rng.randf_range(-0.4, 0.4))
+			aroot.position = _row_local(row, s * (row_hw + 0.12), 0.0, rng.randf_range(-0.4, 0.4))
+			aroot.rotation.y = _row_heading_y(row)
 			_group("Trees").add_child(aroot)
 			var trunk_col := COLOR_TRUNK.lerp(COLOR_LOG, rng.randf_range(0.0, 0.45))
 			var aleg := _add_cylinder(aroot, "ArchLeg", 0.11, 0.17, arch_h,
@@ -2708,28 +2883,27 @@ func _spawn_path_variation(data: Dictionary) -> void:
 	for row in range(3, length - 1, 5):
 		if rng.randf() > 0.55:
 			continue
-		var z := -float(row) * TILE_Z + rng.randf_range(-0.65, 0.65)
+		var edge_hw: float = _seg_width.get(row, PATH_WIDTH) * 0.5
 		for s in [-1.0, 1.0]:
 			if rng.randf() > 0.72:
 				continue
 			var marker := _add_box(
 				_group("Ruins"), "PathEdge",
 				Vector3(rng.randf_range(0.18, 0.32), rng.randf_range(0.08, 0.20), rng.randf_range(0.20, 0.38)),
-				Vector3(s * (PATH_WIDTH * 0.50 - 0.04), 0.05, z),
+				_row_local(row, s * (edge_hw - 0.04), 0.05, rng.randf_range(-0.65, 0.65)),
 				stone_col.lerp(COLOR_STONE_DARK, rng.randf_range(0.0, 0.40))
 			)
 			marker.rotation_degrees.y = rng.randf_range(-25.0, 25.0)
 
 	# Ground-level root strips crossing path at mid-section rows
 	for row in range(6, length - 2, 10):
-		var z := -float(row) * TILE_Z + rng.randf_range(-0.5, 0.5)
 		if rng.randf() < 0.60:
 			var rstrip := _add_box(_group("GrassAndPlants"), "GroundRoot",
 				Vector3(rng.randf_range(1.8, 2.8), 0.06, 0.10),
-				Vector3(rng.randf_range(-0.8, 0.8), 0.02, z),
+				_row_local(row, rng.randf_range(-0.8, 0.8), ROAD_TOP_Y + 0.02, rng.randf_range(-0.5, 0.5)),
 				COLOR_LOG.lerp(COLOR_TRUNK, rng.randf_range(0.0, 0.5))
 			)
-			rstrip.rotation_degrees.y = rng.randf_range(-18.0, 18.0)
+			rstrip.rotation.y = _row_heading_y(row) + deg_to_rad(rng.randf_range(-18.0, 18.0))
 
 # ─── Wildlands (Level 6) helpers ────────────────────────────────────────────
 
@@ -2743,7 +2917,6 @@ const COLOR_ELEPHANT   := Color(0.28, 0.26, 0.24)
 func _spawn_wildlands_dressing(data: Dictionary, rng: RandomNumberGenerator) -> void:
 	var length: int = data.get("length", 30)
 	for row in range(1, length + 4):
-		var z := -float(row) * TILE_Z + rng.randf_range(-0.6, 0.6)
 		for side_value in [-1.0, 1.0]:
 			var side := float(side_value)
 			var near_x := side * rng.randf_range(2.8, 3.3)
@@ -2751,13 +2924,13 @@ func _spawn_wildlands_dressing(data: Dictionary, rng: RandomNumberGenerator) -> 
 			var far_x  := side * rng.randf_range(5.0, 6.0)
 			# Dry grass tufts near path
 			if rng.randf() < 0.72:
-				_dry_grass_tuft(Vector3(near_x, 0.0, z + rng.randf_range(-0.7, 0.7)), rng)
+				_dry_grass_tuft(_row_local(row, near_x, 0.0, rng.randf_range(-0.7, 0.7)), rng)
 			# Sandy rocks at mid distance
 			if rng.randf() < 0.30:
-				_sandy_rock_cluster(Vector3(mid_x, 0.0, z + rng.randf_range(-0.8, 0.8)), rng)
+				_sandy_rock_cluster(_row_local(row, mid_x, 0.0, rng.randf_range(-0.8, 0.8)), rng)
 			# Far trees sparse
 			if row % 3 == 0 and rng.randf() < 0.40:
-				_acacia_tree(Vector3(far_x, 0.0, z), rng)
+				_acacia_tree(_row_local(row, far_x, 0.0, rng.randf_range(-0.6, 0.6)), rng)
 
 func _wildlife_glb(animal: String, pos: Vector3, s: Vector3, rot_y: float = 0.0) -> void:
 	var root := Node3D.new()
@@ -2773,29 +2946,28 @@ func _wildlife_glb(animal: String, pos: Vector3, s: Vector3, rot_y: float = 0.0)
 
 func _spawn_wildlands_wildlife(data: Dictionary, rng: RandomNumberGenerator) -> void:
 	var length: int = data.get("length", 30)
-	var mid_z  := -float(length / 2) * TILE_Z
-	var end_z  := -float(length - 6) * TILE_Z
-	var near_z := -float(6) * TILE_Z
+	var mid_row  := length / 2
+	var end_row  := length - 6
 
 	# Birds arcing across the sky
 	for i in range(2):
 		var row := 5 + i * 9
 		_bird(
-			Vector3(-6.2, rng.randf_range(3.2, 4.4), -float(row) * TILE_Z),
-			Vector3(6.2,  rng.randf_range(3.4, 4.8), -float(row + 3) * TILE_Z),
+			_row_local(row, -6.2, rng.randf_range(3.2, 4.4)),
+			_row_local(row + 3, 6.2, rng.randf_range(3.4, 4.8)),
 			rng
 		)
 
 	# Background wildlife — all placed at |x| > 4.0, never in the gameplay lanes
-	_wildlife_glb("elephant",    Vector3(rng.randf_range(4.5, 6.0),  0.0, end_z),          Vector3(1.6, 1.6, 1.6), 180.0)
-	_wildlife_glb("giraffe",     Vector3(-rng.randf_range(5.5, 7.0), 0.0, end_z + 8.0),    Vector3(1.2, 1.2, 1.2), 90.0)
-	_wildlife_glb("zebra",       Vector3(rng.randf_range(4.0, 5.5),  0.0, mid_z),           Vector3(1.0, 1.0, 1.0), 200.0)
-	_wildlife_glb("lion",        Vector3(-rng.randf_range(4.5, 5.5), 0.0, mid_z - 10.0),   Vector3(0.9, 0.9, 0.9), 160.0)
-	_wildlife_glb("cape_buffalo",Vector3(rng.randf_range(4.0, 5.5),  0.0, mid_z + 10.0),   Vector3(1.1, 1.1, 1.1), 220.0)
-	_wildlife_glb("rhino",       Vector3(-rng.randf_range(5.0, 6.0), 0.0, near_z + 4.0),   Vector3(1.2, 1.2, 1.2), 140.0)
-	_wildlife_glb("warthog",     Vector3(rng.randf_range(4.2, 5.0),  0.0, near_z),          Vector3(0.7, 0.7, 0.7), 100.0)
+	_wildlife_glb("elephant",    _row_local(end_row, rng.randf_range(4.5, 6.0), 0.0),       Vector3(1.6, 1.6, 1.6), 180.0)
+	_wildlife_glb("giraffe",     _row_local(end_row - 3, -rng.randf_range(5.5, 7.0), 0.0),  Vector3(1.2, 1.2, 1.2), 90.0)
+	_wildlife_glb("zebra",       _row_local(mid_row, rng.randf_range(4.0, 5.5), 0.0),        Vector3(1.0, 1.0, 1.0), 200.0)
+	_wildlife_glb("lion",        _row_local(mid_row + 3, -rng.randf_range(4.5, 5.5), 0.0),  Vector3(0.9, 0.9, 0.9), 160.0)
+	_wildlife_glb("cape_buffalo",_row_local(mid_row - 3, rng.randf_range(4.0, 5.5), 0.0),   Vector3(1.1, 1.1, 1.1), 220.0)
+	_wildlife_glb("rhino",       _row_local(7, -rng.randf_range(5.0, 6.0), 0.0),            Vector3(1.2, 1.2, 1.2), 140.0)
+	_wildlife_glb("warthog",     _row_local(6, rng.randf_range(4.2, 5.0), 0.0),             Vector3(0.7, 0.7, 0.7), 100.0)
 	if length > 25:
-		_wildlife_glb("leopard", Vector3(-rng.randf_range(4.5, 5.5), 0.0, end_z + 16.0),   Vector3(0.8, 0.8, 0.8), 250.0)
+		_wildlife_glb("leopard", _row_local(end_row - 5, -rng.randf_range(4.5, 5.5), 0.0),  Vector3(0.8, 0.8, 0.8), 250.0)
 
 func _dry_grass_tuft(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	var root := Node3D.new()
@@ -2912,6 +3084,81 @@ func _place_glb(parent: Node3D, path: String, offset: Vector3, s: Vector3) -> No
 	parent.add_child(inst)
 	return inst
 
+# ─── GLB MultiMesh batching ──────────────────────────────────────────────────
+# Scattered dressing props (grass, ferns, bushes, trees, rocks) reuse the same
+# handful of GLB scenes hundreds of times. Instead of one scene instance (and
+# one draw call) per prop, transforms are collected during build and flushed
+# into one MultiMesh per unique mesh — a single draw call for all instances.
+
+func _batch_glb(path: String, xform: Transform3D) -> bool:
+	if not ResourceLoader.exists(path):
+		return false
+	if not _glb_batches.has(path):
+		_glb_batches[path] = []
+	(_glb_batches[path] as Array).append(xform)
+	return true
+
+func _flush_glb_batches() -> void:
+	for path: String in _glb_batches.keys():
+		var xforms: Array = _glb_batches[path]
+		if xforms.is_empty():
+			continue
+		var packed := load(path) as PackedScene
+		if packed == null:
+			continue
+		var proto := packed.instantiate() as Node3D
+		if proto == null:
+			continue
+		var entries: Array = []
+		_collect_mesh_entries(proto, Transform3D.IDENTITY, entries)
+		proto.free()
+		var no_shadow := path.contains("grass_clumps") or path.contains("ferns") or path.contains("vines")
+		for entry: Dictionary in entries:
+			var mm := MultiMesh.new()
+			mm.transform_format = MultiMesh.TRANSFORM_3D
+			mm.mesh = entry["mesh"]
+			mm.instance_count = xforms.size()
+			for i in range(xforms.size()):
+				mm.set_instance_transform(i, (xforms[i] as Transform3D) * (entry["xform"] as Transform3D))
+			var mmi := MultiMeshInstance3D.new()
+			mmi.name = "Batch_" + path.get_file().get_basename()
+			mmi.multimesh = mm
+			if entry["override"] != null:
+				mmi.material_override = entry["override"]
+			if no_shadow:
+				mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			_group("Batched").add_child(mmi)
+	_glb_batches.clear()
+
+func _collect_mesh_entries(node: Node, xform: Transform3D, out: Array) -> void:
+	var local := xform
+	if node is Node3D:
+		local = xform * (node as Node3D).transform
+	if node is MeshInstance3D and (node as MeshInstance3D).mesh != null:
+		out.append({
+			"mesh": (node as MeshInstance3D).mesh,
+			"xform": local,
+			"override": (node as MeshInstance3D).material_override,
+		})
+	for child in node.get_children():
+		_collect_mesh_entries(child, local, out)
+
+# Distance culling: dressing further than PROP_CULL_DISTANCE fades out —
+# the camera sits low behind the player, so far props are fog-covered pixels
+# that still cost draw calls without this.
+func _apply_distance_culling() -> void:
+	for group_name in ["Trees", "GrassAndPlants", "RocksAndLogs", "Ruins", "ModeEffects", "Animals", "RouteSigns", "Collectibles"]:
+		_apply_culling_recursive(_group(group_name))
+
+func _apply_culling_recursive(node: Node) -> void:
+	if node is GeometryInstance3D:
+		var gi := node as GeometryInstance3D
+		gi.visibility_range_end = PROP_CULL_DISTANCE
+		gi.visibility_range_end_margin = 6.0
+		gi.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+	for child in node.get_children():
+		_apply_culling_recursive(child)
+
 func _add_box(parent: Node3D, node_name: String, size: Vector3, pos: Vector3, color: Color) -> MeshInstance3D:
 	var mesh := MeshInstance3D.new()
 	mesh.name = node_name
@@ -2962,10 +3209,26 @@ func _add_static_box(parent: Node3D, node_name: String, size: Vector3, pos: Vect
 	return body
 
 func _set_color(mesh: MeshInstance3D, color: Color) -> void:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = color
-	if color.a < 0.999:
-		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
-	mat.roughness = 0.92
-	mesh.material_override = mat
+	mesh.material_override = _shared_material(color)
+
+# One material per (quantized) color, shared across every mesh that uses it.
+# Without this each prop part allocated its own StandardMaterial3D — thousands
+# of unique materials per level meant a GPU state change per mesh on mobile.
+func _shared_material(color: Color) -> StandardMaterial3D:
+	var q := Color(
+		snappedf(color.r, 0.02),
+		snappedf(color.g, 0.02),
+		snappedf(color.b, 0.02),
+		snappedf(color.a, 0.05)
+	)
+	var key := q.to_rgba64()
+	var mat: StandardMaterial3D = _mat_cache.get(key)
+	if mat == null:
+		mat = StandardMaterial3D.new()
+		mat.albedo_color = q
+		if q.a < 0.999:
+			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
+		mat.roughness = 0.92
+		_mat_cache[key] = mat
+	return mat

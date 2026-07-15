@@ -16,6 +16,8 @@ var _route_timer: float = 0.0
 var _junction_lbl : Label = null
 var _lives_lbl    : Label = null
 var _level_id     : int = 1
+var _hint_lbl     : Label = null
+var _hint_timer   : float = 0.0
 
 func _ready() -> void:
 	btn_pause.pressed.connect(_on_pause)
@@ -44,6 +46,10 @@ func _process(delta: float) -> void:
 		_route_timer -= delta
 		if _route_timer <= 0.0 and _route_lbl != null:
 			_route_lbl.visible = false
+	if _hint_timer > 0.0:
+		_hint_timer -= delta
+		if _hint_timer <= 0.0 and _hint_lbl != null:
+			_hint_lbl.visible = false
 
 # ─── Turn prompt ─────────────────────────────────────────────────────────────
 
@@ -166,6 +172,20 @@ func show_route_chosen(route_label: String) -> void:
 	_route_lbl.text = "Trail Chosen: " + route_label
 	_route_lbl.visible = true
 	_route_timer = 2.4
+
+# ─── Tutorial hints + endless progress ───────────────────────────────────────
+
+func set_progress_text(text: String) -> void:
+	lbl_level.text = text
+
+func show_hint(text: String, seconds: float = 2.6) -> void:
+	if _hint_lbl == null:
+		_hint_lbl = _hud_label("LblHint", Vector2(22, 500), Vector2(436, 88), 26)
+		_hint_lbl.add_theme_color_override("font_color", Color(1.0, 0.97, 0.82))
+		add_child(_hint_lbl)
+	_hint_lbl.text = text
+	_hint_lbl.visible = true
+	_hint_timer = seconds
 
 # ─── Sand warning ─────────────────────────────────────────────────────────────
 

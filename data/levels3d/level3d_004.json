@@ -10,14 +10,46 @@
     }
   ],
   "obstacles": [
-    { "type": "rock",  "lane": 0, "row": 6  },
-    { "type": "log",   "lane": 2, "row": 12 },
-    { "type": "spike", "lane": 1, "row": 18 },
-    { "type": "rock",  "lane": 0, "row": 27 },
-    { "type": "log",   "lane": 2, "row": 33 },
-    { "type": "rock",  "lane": 0, "row": 37 },
-    { "type": "spike", "lane": 2, "row": 37 },
-    { "type": "log",   "lane": 1, "row": 43 }
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 6
+    },
+    {
+      "type": "log",
+      "lane": 2,
+      "row": 12
+    },
+    {
+      "type": "spike",
+      "lane": 1,
+      "row": 18
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 27
+    },
+    {
+      "type": "log",
+      "lane": 2,
+      "row": 33
+    },
+    {
+      "type": "rock",
+      "lane": 0,
+      "row": 37
+    },
+    {
+      "type": "spike",
+      "lane": 2,
+      "row": 37
+    },
+    {
+      "type": "log",
+      "lane": 1,
+      "row": 41
+    }
   ],
   "coins": [
     {
@@ -62,11 +94,11 @@
     },
     {
       "lane": 0,
-      "row": 18
+      "row": 19
     },
     {
       "lane": 0,
-      "row": 18
+      "row": 19
     },
     {
       "lane": 0,
@@ -86,11 +118,11 @@
     },
     {
       "lane": 0,
-      "row": 27
+      "row": 28
     },
     {
       "lane": 0,
-      "row": 27
+      "row": 28
     },
     {
       "lane": 0,
@@ -122,7 +154,7 @@
     },
     {
       "lane": 1,
-      "row": 45
+      "row": 43
     },
     {
       "gem": true,
@@ -132,12 +164,12 @@
     {
       "gem": true,
       "lane": 2,
-      "row": 44
+      "row": 43
     },
     {
       "gem": true,
       "lane": 1,
-      "row": 45
+      "row": 43
     }
   ],
   "collectables": [
@@ -149,7 +181,7 @@
     {
       "type": "bricks",
       "lane": 0,
-      "row": 6
+      "row": 7
     },
     {
       "type": "relic_key",

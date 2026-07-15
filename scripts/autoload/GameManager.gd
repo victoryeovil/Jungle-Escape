@@ -21,6 +21,10 @@ var pending_level_after_login: int = 0
 var in_daily_challenge: bool = false
 var daily_challenge_data: Dictionary = {}
 
+# Endless Run mode — no lives cost, score-chasing loop
+var endless_mode: bool = false
+var endless_run_seed: int = 0
+
 # Challenge run tracking — reset on every level start
 var _challenge_fail_count: int = 0
 var _challenge_retry_used: bool = false
@@ -145,6 +149,7 @@ func should_show_login_prompt() -> bool:
 func go_to_menu() -> void:
 	print("[NAV][GameManager] go_to_menu called")
 	state = GameState.MENU
+	endless_mode = false
 	get_tree().paused = false
 	var err := get_tree().change_scene_to_file("res://scenes/main_menu/MainMenu.tscn")
 	print("[NAV][GameManager] go_to_menu change_scene result=" + str(err))
@@ -168,8 +173,24 @@ func go_to_gameplay(level_id: int) -> void:
 	var err := get_tree().change_scene_to_file("res://scenes/gameplay/GameplayScreen.tscn")
 	print("[NAV][GameManager] go_to_gameplay change_scene result=" + str(err))
 
+func go_to_endless() -> void:
+	print("[NAV][GameManager] go_to_endless called")
+	endless_mode = true
+	endless_run_seed = randi()
+	current_level_id = 0
+	session_coins = 0
+	session_keys = 0
+	last_fail_row = 0
+	_level_start_time = Time.get_ticks_msec() / 1000.0
+	state = GameState.PLAYING
+	Analytics.level_start(0, SaveManager.get_selected_skin(), 1)
+	get_tree().paused = false
+	var err := get_tree().change_scene_to_file("res://scenes/game3d/Game3D.tscn")
+	print("[NAV][GameManager] go_to_endless change_scene result=" + str(err))
+
 func go_to_gameplay_3d(level_id: int) -> void:
 	print("[NAV][GameManager] go_to_gameplay_3d called; level_id=" + str(level_id))
+	endless_mode = false
 	if level_id > 3 and not SupabaseClient.has_registration_key():
 		print("[NAV][GameManager] go_to_gameplay_3d blocked; registration required for level", level_id)
 		go_to_login_prompt(true, level_id)
@@ -217,6 +238,10 @@ func go_to_wildlands_unlock() -> void:
 	print("[NAV][GameManager] go_to_wildlands_unlock change_scene result=" + str(err))
 
 func restart_level() -> void:
+	if endless_mode:
+		get_tree().paused = false
+		go_to_endless()
+		return
 	if in_daily_challenge:
 		_challenge_retry_used = true
 	get_tree().paused = false

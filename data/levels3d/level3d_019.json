@@ -48,7 +48,7 @@
     {
       "type": "branch",
       "lane": 1,
-      "row": 44
+      "row": 42
     }
   ],
   "coins": [
@@ -109,7 +109,7 @@
       "row": 19
     },
     {
-      "lane": 1,
+      "lane": 0,
       "row": 20
     },
     {
@@ -125,7 +125,7 @@
       "row": 24
     },
     {
-      "lane": 0,
+      "lane": 1,
       "row": 25
     },
     {
@@ -183,12 +183,12 @@
     {
       "gem": true,
       "lane": 0,
-      "row": 45
+      "row": 44
     },
     {
       "gem": true,
       "lane": 0,
-      "row": 45
+      "row": 44
     }
   ],
   "collectables": [

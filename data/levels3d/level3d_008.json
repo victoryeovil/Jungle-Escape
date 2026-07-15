@@ -33,7 +33,7 @@
     {
       "type": "spike",
       "lane": 2,
-      "row": 15
+      "row": 18
     },
     {
       "type": "rock",
@@ -58,7 +58,7 @@
     {
       "type": "rock",
       "lane": 0,
-      "row": 31
+      "row": 26
     }
   ],
   "coins": [
@@ -76,7 +76,7 @@
     },
     {
       "lane": 0,
-      "row": 4
+      "row": 5
     },
     {
       "lane": 0,
@@ -116,7 +116,7 @@
     },
     {
       "lane": 0,
-      "row": 18
+      "row": 20
     },
     {
       "lane": 0,
@@ -135,7 +135,7 @@
       "row": 24
     },
     {
-      "lane": 0,
+      "lane": 1,
       "row": 26
     },
     {
@@ -153,19 +153,19 @@
     {
       "gem": true,
       "lane": 0,
-      "row": 32
+      "row": 31
     },
     {
       "gem": true,
       "lane": 2,
-      "row": 32
+      "row": 31
     }
   ],
   "collectables": [
     {
       "type": "bricks",
       "lane": 0,
-      "row": 4
+      "row": 5
     },
     {
       "type": "tools",
@@ -180,7 +180,7 @@
     {
       "type": "tools",
       "lane": 0,
-      "row": 22
+      "row": 23
     },
     {
       "type": "bricks",

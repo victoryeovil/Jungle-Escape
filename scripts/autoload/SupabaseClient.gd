@@ -56,9 +56,9 @@ func _process(delta: float) -> void:
 		# Second leg — browser sent real params via JS redirect
 		var qs := request_line.split("?")[1].split(" ")[0] if "?" in request_line else ""
 		var params := _parse_qs(qs)
-		var at  := params.get("access_token",  "")
-		var rt  := params.get("refresh_token", "")
-		var uid := params.get("user_id",       "")
+		var at:  String = params.get("access_token",  "")
+		var rt:  String = params.get("refresh_token", "")
+		var uid: String = params.get("user_id",       "")
 		_serve_peer(peer, "<h1 style='font-family:sans-serif;color:#2d7a2d'>Login successful! Return to the game.</h1>")
 		_oauth_server.stop()
 		_oauth_server = null

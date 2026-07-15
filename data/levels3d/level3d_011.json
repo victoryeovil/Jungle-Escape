@@ -28,12 +28,12 @@
     {
       "type": "branch",
       "lane": 1,
-      "row": 14
+      "row": 13
     },
     {
       "type": "rock",
       "lane": 0,
-      "row": 18
+      "row": 19
     },
     {
       "type": "rock",
@@ -58,7 +58,7 @@
     {
       "type": "rock",
       "lane": 0,
-      "row": 33
+      "row": 29
     }
   ],
   "coins": [
@@ -116,7 +116,7 @@
     },
     {
       "lane": 0,
-      "row": 19
+      "row": 20
     },
     {
       "lane": 0,
@@ -143,7 +143,7 @@
       "row": 27
     },
     {
-      "lane": 0,
+      "lane": 1,
       "row": 29
     },
     {
@@ -156,17 +156,17 @@
     },
     {
       "lane": 1,
-      "row": 34
+      "row": 33
     },
     {
       "gem": true,
       "lane": 0,
-      "row": 34
+      "row": 33
     },
     {
       "gem": true,
       "lane": 2,
-      "row": 35
+      "row": 33
     }
   ],
   "collectables": [
@@ -188,7 +188,7 @@
     {
       "type": "food",
       "lane": 0,
-      "row": 21
+      "row": 22
     },
     {
       "type": "map_piece",

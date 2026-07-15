@@ -7,11 +7,33 @@ const RUN_SPEED: float = 8.0  # default; overridden per-level by Game3D
 var _run_speed: float = RUN_SPEED
 
 func set_level_speed(level_id: int) -> void:
+	# Gentle ramp across the campaign so later levels feel faster and more
+	# demanding without outrunning the swipe reaction window (~0.9 s per 2 rows).
 	match level_id:
 		1: _run_speed = 5.5
-		2: _run_speed = 6.5
-		3: _run_speed = 7.2
+		2: _run_speed = 6.2
+		3: _run_speed = 6.8
+		4: _run_speed = 7.2
+		5: _run_speed = 7.5
+		6: _run_speed = 7.7
+		7: _run_speed = 7.8
+		8: _run_speed = 7.9
+		9: _run_speed = 8.0
+		10: _run_speed = 8.1
+		11: _run_speed = 8.2
+		12: _run_speed = 8.2
+		13: _run_speed = 8.4
+		14: _run_speed = 8.5
+		15: _run_speed = 8.5
+		16: _run_speed = 8.7
+		17: _run_speed = 8.6
+		18: _run_speed = 8.8
+		19: _run_speed = 9.0
+		20: _run_speed = 9.0
 		_: _run_speed = RUN_SPEED
+
+func set_run_speed(speed: float) -> void:
+	_run_speed = speed
 const JUMP_VELOCITY: float = 8.5
 const SLIDE_DURATION: float = 0.7
 const GRAVITY: float = 22.0
@@ -76,6 +98,7 @@ var _skin_id: String = "explorer"
 var _robot_shield_active: bool = false   # Robot: absorbs one hit
 var _magnet_timer: float = 0.0           # Treasure: coin attract pulse
 var _golden_coin_counter: int = 0        # Golden: bonus coin every 3
+var _invincible_timer: float = 0.0       # post-revive grace period
 
 signal died
 signal sand_blocked   # emitted when player tries to jump on sand without Sand Shoes
@@ -146,11 +169,14 @@ func _physics_process(delta: float) -> void:
 	_detect_surface()
 	_tick_abilities(delta)
 	_update_trail()
+	_tick_invincibility(delta)
 
 	for i in get_slide_collision_count():
 		var col := get_slide_collision(i)
 		var collider := col.get_collider()
 		if collider != null and collider.has_meta("obstacle"):
+			if _invincible_timer > 0.0:
+				continue
 			die()
 			return
 
@@ -349,8 +375,35 @@ func _on_turn_zone_exited() -> void:
 	_turn_zone_dir = 0
 	_queued_turn = 0
 
+func _tick_invincibility(delta: float) -> void:
+	if _invincible_timer <= 0.0:
+		return
+	_invincible_timer -= delta
+	var blink_target: Node3D = _character_model if _character_model != null else self
+	if _invincible_timer <= 0.0:
+		blink_target.visible = true
+	else:
+		blink_target.visible = fmod(_invincible_timer, 0.24) > 0.10
+
+# Second chance: reposition on a safe row and grant a short grace window.
+# Paid with gems for now — swap the gem cost for a rewarded ad callback once
+# an ad SDK is integrated.
+func revive(safe_pos: Vector3) -> void:
+	_is_dead = false
+	state = State.RUN
+	velocity = Vector3.ZERO
+	global_position = safe_pos
+	_queued_turn = 0
+	_slide_timer = 0.0
+	_set_slide_collision(false)
+	_invincible_timer = 2.2
+	EventBus.play_sfx.emit("gem")
+	_update_character_animation(true)
+
 func die() -> void:
 	if _is_dead:
+		return
+	if _invincible_timer > 0.0:
 		return
 	# Robot: shielded — absorbs one obstacle hit
 	if _skin_id == "robot" and _robot_shield_active:
@@ -374,6 +427,10 @@ func die() -> void:
 
 func reset(lane: int = 1) -> void:
 	_is_dead = false
+	_invincible_timer = 0.0
+	if _character_model != null:
+		_character_model.visible = true
+	visible = true
 	_lane_offsets = DEFAULT_LANE_OFFSETS.duplicate()
 	current_lane = clampi(lane, 0, _lane_offsets.size() - 1)
 	state = State.RUN
