@@ -31,6 +31,8 @@ signal level_unlocked(level_id: int)
 signal skin_unlocked(skin_id: String)
 @warning_ignore("unused_signal")
 signal stars_updated(total_stars: int)
+@warning_ignore("unused_signal")
+signal lives_changed(current: int, max_lives: int)
 
 # --- UI ---
 @warning_ignore("unused_signal")
@@ -41,6 +43,8 @@ signal settings_changed()
 signal login_requested()
 @warning_ignore("unused_signal")
 signal login_completed(success: bool)
+@warning_ignore("unused_signal")
+signal registration_required(next_level: int)   # hard gate — skip button hidden
 @warning_ignore("unused_signal")
 signal shop_opened()
 @warning_ignore("unused_signal")

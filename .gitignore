@@ -3,7 +3,7 @@
 .import/
 *.import
 
-# Godot exports and local export settings
+# Godot exports and local export settings (export_presets contains signing secrets)
 export.cfg
 export_presets.cfg
 *.apk
@@ -39,5 +39,7 @@ desktop.ini
 .vscode/
 .idea/
 
-build.md
-checkpoint.md
+# Dev-only docs (never publish)
+_dev/
+
+android

@@ -41,14 +41,119 @@ static func world_levels(world: Dictionary) -> Array:
 
 # ── Skins ──────────────────────────────────────────────────────────────────────
 const SKINS := [
-	{ "id": "explorer",      "name": "Kairo",             "cost_coins": 0,   "cost_gems": 0, "unlock_method": "default", "available_after_level": 0 },
-	{ "id": "jungle_girl",   "name": "Zuri",              "cost_coins": 0,   "cost_gems": 0, "unlock_method": "default", "available_after_level": 0 },
-	{ "id": "monkey",        "name": "Monkey",            "cost_coins": 300, "cost_gems": 0, "unlock_method": "coins",   "available_after_level": 3 },
-	{ "id": "robot",         "name": "Robot Explorer",    "cost_coins": 0,   "cost_gems": 5, "unlock_method": "gems",    "available_after_level": 5 },
-	{ "id": "treasure",      "name": "Treasure Hunter",   "cost_coins": 500, "cost_gems": 0, "unlock_method": "coins",   "available_after_level": 8 },
-	{ "id": "tribal",        "name": "Tribal Adventurer", "cost_coins": 0,   "cost_gems": 8, "unlock_method": "gems",    "available_after_level": 10 },
-	{ "id": "golden",        "name": "Golden Explorer",   "cost_coins": 0,   "cost_gems": 0, "unlock_method": "stars",   "unlock_stars": 60, "available_after_level": 20 },
+	{
+		"id": "explorer", "name": "Kairo",
+		"preview_path": "res://assets/3d/characters/kairo/kairo_source_preview.png",
+		"scene_path": "res://assets/3d/characters/kairo/Kairo.tscn",
+		"cost_coins": 0, "cost_gems": 0, "unlock_method": "default", "available_after_level": 0,
+		"stats": {"speed": 3, "agility": 3},
+		"special": "Balanced — holds his own on any route",
+		"lore": "A seasoned explorer, Kairo has charted dozens of lost jungle trails.",
+		"color_variants": [
+			{"id": "default", "name": "Classic",      "modulate": Color(1.00, 1.00, 1.00)},
+			{"id": "sand",    "name": "Desert Sand",   "modulate": Color(1.00, 0.88, 0.68)},
+			{"id": "forest",  "name": "Deep Forest",   "modulate": Color(0.68, 0.90, 0.62)},
+		],
+	},
+	{
+		"id": "jungle_girl", "name": "Zuri",
+		"preview_path": "res://assets/3d/characters/zuri/zuri_source_preview.png",
+		"scene_path": "res://assets/3d/characters/zuri/Zuri.tscn",
+		"cost_coins": 0, "cost_gems": 0, "unlock_method": "default", "available_after_level": 0,
+		"stats": {"speed": 4, "agility": 4},
+		"special": "Nimble — slides execute faster",
+		"lore": "Zuri grew up in the jungle canopy — no path is too wild for her.",
+		"color_variants": [
+			{"id": "default", "name": "Classic",   "modulate": Color(1.00, 1.00, 1.00)},
+			{"id": "sunset",  "name": "Sunset",    "modulate": Color(1.00, 0.82, 0.62)},
+			{"id": "storm",   "name": "Stormborn", "modulate": Color(0.72, 0.80, 0.90)},
+		],
+	},
+	{
+		"id": "monkey", "name": "Monkey",
+		"preview_path": "res://assets/3d/characters/monkey/monkey_source_preview.png",
+		"scene_path": "res://assets/3d/characters/monkey/Monkey.tscn",
+		"cost_coins": 300, "cost_gems": 0, "unlock_method": "coins", "available_after_level": 3,
+		"stats": {"speed": 5, "agility": 5},
+		"special": "Climber — jumps carry further",
+		"lore": "Quick and restless, the Jungle Monkey never misses a vine.",
+		"color_variants": [
+			{"id": "default", "name": "Classic",  "modulate": Color(1.00, 1.00, 1.00)},
+			{"id": "golden",  "name": "Gold Fur", "modulate": Color(1.08, 0.88, 0.46)},
+			{"id": "shadow",  "name": "Shadow",   "modulate": Color(0.48, 0.38, 0.55)},
+		],
+	},
+	{
+		"id": "robot", "name": "Robot Explorer",
+		"preview_path": "res://assets/3d/characters/robot/robot_source_preview.png",
+		"scene_path": "res://assets/3d/characters/robot/RobotExplorer.tscn",
+		"cost_coins": 0, "cost_gems": 5, "unlock_method": "gems", "available_after_level": 5,
+		"stats": {"speed": 2, "agility": 2},
+		"special": "Shielded — survives one obstacle hit",
+		"lore": "Built to endure harsh terrain — the Robot Explorer never gives up.",
+		"color_variants": [
+			{"id": "default", "name": "Steel",   "modulate": Color(1.00, 1.00, 1.00)},
+			{"id": "combat",  "name": "Combat",  "modulate": Color(0.92, 0.46, 0.44)},
+			{"id": "arctic",  "name": "Arctic",  "modulate": Color(0.72, 0.88, 1.00)},
+		],
+	},
+	{
+		"id": "treasure", "name": "Treasure Hunter",
+		"preview_path": "res://assets/3d/characters/treasure/treasure_source_preview.png",
+		"scene_path": "res://assets/3d/characters/treasure/TreasureHunter.tscn",
+		"cost_coins": 500, "cost_gems": 0, "unlock_method": "coins", "available_after_level": 8,
+		"stats": {"speed": 3, "agility": 3},
+		"special": "Magnet — pulls nearby coins in",
+		"lore": "Coin by coin, the Treasure Hunter has never left empty-handed.",
+		"color_variants": [
+			{"id": "default", "name": "Classic",     "modulate": Color(1.00, 1.00, 1.00)},
+			{"id": "desert",  "name": "Desert Gold", "modulate": Color(1.00, 0.86, 0.58)},
+			{"id": "camo",    "name": "Jungle Camo", "modulate": Color(0.60, 0.82, 0.56)},
+		],
+	},
+	{
+		"id": "tribal", "name": "Tribal Adventurer",
+		"preview_path": "res://assets/3d/characters/tribal/tribal_source_preview.png",
+		"scene_path": "res://assets/3d/characters/tribal/TribalAdventurer.tscn",
+		"cost_coins": 0, "cost_gems": 8, "unlock_method": "gems", "available_after_level": 10,
+		"stats": {"speed": 4, "agility": 3},
+		"special": "Tracker — reveals alternate paths",
+		"lore": "A guardian of the ancient paths, the Tribal Adventurer runs with the jungle.",
+		"color_variants": [
+			{"id": "default", "name": "Classic",  "modulate": Color(1.00, 1.00, 1.00)},
+			{"id": "flame",   "name": "Flame",    "modulate": Color(1.00, 0.70, 0.38)},
+			{"id": "spirit",  "name": "Spirit",   "modulate": Color(0.72, 0.60, 0.92)},
+		],
+	},
+	{
+		"id": "golden", "name": "Golden Explorer",
+		"preview_path": "res://assets/3d/characters/golden/golden_source_preview.png",
+		"scene_path": "res://assets/3d/characters/golden/GoldenExplorer.tscn",
+		"cost_coins": 0, "cost_gems": 0, "unlock_method": "stars", "unlock_stars": 60, "available_after_level": 20,
+		"stats": {"speed": 4, "agility": 4},
+		"special": "Lucky — earns bonus coins each run",
+		"lore": "Forged by fortune — every step the Golden Explorer takes leaves a trail.",
+		"color_variants": [
+			{"id": "default", "name": "Gold",    "modulate": Color(1.00, 1.00, 1.00)},
+			{"id": "diamond", "name": "Diamond", "modulate": Color(0.76, 0.90, 1.05)},
+			{"id": "ruby",    "name": "Ruby",    "modulate": Color(1.00, 0.54, 0.54)},
+		],
+	},
 ]
+
+static func get_skin(skin_id: String) -> Dictionary:
+	for skin: Dictionary in SKINS:
+		if str(skin.get("id", "")) == skin_id:
+			return skin
+	return {}
+
+static func get_skin_variant(skin_id: String, variant_id: String) -> Dictionary:
+	var skin := get_skin(skin_id)
+	for v: Dictionary in skin.get("color_variants", []):
+		if str(v.get("id", "")) == variant_id:
+			return v
+	var variants: Array = skin.get("color_variants", [])
+	return variants[0] if not variants.is_empty() else {}
 
 # ── Trails ─────────────────────────────────────────────────────────────────────
 const TRAILS := [
@@ -76,15 +181,20 @@ const TEASER_MESSAGES := [
 
 # ── Resources (collectibles beyond coins/gems) ──────────────────────────────
 const RESOURCES: Array = [
-	{ "id": "bricks",          "name": "Bricks",          "icon": "🧱" },
-	{ "id": "wood",            "name": "Wood",             "icon": "🪵" },
-	{ "id": "tiles",           "name": "Tiles",            "icon": "🔲" },
-	{ "id": "windows",         "name": "Windows",          "icon": "🪟" },
-	{ "id": "food",            "name": "Food",             "icon": "🥫" },
-	{ "id": "tools",           "name": "Tools",            "icon": "🔧" },
-	{ "id": "relic_keys",      "name": "Relic Keys",       "icon": "🗝" },
-	{ "id": "sunstone_shards", "name": "Sunstone Shards",  "icon": "✦" },
-	{ "id": "map_pieces",      "name": "Map Pieces",       "icon": "🗺" },
+	{ "id": "bricks",          "name": "Bricks",          "icon": "🧱", "icon_path": "res://assets/ui/icons/icon_bricks.png" },
+	{ "id": "wood",            "name": "Wood",             "icon": "🪵", "icon_path": "res://assets/ui/icons/icon_wood.png" },
+	{ "id": "tiles",           "name": "Tiles",            "icon": "🔲", "icon_path": "res://assets/ui/icons/icon_tiles.png" },
+	{ "id": "windows",         "name": "Windows",          "icon": "🪟", "icon_path": "res://assets/ui/icons/icon_windows.png" },
+	{ "id": "food",            "name": "Food",             "icon": "🥫", "icon_path": "res://assets/ui/icons/icon_food.png" },
+	{ "id": "tools",           "name": "Tools",            "icon": "🔧", "icon_path": "res://assets/ui/icons/icon_tools.png" },
+	{ "id": "relic_keys",      "name": "Relic Keys",       "icon": "🗝", "icon_path": "res://assets/ui/icons/icon_relic_key.png" },
+	{ "id": "sunstone_shards", "name": "Sunstone Shards",  "icon": "✦", "icon_path": "res://assets/ui/icons/icon_sunstone_shard.png" },
+	{ "id": "map_pieces",      "name": "Map Pieces",       "icon": "🗺", "icon_path": "res://assets/ui/icons/icon_map_piece.png" },
+	{ "id": "water_token",  "name": "Water Tokens",  "icon": "💧", "icon_path": "res://assets/ui/icons/water_token_icon.png" },
+	{ "id": "fish_token",   "name": "Fish Tokens",   "icon": "🐟", "icon_path": "res://assets/ui/icons/fish_token_icon.png" },
+	{ "id": "river_relic",  "name": "River Relics",  "icon": "⚱",  "icon_path": "res://assets/ui/icons/river_relic_icon.png" },
+	{ "id": "animal_badge", "name": "Animal Badges", "icon": "★",  "icon_path": "res://assets/ui/icons/animal_badge_icon.png" },
+	{ "id": "trade_token",  "name": "Trade Tokens",  "icon": "🔶", "icon_path": "res://assets/ui/icons/trade_token_icon.png" },
 ]
 
 # ── Upgrades ────────────────────────────────────────────────────────────────
@@ -96,6 +206,7 @@ const UPGRADES: Array = [
 		"unlock_after_level": 5,
 		"cost": { "coins": 150 },
 		"icon": "👟",
+		"icon_path": "res://assets/ui/icons/sand_shoes_icon.png",
 	},
 ]
 
