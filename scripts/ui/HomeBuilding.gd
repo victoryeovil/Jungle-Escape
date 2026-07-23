@@ -1,414 +1,563 @@
 extends Control
 
-# ─── Home Building Screen ─────────────────────────────────────────────────────
-# Shows the 6-stage home construction progress.
-# Each stage has a cost (from Constants.HOME_STAGES); player spends resources to advance.
+# Hands-on home construction. Players choose the land and plan, then tap the
+# actual building site to place every piece. Partial progress survives leaving.
 
-const HOME_ART_PATH := "res://assets/backgrounds/bg_home_building.png"
+const STAGE_PIECES := {1: 6, 2: 10, 3: 6, 4: 2, 5: 5}
+const SITE_RECT := Rect2(18, 86, 444, 500)
+const LAND_ART_PATH := "res://assets/backgrounds/bg_land_selection_v2.png"
 
-var _stage_cards: Array[Control] = []
-var _status_lbl: Label = null
-var _progress_bar: ColorRect = null
-var _home_art_texture: Texture2D = null
+var _status_label: Label
+var _instruction_label: Label
+var _stage_label: Label
+var _progress_fill: ColorRect
+var _resource_label: Label
+var _site_button: Button
+var _land_panel: Control
+var _plan_panel: Control
+var _pulse := 0.0
+var _using_land_art := false
 
 func _ready() -> void:
-	_home_art_texture = _load_art_texture(HOME_ART_PATH)
-	if _using_art_plate():
-		_build_art_plate()
-		_build_status_label()
-		queue_redraw()
+	if _selected_plot().is_empty():
+		_build_land_art_screen()
+		EventBus.play_music.emit("menu")
 		return
-	_build_background()
-	_build_header()
-	_build_progress_header()
-	_build_stage_list()
-	_build_status_label()
+	_build_interface()
 	_refresh()
+	EventBus.play_music.emit("menu")
 
-# ─── Build ────────────────────────────────────────────────────────────────────
-
-func _build_background() -> void:
-	var bg := ColorRect.new()
-	bg.color = Color(0.14, 0.09, 0.04)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(bg)
-
-	# Savanna sky gradient at top
-	var sky := ColorRect.new()
-	sky.color = Color(0.62, 0.52, 0.30, 0.40)
-	sky.size = Vector2(480, 110)
-	sky.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(sky)
+func _process(delta: float) -> void:
+	_pulse += delta
+	queue_redraw()
 
 func _draw() -> void:
-	if _using_art_plate():
-		var draw_size := size
-		if draw_size.x <= 0.0 or draw_size.y <= 0.0:
-			draw_size = get_viewport_rect().size
-		draw_texture_rect(_home_art_texture, Rect2(Vector2.ZERO, draw_size), false)
+	if _using_land_art:
+		return
+	# Layered sky and ground give the construction view depth without hiding it
+	# behind a pre-rendered purchase screen.
+	draw_rect(Rect2(0, 0, 480, 854), Color("102917"))
+	draw_rect(SITE_RECT, Color("78b8c5"))
+	draw_rect(Rect2(18, 270, 444, 316), _plot_ground_color())
+	draw_circle(Vector2(405, 132), 42.0, Color(1.0, 0.78, 0.24, 0.85))
+	_draw_distant_jungle()
+	_draw_plot_features()
+	if not _selected_plot().is_empty():
+		_draw_house()
+		_draw_build_marker()
 
-func _build_art_plate() -> void:
-	_art_hit(Rect2(10, 10, 58, 44)).pressed.connect(_on_back)
-	_art_hit(Rect2(430, 12, 42, 44)).pressed.connect(_on_plus)
+func _build_land_art_screen() -> void:
+	_using_land_art = true
+	var background := TextureRect.new()
+	background.texture = load(LAND_ART_PATH)
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_SCALE
+	background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(background)
 
-	var stage_rows := [
-		Rect2(350, 302, 106, 42),
-		Rect2(350, 392, 106, 42),
-		Rect2(350, 480, 106, 42),
-		Rect2(350, 571, 106, 42),
-		Rect2(350, 660, 106, 42),
-		Rect2(350, 750, 106, 42),
+	# The illustrated cards are the controls. Transparent hit areas preserve the
+	# supplied design while keeping the choices fully functional.
+	_land_art_hit(Rect2(8, 12, 56, 52), _on_back)
+	var card_rects := [
+		Rect2(24, 152, 434, 168),
+		Rect2(24, 324, 434, 155),
+		Rect2(24, 485, 434, 151),
 	]
-	for i in range(stage_rows.size()):
-		_art_hit(stage_rows[i]).pressed.connect(_on_build.bind(i))
+	for i in range(Constants.LAND_PLOTS.size()):
+		var plot: Dictionary = Constants.LAND_PLOTS[i]
+		var button := _land_art_hit(card_rects[i], _choose_land.bind(plot))
+		button.disabled = not SaveManager.is_level_completed(int(plot.get("unlock_level", 1)))
+	_land_art_hit(Rect2(98, 741, 287, 72), _on_back)
 
-func _build_header() -> void:
-	var hdr := ColorRect.new()
-	hdr.color = Color(0.12, 0.08, 0.03, 0.96)
-	hdr.size = Vector2(480, 60)
-	add_child(hdr)
+	# Replace the sample currency values in the artwork with live save values.
+	_land_counter(Vector2(244, 19), Vector2(78, 31), str(SaveManager.get_coins()))
+	_land_counter(Vector2(361, 19), Vector2(70, 31), str(SaveManager.get_gems()))
+	_status_label = Label.new()
+	_status_label.position = Vector2(42, 700)
+	_status_label.size = Vector2(396, 34)
+	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_status_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_status_label.add_theme_font_size_override("font_size", 13)
+	_status_label.add_theme_color_override("font_color", Color("fff2b4"))
+	_status_label.add_theme_color_override("font_outline_color", Color("21330e"))
+	_status_label.add_theme_constant_override("outline_size", 4)
+	add_child(_status_label)
 
-	var btn_back := Button.new()
-	btn_back.text = "←"
-	btn_back.custom_minimum_size = Vector2(52, 44)
-	btn_back.position = Vector2(6, 8)
-	btn_back.pressed.connect(_on_back)
-	_style_btn(btn_back, Color(0.28, 0.18, 0.08))
-	hdr.add_child(btn_back)
+func _land_art_hit(rect: Rect2, callback: Callable) -> Button:
+	var button := Button.new()
+	button.flat = true
+	button.position = rect.position
+	button.size = rect.size
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.pressed.connect(callback)
+	add_child(button)
+	return button
 
-	var lbl_title := Label.new()
-	lbl_title.text = "Build Your Home"
-	lbl_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl_title.add_theme_font_size_override("font_size", 20)
-	lbl_title.add_theme_color_override("font_color", Color(0.96, 0.84, 0.42))
-	lbl_title.size = Vector2(260, 44)
-	lbl_title.position = Vector2(110, 10)
-	hdr.add_child(lbl_title)
+func _land_counter(pos: Vector2, counter_size: Vector2, value: String) -> void:
+	var label := Label.new()
+	label.text = value
+	label.position = pos
+	label.size = counter_size
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_color", Color("fff0bd"))
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("3d2812")
+	style.set_corner_radius_all(12)
+	label.add_theme_stylebox_override("normal", style)
+	add_child(label)
 
-	var lbl_coins := Label.new()
-	lbl_coins.name = "HdrCoins"
-	lbl_coins.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	lbl_coins.add_theme_font_size_override("font_size", 14)
-	lbl_coins.add_theme_color_override("font_color", Color(1.0, 0.90, 0.30))
-	lbl_coins.size = Vector2(90, 44)
-	lbl_coins.position = Vector2(382, 10)
-	hdr.add_child(lbl_coins)
+func _draw_distant_jungle() -> void:
+	var tree_color := Color("245e31")
+	for i in range(10):
+		var x := 30.0 + float(i) * 46.0
+		var h := 52.0 + float((i * 23) % 50)
+		draw_rect(Rect2(x - 4, 270 - h * 0.45, 8, h), Color("4f3b24"))
+		draw_circle(Vector2(x, 235 - h * 0.45), 30.0, tree_color)
 
-func _build_progress_header() -> void:
-	var prog_bg := ColorRect.new()
-	prog_bg.name = "ProgBg"
-	prog_bg.color = Color(0.08, 0.05, 0.02, 0.90)
-	prog_bg.size = Vector2(480, 44)
-	prog_bg.position = Vector2(0, 60)
-	add_child(prog_bg)
+func _draw_plot_features() -> void:
+	match str(SaveManager.get_setting("home_plot", "")):
+		"riverside":
+			draw_colored_polygon(PackedVector2Array([Vector2(18, 512), Vector2(462, 474), Vector2(462, 586), Vector2(18, 586)]), Color("2787ad"))
+			for i in range(6):
+				draw_line(Vector2(30 + i * 68, 535), Vector2(76 + i * 68, 528), Color(0.7, 0.94, 1.0, 0.55), 2.0)
+		"savanna":
+			draw_circle(Vector2(84, 356), 58, Color("bc9a47"))
+			draw_line(Vector2(84, 300), Vector2(84, 400), Color("5a3d1f"), 12)
+		"baobab":
+			draw_line(Vector2(392, 210), Vector2(386, 440), Color("6f4b2a"), 42)
+			draw_circle(Vector2(382, 206), 74, Color("36743c"))
+		_:
+			pass
 
-	var lbl_prog := Label.new()
-	lbl_prog.name = "LblProgress"
-	lbl_prog.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl_prog.add_theme_font_size_override("font_size", 13)
-	lbl_prog.add_theme_color_override("font_color", Color(0.88, 0.78, 0.52))
-	lbl_prog.size = Vector2(480, 44)
-	lbl_prog.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	prog_bg.add_child(lbl_prog)
+func _draw_house() -> void:
+	var current := SaveManager.get_home_stage()
+	var center := Vector2(240, 414)
+	# Cleared land / construction pad.
+	draw_colored_polygon(PackedVector2Array([center + Vector2(-158, 100), center + Vector2(0, 154), center + Vector2(158, 100), center + Vector2(0, 48)]), Color("ad8950"))
 
-	# Resource inventory row below
-	var inv := ColorRect.new()
-	inv.name = "InvStrip"
-	inv.color = Color(0.06, 0.04, 0.01, 0.85)
-	inv.size = Vector2(480, 36)
-	inv.position = Vector2(0, 104)
-	add_child(inv)
-	var x := 8.0
-	for r: Dictionary in Constants.RESOURCES:
-		var lbl := Label.new()
-		lbl.name = "ResLbl_" + str(r.get("id", ""))
-		lbl.add_theme_font_size_override("font_size", 11)
-		lbl.add_theme_color_override("font_color", Color(0.88, 0.82, 0.58))
-		lbl.size = Vector2(74, 36)
-		lbl.position = Vector2(x, 2)
-		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		inv.add_child(lbl)
-		x += 76.0
+	var foundation_parts := _visible_piece_count(1)
+	for i in range(foundation_parts):
+		var col := i % 3
+		var row := i / 3
+		var p := center + Vector2(-116 + col * 78, 84 + row * 28)
+		draw_colored_polygon(PackedVector2Array([p, p + Vector2(58, -18), p + Vector2(112, 0), p + Vector2(54, 20)]), Color("b98b55"))
+		draw_polyline(PackedVector2Array([p, p + Vector2(58, -18), p + Vector2(112, 0), p + Vector2(54, 20), p]), Color("69482d"), 2)
 
-func _build_stage_list() -> void:
-	var list := Control.new()
-	list.name = "StageList"
-	list.position = Vector2(0, 148)
-	list.size = Vector2(480, 600)
-	add_child(list)
+	var wall_parts := _visible_piece_count(2)
+	for i in range(wall_parts):
+		var side_right := i >= 5
+		var row := (i if not side_right else i - 5)
+		if not side_right:
+			var y := 438.0 - row * 25.0
+			draw_rect(Rect2(128, y, 224, 23), Color("c58a4b"))
+			draw_line(Vector2(128, y), Vector2(352, y), Color("704427"), 2)
+			for brick in range(1, 5):
+				draw_line(Vector2(128 + brick * 45 + (22 if row % 2 else 0), y), Vector2(128 + brick * 45 + (22 if row % 2 else 0), y + 23), Color("8b5934"), 1)
+		else:
+			var y2 := 438.0 - row * 25.0
+			draw_colored_polygon(PackedVector2Array([Vector2(352, y2), Vector2(400, y2 - 18), Vector2(400, y2 + 5), Vector2(352, y2 + 23)]), Color("a9703e"))
 
-	var y := 0.0
-	for i in range(Constants.HOME_STAGES.size()):
-		var stage_data: Dictionary = Constants.HOME_STAGES[i]
-		var card := _build_stage_card(i, stage_data, Vector2(14, y))
-		list.add_child(card)
-		_stage_cards.append(card)
-		y += 120.0
+	var roof_parts := _visible_piece_count(3)
+	if roof_parts > 0:
+		var roof_color := Color("a94125")
+		var roof_points := [
+			PackedVector2Array([Vector2(112, 334), Vector2(240, 274), Vector2(260, 300), Vector2(134, 359)]),
+			PackedVector2Array([Vector2(240, 274), Vector2(408, 326), Vector2(382, 351), Vector2(260, 300)]),
+			PackedVector2Array([Vector2(134, 359), Vector2(260, 300), Vector2(382, 351), Vector2(256, 410)]),
+			PackedVector2Array([Vector2(112, 334), Vector2(134, 359), Vector2(256, 410), Vector2(228, 379)]),
+			PackedVector2Array([Vector2(228, 379), Vector2(256, 410), Vector2(382, 351), Vector2(350, 382)]),
+			PackedVector2Array([Vector2(226, 278), Vector2(244, 268), Vector2(416, 320), Vector2(401, 332)]),
+		]
+		for i in range(mini(roof_parts, roof_points.size())):
+			draw_colored_polygon(roof_points[i], roof_color.lightened(float(i % 2) * 0.09))
+			draw_polyline(roof_points[i], Color("612618"), 2)
 
-func _build_stage_card(stage_idx: int, stage_data: Dictionary, card_pos: Vector2) -> Control:
-	var card := ColorRect.new()
-	card.name = "StageCard_%d" % stage_idx
-	card.color = Color(0.10, 0.07, 0.03, 0.88)
-	card.size = Vector2(452, 112)
-	card.position = card_pos
+	var window_parts := _visible_piece_count(4)
+	if window_parts >= 1:
+		_draw_window(Rect2(156, 370, 42, 48))
+	if window_parts >= 2:
+		_draw_window(Rect2(284, 370, 42, 48))
 
-	# Stage number badge
-	var badge := ColorRect.new()
-	badge.color = Color(0.22, 0.14, 0.06, 1.0)
-	badge.size = Vector2(44, 112)
-	card.add_child(badge)
-	var lbl_num := Label.new()
-	lbl_num.text = str(stage_idx + 1)
-	lbl_num.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl_num.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl_num.add_theme_font_size_override("font_size", 22)
-	lbl_num.add_theme_color_override("font_color", Color(0.96, 0.84, 0.42))
-	lbl_num.size = Vector2(44, 112)
-	card.add_child(lbl_num)
+	var finish_parts := _visible_piece_count(5)
+	if finish_parts >= 1:
+		draw_rect(Rect2(218, 388, 52, 70), Color("654225"))
+		draw_circle(Vector2(258, 424), 3, Color("f5c84b"))
+	if finish_parts >= 2:
+		draw_line(Vector2(240, 458), Vector2(240, 540), Color("d6bd77"), 38)
+	if finish_parts >= 3:
+		draw_circle(Vector2(105, 474), 32, Color("3e873f"))
+	if finish_parts >= 4:
+		draw_circle(Vector2(372, 474), 30, Color("3e873f"))
+	if finish_parts >= 5:
+		draw_string(ThemeDB.fallback_font, Vector2(178, 558), "YOUR JUNGLE HOME", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("ffe08a"))
 
-	var lbl_name := Label.new()
-	lbl_name.text = stage_data.get("name", "Stage " + str(stage_idx + 1))
-	lbl_name.add_theme_font_size_override("font_size", 16)
-	lbl_name.add_theme_color_override("font_color", Color(0.92, 0.85, 0.58))
-	lbl_name.size = Vector2(240, 28)
-	lbl_name.position = Vector2(52, 8)
-	card.add_child(lbl_name)
+	if current >= Constants.HOME_STAGES.size():
+		draw_arc(Vector2(240, 330), 176 + sin(_pulse * 2.0) * 4.0, 0, TAU, 48, Color(1.0, 0.82, 0.25, 0.45), 4)
 
-	var lbl_desc := Label.new()
-	lbl_desc.text = stage_data.get("description", "")
-	lbl_desc.add_theme_font_size_override("font_size", 11)
-	lbl_desc.add_theme_color_override("font_color", Color(0.75, 0.70, 0.55))
-	lbl_desc.size = Vector2(240, 36)
-	lbl_desc.position = Vector2(52, 34)
-	lbl_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	card.add_child(lbl_desc)
+func _draw_window(rect: Rect2) -> void:
+	draw_rect(rect, Color("52b7d6"))
+	draw_rect(rect, Color("f5d96e"), false, 3)
+	draw_line(rect.position + Vector2(rect.size.x * 0.5, 0), rect.position + Vector2(rect.size.x * 0.5, rect.size.y), Color("704427"), 2)
+	draw_line(rect.position + Vector2(0, rect.size.y * 0.5), rect.position + Vector2(rect.size.x, rect.size.y * 0.5), Color("704427"), 2)
 
-	var cost: Dictionary = stage_data.get("cost", {})
-	var lbl_cost := Label.new()
-	lbl_cost.name = "LblCost"
-	lbl_cost.text = _build_cost_text(cost)
-	lbl_cost.add_theme_font_size_override("font_size", 11)
-	lbl_cost.add_theme_color_override("font_color", Color(0.90, 0.75, 0.28))
-	lbl_cost.size = Vector2(240, 32)
-	lbl_cost.position = Vector2(52, 70)
-	lbl_cost.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	card.add_child(lbl_cost)
+func _draw_build_marker() -> void:
+	var stage := SaveManager.get_home_stage()
+	if stage <= 0 or stage >= Constants.HOME_STAGES.size():
+		return
+	var y := 320.0 + sin(_pulse * 4.0) * 7.0
+	draw_circle(Vector2(240, y), 24, Color(1.0, 0.78, 0.18, 0.85))
+	draw_string(ThemeDB.fallback_font, Vector2(232, y + 8), "+", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color.WHITE)
 
-	var btn_build := Button.new()
-	btn_build.name = "BtnBuild"
-	btn_build.text = "Build"
-	btn_build.custom_minimum_size = Vector2(82, 34)
-	btn_build.position = Vector2(360, 66)
-	btn_build.pressed.connect(func() -> void: _on_build(stage_idx))
-	_style_btn(btn_build, Color(0.42, 0.22, 0.06))
-	card.add_child(btn_build)
+func _visible_piece_count(stage: int) -> int:
+	var current := SaveManager.get_home_stage()
+	var goal := int(STAGE_PIECES.get(stage, 0))
+	if current > stage:
+		return goal
+	if current < stage:
+		return 0
+	return clampi(int(SaveManager.get_setting(_progress_key(stage), 0)), 0, goal)
 
-	var lbl_status := Label.new()
-	lbl_status.name = "LblStatus"
-	lbl_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl_status.add_theme_font_size_override("font_size", 13)
-	lbl_status.size = Vector2(90, 36)
-	lbl_status.position = Vector2(356, 26)
-	card.add_child(lbl_status)
+func _build_interface() -> void:
+	var header := ColorRect.new()
+	header.color = Color(0.02, 0.08, 0.03, 0.95)
+	header.position = Vector2(0, 0)
+	header.size = Vector2(480, 72)
+	add_child(header)
 
-	return card
+	var back := Button.new()
+	back.text = "<"
+	back.position = Vector2(10, 12)
+	back.size = Vector2(52, 46)
+	_style_button(back, Color("315526"))
+	back.pressed.connect(_on_back)
+	header.add_child(back)
 
-func _build_status_label() -> void:
-	_status_lbl = Label.new()
-	_status_lbl.name = "GlobalStatus"
-	_status_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_status_lbl.add_theme_font_size_override("font_size", 13)
-	_status_lbl.add_theme_color_override("font_color", Color(1.0, 0.65, 0.25))
-	_status_lbl.size = Vector2(440, 32)
-	_status_lbl.position = Vector2(20, 812)
-	_status_lbl.visible = false
-	add_child(_status_lbl)
+	var title := Label.new()
+	title.text = "BUILD YOUR HOME"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title.position = Vector2(72, 10)
+	title.size = Vector2(280, 48)
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", Color("ffe08a"))
+	header.add_child(title)
 
-# ─── Refresh ──────────────────────────────────────────────────────────────────
+	_resource_label = Label.new()
+	_resource_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_resource_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_resource_label.position = Vector2(350, 10)
+	_resource_label.size = Vector2(118, 48)
+	_resource_label.add_theme_font_size_override("font_size", 13)
+	_resource_label.add_theme_color_override("font_color", Color("ffd44f"))
+	header.add_child(_resource_label)
+
+	_site_button = Button.new()
+	_site_button.flat = true
+	_site_button.position = SITE_RECT.position
+	_site_button.size = SITE_RECT.size
+	_site_button.focus_mode = Control.FOCUS_NONE
+	_site_button.pressed.connect(_on_site_tapped)
+	add_child(_site_button)
+
+	var tray := ColorRect.new()
+	tray.color = Color(0.025, 0.075, 0.025, 0.96)
+	tray.position = Vector2(0, 602)
+	tray.size = Vector2(480, 252)
+	add_child(tray)
+
+	_stage_label = Label.new()
+	_stage_label.position = Vector2(20, 14)
+	_stage_label.size = Vector2(440, 32)
+	_stage_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_stage_label.add_theme_font_size_override("font_size", 20)
+	_stage_label.add_theme_color_override("font_color", Color("ffe08a"))
+	tray.add_child(_stage_label)
+
+	_instruction_label = Label.new()
+	_instruction_label.position = Vector2(24, 52)
+	_instruction_label.size = Vector2(432, 48)
+	_instruction_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_instruction_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_instruction_label.add_theme_font_size_override("font_size", 14)
+	_instruction_label.add_theme_color_override("font_color", Color("d7edbb"))
+	tray.add_child(_instruction_label)
+
+	var progress_bg := ColorRect.new()
+	progress_bg.color = Color("142313")
+	progress_bg.position = Vector2(38, 112)
+	progress_bg.size = Vector2(404, 20)
+	tray.add_child(progress_bg)
+	_progress_fill = ColorRect.new()
+	_progress_fill.color = Color("e7a72d")
+	_progress_fill.size = Vector2(0, 20)
+	progress_bg.add_child(_progress_fill)
+
+	_status_label = Label.new()
+	_status_label.position = Vector2(20, 144)
+	_status_label.size = Vector2(440, 30)
+	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_status_label.add_theme_font_size_override("font_size", 13)
+	_status_label.add_theme_color_override("font_color", Color("ffc85a"))
+	tray.add_child(_status_label)
+
+	var explore := Button.new()
+	explore.text = "EXPLORE FOR MATERIALS"
+	explore.position = Vector2(94, 188)
+	explore.size = Vector2(292, 48)
+	_style_button(explore, Color("286d36"))
+	explore.pressed.connect(_on_back)
+	tray.add_child(explore)
 
 func _refresh() -> void:
-	var current_stage: int = SaveManager.get_home_stage()
-
-	# Header coins
-	var hdr_coins := find_child("HdrCoins", true, false) as Label
-	if hdr_coins != null:
-		hdr_coins.text = "🪙 " + str(SaveManager.get_coins())
-
-	# Progress label
-	var lbl_prog := find_child("LblProgress", true, false) as Label
-	if lbl_prog != null:
-		if current_stage >= Constants.HOME_STAGES.size():
-			lbl_prog.text = "🏠 Home Complete! All 6 stages built."
-		else:
-			var stage_name: String = Constants.HOME_STAGES[current_stage].get("name", "")
-			lbl_prog.text = "Stage " + str(current_stage + 1) + " / " + str(Constants.HOME_STAGES.size()) + "  →  " + stage_name
-
-	# Resource inventory strip
-	var inv := find_child("InvStrip", true, false)
-	if inv != null:
-		for r: Dictionary in Constants.RESOURCES:
-			var res_id: String = r.get("id", "")
-			var lbl := inv.find_child("ResLbl_" + res_id, false, false) as Label
-			if lbl != null:
-				lbl.text = r.get("icon", "?") + " " + str(SaveManager.get_resource(res_id))
-
-	# Per-stage cards
-	for i in range(_stage_cards.size()):
-		_refresh_stage_card(i, current_stage)
-
-func _refresh_stage_card(stage_idx: int, current_stage: int) -> void:
-	var card := _stage_cards[stage_idx] as Control
-	if card == null:
+	_clear_picker()
+	_resource_label.text = "%d coins\n%d gems" % [SaveManager.get_coins(), SaveManager.get_gems()]
+	var plot := _selected_plot()
+	if plot.is_empty():
+		_site_button.disabled = true
+		_stage_label.text = "CHOOSE YOUR LAND"
+		_instruction_label.text = "Pick the place where your home will stand. Each plot has its own scenery and perk."
+		_progress_fill.size.x = 0
+		_show_land_choices()
+		queue_redraw()
 		return
-	var btn_build := card.find_child("BtnBuild", false, false) as Button
-	var lbl_status := card.find_child("LblStatus", false, false) as Label
-	if stage_idx < current_stage:
-		# Already built
-		card.color = Color(0.06, 0.12, 0.04, 0.88)
-		if btn_build != null:
-			btn_build.visible = false
-		if lbl_status != null:
-			lbl_status.text = "✓ Built"
-			lbl_status.add_theme_color_override("font_color", Color(0.40, 0.88, 0.36))
-	elif stage_idx == current_stage:
-		# Current buildable stage
-		card.color = Color(0.18, 0.12, 0.04, 0.92)
-		if btn_build != null:
-			btn_build.visible = true
-			btn_build.disabled = not _can_afford_stage(stage_idx)
-		if lbl_status != null:
-			lbl_status.text = ""
+
+	var stage := SaveManager.get_home_stage()
+	_site_button.disabled = stage >= Constants.HOME_STAGES.size()
+	if stage >= Constants.HOME_STAGES.size():
+		_stage_label.text = "%s COMPLETE" % str(_selected_plan().get("name", "HOME")).to_upper()
+		_instruction_label.text = "Your home is standing! Tap Explore to collect more treasures."
+		_progress_fill.size.x = 404
+		queue_redraw()
+		return
+
+	if stage == 1 and _selected_plan().is_empty():
+		_site_button.disabled = true
+		_stage_label.text = "CHOOSE A HOUSE PLAN"
+		_instruction_label.text = "Decide what you want to build before laying the first stone."
+		_progress_fill.size.x = 0
+		_show_plan_choices()
+		queue_redraw()
+		return
+
+	var goal := int(STAGE_PIECES.get(stage, 1))
+	var placed := int(SaveManager.get_setting(_progress_key(stage), 0))
+	_stage_label.text = "STAGE %d: %s" % [stage + 1, str(Constants.HOME_STAGES[stage].get("name", "Build"))]
+	if bool(SaveManager.get_setting(_paid_key(stage), false)):
+		_instruction_label.text = "Tap the glowing marker to place each piece.  %d / %d placed." % [placed, goal]
 	else:
-		# Locked future stage
-		card.color = Color(0.06, 0.04, 0.02, 0.80)
-		if btn_build != null:
-			btn_build.visible = false
-		if lbl_status != null:
-			lbl_status.text = "🔒"
-			lbl_status.add_theme_color_override("font_color", Color(0.55, 0.50, 0.40))
+		_instruction_label.text = "Tap the site to begin. Materials: %s" % _cost_text(_effective_cost(stage))
+	_progress_fill.size.x = 404.0 * float(placed) / float(goal)
+	queue_redraw()
 
-# ─── Actions ──────────────────────────────────────────────────────────────────
+func _show_land_choices() -> void:
+	_land_panel = Control.new()
+	_land_panel.position = Vector2(20, 100)
+	_land_panel.size = Vector2(440, 470)
+	add_child(_land_panel)
+	var colors := [Color("26758c"), Color("bd8c39"), Color("4e7136")]
+	for i in range(Constants.LAND_PLOTS.size()):
+		var plot: Dictionary = Constants.LAND_PLOTS[i]
+		var card := Button.new()
+		card.position = Vector2(8, 10 + i * 148)
+		card.size = Vector2(424, 132)
+		card.text = "%s\n%s\n%s\nCost: %s" % [str(plot.get("name", "Land")), str(plot.get("perk", "")), "Available after Level %d" % int(plot.get("unlock_level", 1)), _cost_text(plot.get("cost", {}))]
+		card.disabled = not SaveManager.is_level_unlocked(int(plot.get("unlock_level", 1)))
+		_style_button(card, colors[i])
+		var chosen: Dictionary = plot
+		card.pressed.connect(func(): _choose_land(chosen))
+		_land_panel.add_child(card)
 
-func _on_build(stage_idx: int) -> void:
+func _show_plan_choices() -> void:
+	_plan_panel = Control.new()
+	_plan_panel.position = Vector2(20, 100)
+	_plan_panel.size = Vector2(440, 470)
+	add_child(_plan_panel)
+	var colors := [Color("6d4a25"), Color("38605a"), Color("5a3b66")]
+	for i in range(Constants.HOUSE_PLANS.size()):
+		var plan: Dictionary = Constants.HOUSE_PLANS[i]
+		var card := Button.new()
+		card.position = Vector2(8, 10 + i * 148)
+		card.size = Vector2(424, 132)
+		card.text = "%s\n%s\nBuild cost x%.1f  |  Completion: %d gems" % [str(plan.get("name", "Plan")), str(plan.get("desc", "")), float(plan.get("cost_scale", 1.0)), int(plan.get("reward_gems", 10))]
+		_style_button(card, colors[i])
+		var chosen: Dictionary = plan
+		card.pressed.connect(func(): _choose_plan(chosen))
+		_plan_panel.add_child(card)
+
+func _choose_land(plot: Dictionary) -> void:
+	var cost: Dictionary = plot.get("cost", {})
+	if not _can_afford(cost):
+		_show_status("You need more materials for this land.")
+		return
+	_spend(cost)
+	SaveManager.set_setting("home_plot", str(plot.get("id", "")))
+	SaveManager.set_home_stage(1)
+	SaveManager.add_gems(Constants.HOME_STAGE_REWARD_GEMS)
+	EventBus.play_sfx.emit("stars_2")
+	_show_status("Land chosen. Now choose the home you want to build.")
+	if _using_land_art:
+		get_tree().reload_current_scene()
+		return
+	_refresh()
+
+func _choose_plan(plan: Dictionary) -> void:
+	SaveManager.set_setting("home_plan", str(plan.get("id", "")))
 	EventBus.play_sfx.emit("button")
-	var current := SaveManager.get_home_stage()
-	if stage_idx != current:
-		_show_status("Build stages in order!")
+	_show_status("Plan selected. Tap the site to lay your foundation.")
+	_refresh()
+
+func _on_site_tapped() -> void:
+	var stage := SaveManager.get_home_stage()
+	if stage <= 0 or stage >= Constants.HOME_STAGES.size():
 		return
-	if not _can_afford_stage(stage_idx):
-		_show_status("Not enough resources.")
+	if stage == 1 and _selected_plan().is_empty():
+		_refresh()
 		return
-	# Spend resources
-	var stage_data: Dictionary = Constants.HOME_STAGES[stage_idx]
-	var cost: Dictionary = stage_data.get("cost", {})
+	var paid_key := _paid_key(stage)
+	if not bool(SaveManager.get_setting(paid_key, false)):
+		var cost := _effective_cost(stage)
+		if not _can_afford(cost):
+			_show_status("Not enough materials. Explore more, then come back.")
+			return
+		_spend(cost)
+		SaveManager.set_setting(paid_key, true)
+
+	var key := _progress_key(stage)
+	var goal := int(STAGE_PIECES.get(stage, 1))
+	var placed := mini(goal, int(SaveManager.get_setting(key, 0)) + 1)
+	SaveManager.set_setting(key, placed)
+	EventBus.play_sfx.emit("button")
+	Input.vibrate_handheld(35)
+	_spawn_build_feedback(stage)
+	if placed >= goal:
+		_finish_stage(stage)
+	else:
+		_show_status(_placement_message(stage, placed, goal))
+	_refresh()
+
+func _finish_stage(stage: int) -> void:
+	SaveManager.set_home_stage(stage + 1)
+	SaveManager.set_setting(_paid_key(stage), false)
+	SaveManager.add_gems(Constants.HOME_STAGE_REWARD_GEMS)
+	Input.vibrate_handheld(120)
+	if stage + 1 >= Constants.HOME_STAGES.size():
+		var bonus := int(_selected_plan().get("reward_gems", 10))
+		SaveManager.add_gems(bonus)
+		EventBus.play_sfx.emit("stars_3")
+		_show_status("Home complete! You built every part. +%d gems" % (bonus + Constants.HOME_STAGE_REWARD_GEMS))
+	else:
+		EventBus.play_sfx.emit("stars_2")
+		_show_status("Stage complete! The house is taking shape.")
+
+func _spawn_build_feedback(stage: int) -> void:
+	var chip := Label.new()
+	chip.text = ["STONE", "BRICK", "TILE", "WINDOW", "DETAIL"][clampi(stage - 1, 0, 4)]
+	chip.position = Vector2(188, 322)
+	chip.size = Vector2(104, 34)
+	chip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	chip.add_theme_font_size_override("font_size", 16)
+	chip.add_theme_color_override("font_color", Color("fff1a1"))
+	add_child(chip)
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(chip, "position:y", 270.0, 0.45)
+	tween.tween_property(chip, "modulate:a", 0.0, 0.45)
+	tween.chain().tween_callback(chip.queue_free)
+
+func _placement_message(stage: int, placed: int, goal: int) -> String:
+	var verbs := ["Foundation stone laid", "Wall block fitted", "Roof section secured", "Window installed", "Finishing detail added"]
+	return "%s - %d of %d" % [verbs[clampi(stage - 1, 0, 4)], placed, goal]
+
+func _selected_plot() -> Dictionary:
+	var selected := str(SaveManager.get_setting("home_plot", ""))
+	for plot: Dictionary in Constants.LAND_PLOTS:
+		if str(plot.get("id", "")) == selected:
+			return plot
+	return {}
+
+func _selected_plan() -> Dictionary:
+	var selected := str(SaveManager.get_setting("home_plan", ""))
+	for plan: Dictionary in Constants.HOUSE_PLANS:
+		if str(plan.get("id", "")) == selected:
+			return plan
+	return {}
+
+func _effective_cost(stage: int) -> Dictionary:
+	var base: Dictionary = Constants.HOME_STAGES[stage].get("cost", {})
+	var scale := float(_selected_plan().get("cost_scale", 1.0))
+	var result: Dictionary = {}
+	for key: String in base:
+		result[key] = int(ceil(float(base[key]) * scale))
+	return result
+
+func _can_afford(cost: Dictionary) -> bool:
+	for key: String in cost:
+		var have := SaveManager.get_coins() if key == "coins" else SaveManager.get_resource(key)
+		if have < int(cost[key]):
+			return false
+	return true
+
+func _spend(cost: Dictionary) -> void:
 	for key: String in cost:
 		if key == "coins":
 			SaveManager.spend_coins(int(cost[key]))
 		else:
 			SaveManager.spend_resource(key, int(cost[key]))
-	SaveManager.set_home_stage(stage_idx + 1)
-	if stage_idx + 1 >= Constants.HOME_STAGES.size():
-		_show_status("🏠 Home Complete! Congratulations!")
-	else:
-		_show_status("Stage " + str(stage_idx + 1) + " built! 🎉")
-	_refresh()
+
+func _cost_text(cost: Dictionary) -> String:
+	var pieces: Array[String] = []
+	for key: String in cost:
+		pieces.append("%d %s" % [int(cost[key]), "coins" if key == "coins" else key.replace("_", " ")])
+	return " + ".join(pieces)
+
+func _progress_key(stage: int) -> String:
+	return "home_build_progress_%d" % stage
+
+func _paid_key(stage: int) -> String:
+	return "home_build_paid_%d" % stage
+
+func _plot_ground_color() -> Color:
+	match str(SaveManager.get_setting("home_plot", "")):
+		"riverside": return Color("508e52")
+		"savanna": return Color("b49345")
+		"baobab": return Color("628442")
+		_: return Color("477c42")
+
+func _clear_picker() -> void:
+	if is_instance_valid(_land_panel):
+		_land_panel.queue_free()
+	if is_instance_valid(_plan_panel):
+		_plan_panel.queue_free()
+	_land_panel = null
+	_plan_panel = null
+
+func _show_status(message: String) -> void:
+	_status_label.text = message
+	get_tree().create_timer(3.0).timeout.connect(func():
+		if is_instance_valid(_status_label) and _status_label.text == message:
+			_status_label.text = "")
+
+func _style_button(button: Button, color: Color) -> void:
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = color
+	normal.border_color = Color(1.0, 0.78, 0.25, 0.72)
+	normal.set_border_width_all(2)
+	normal.set_corner_radius_all(10)
+	normal.content_margin_left = 12
+	normal.content_margin_right = 12
+	button.add_theme_stylebox_override("normal", normal)
+	var hover := normal.duplicate() as StyleBoxFlat
+	hover.bg_color = color.lightened(0.15)
+	button.add_theme_stylebox_override("hover", hover)
+	var pressed := normal.duplicate() as StyleBoxFlat
+	pressed.bg_color = color.darkened(0.15)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_font_size_override("font_size", 14)
+	button.add_theme_color_override("font_color", Color.WHITE)
 
 func _on_back() -> void:
 	EventBus.play_sfx.emit("button")
 	GameManager.go_to_level_select()
-
-func _on_plus() -> void:
-	EventBus.play_sfx.emit("button")
-	GameManager.go_to_upgrade_shop()
-
-# ─── Helpers ──────────────────────────────────────────────────────────────────
-
-func _art_hit(rect: Rect2) -> Button:
-	var btn := Button.new()
-	btn.text = ""
-	btn.flat = true
-	btn.focus_mode = Control.FOCUS_NONE
-	btn.position = rect.position
-	btn.size = rect.size
-	btn.custom_minimum_size = rect.size
-	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	var empty := StyleBoxEmpty.new()
-	btn.add_theme_stylebox_override("normal", empty)
-	btn.add_theme_stylebox_override("hover", empty)
-	btn.add_theme_stylebox_override("pressed", empty)
-	btn.add_theme_stylebox_override("focus", empty)
-	add_child(btn)
-	return btn
-
-func _load_art_texture(path: String) -> Texture2D:
-	if ResourceLoader.exists(path):
-		var tex := load(path)
-		if tex is Texture2D:
-			return tex as Texture2D
-
-	var img := Image.new()
-	if img.load(path) == OK:
-		return ImageTexture.create_from_image(img)
-	return null
-
-func _using_art_plate() -> bool:
-	return _home_art_texture != null
-
-func _can_afford_stage(stage_idx: int) -> bool:
-	if stage_idx >= Constants.HOME_STAGES.size():
-		return false
-	var stage_data: Dictionary = Constants.HOME_STAGES[stage_idx]
-	var cost: Dictionary = stage_data.get("cost", {})
-	for key: String in cost:
-		if key == "coins":
-			if SaveManager.get_coins() < int(cost[key]):
-				return false
-		else:
-			if SaveManager.get_resource(key) < int(cost[key]):
-				return false
-	return true
-
-func _build_cost_text(cost: Dictionary) -> String:
-	var parts: Array[String] = []
-	for key: String in cost:
-		var val: int = int(cost[key])
-		if key == "coins":
-			parts.append("🪙 " + str(val))
-		else:
-			var info := _find_resource_info(key)
-			parts.append(info.get("icon", "?") + " " + str(val) + " " + info.get("name", key))
-	return "  ".join(parts)
-
-func _find_resource_info(resource_id: String) -> Dictionary:
-	for r: Dictionary in Constants.RESOURCES:
-		if r.get("id", "") == resource_id:
-			return r
-	return { "id": resource_id, "name": resource_id, "icon": "?" }
-
-func _show_status(msg: String) -> void:
-	if _status_lbl == null:
-		return
-	_status_lbl.text = msg
-	_status_lbl.visible = true
-	get_tree().create_timer(2.6).timeout.connect(func() -> void:
-		if _status_lbl != null:
-			_status_lbl.visible = false
-	)
-
-func _style_btn(btn: Button, col: Color) -> void:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = col
-	sb.corner_radius_top_left = 6
-	sb.corner_radius_top_right = 6
-	sb.corner_radius_bottom_left = 6
-	sb.corner_radius_bottom_right = 6
-	sb.content_margin_left = 8.0
-	sb.content_margin_right = 8.0
-	btn.add_theme_stylebox_override("normal", sb)
-	var sb_h := sb.duplicate() as StyleBoxFlat
-	sb_h.bg_color = col.lightened(0.18)
-	btn.add_theme_stylebox_override("hover", sb_h)
-	var sb_p := sb.duplicate() as StyleBoxFlat
-	sb_p.bg_color = col.darkened(0.18)
-	btn.add_theme_stylebox_override("pressed", sb_p)

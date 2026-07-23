@@ -208,3 +208,38 @@ CREATE TRIGGER trg_endless_scores_updated_at
 
 CREATE INDEX IF NOT EXISTS idx_endless_scores_distance
   ON endless_scores (best_distance_m DESC);
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- 8. WEEKLY LEADERBOARD (public read, owner write; week_key = "W<n>" with
+--    Monday 00:00 UTC boundaries, computed client-side)
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS weekly_scores (
+  user_id         UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  week_key        TEXT        NOT NULL,
+  display_name    TEXT        NOT NULL DEFAULT 'Explorer',
+  best_distance_m INTEGER     NOT NULL DEFAULT 0 CHECK (best_distance_m >= 0),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, week_key)
+);
+
+ALTER TABLE weekly_scores ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "public_read_weekly" ON weekly_scores;
+CREATE POLICY "public_read_weekly" ON weekly_scores
+  FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "owner_write_weekly" ON weekly_scores;
+CREATE POLICY "owner_write_weekly" ON weekly_scores
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "owner_update_weekly" ON weekly_scores;
+CREATE POLICY "owner_update_weekly" ON weekly_scores
+  FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP TRIGGER IF EXISTS trg_weekly_scores_updated_at ON weekly_scores;
+CREATE TRIGGER trg_weekly_scores_updated_at
+  BEFORE UPDATE ON weekly_scores
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE INDEX IF NOT EXISTS idx_weekly_scores_week_distance
+  ON weekly_scores (week_key, best_distance_m DESC);

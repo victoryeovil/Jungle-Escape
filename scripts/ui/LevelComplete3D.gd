@@ -29,6 +29,9 @@ func show_result(stars: int, coins: int, level_id: int = -1, resources: Dictiona
 	var teaser := _next_level_teaser(active_level)
 	if not teaser.is_empty():
 		lbl_story.text += "\n\n" + teaser
+	var home_teaser := _home_progress_teaser()
+	if not home_teaser.is_empty():
+		lbl_story.text += "\n" + home_teaser
 	if active_level == 3 and SaveManager.is_lives_intro_pending():
 		SaveManager.mark_lives_intro_seen()
 	_apply_register_gate(active_level)
@@ -56,6 +59,31 @@ func _next_level_teaser(level_id: int) -> String:
 	if next_name.is_empty():
 		return ""
 	return "▶ Next: %s awaits…" % next_name
+
+# Home-building drip: show what the next build stage still needs, so every
+# run's resource haul visibly pushes the home forward.
+func _home_progress_teaser() -> String:
+	var stage := SaveManager.get_home_stage()
+	if stage >= Constants.HOME_STAGES.size():
+		return ""
+	if stage == 0:
+		return "🏠 Your Land awaits — buy a plot to start building!" if SaveManager.get_stars(5) > 0 else ""
+	var base: Dictionary = Constants.HOME_STAGES[stage].get("cost", {})
+	var scale := 1.0
+	var plan_id := str(SaveManager.get_setting("home_plan", ""))
+	for p: Dictionary in Constants.HOUSE_PLANS:
+		if str(p.get("id", "")) == plan_id:
+			scale = float(p.get("cost_scale", 1.0))
+	var missing: Array[String] = []
+	for key: String in base:
+		var need := int(ceil(float(base[key]) * scale))
+		var have := SaveManager.get_coins() if key == "coins" else SaveManager.get_resource(key)
+		if have < need:
+			missing.append("%d %s" % [need - have, key.replace("_", " ")])
+	var stage_name := str(Constants.HOME_STAGES[stage].get("name", "next stage"))
+	if missing.is_empty():
+		return "🏠 %s is ready to build — visit Your Land!" % stage_name
+	return "🏠 %s: need %s more" % [stage_name, ", ".join(missing)]
 
 func _apply_register_gate(level_id: int) -> void:
 	if level_id != 3 or SupabaseClient.has_registration_key():

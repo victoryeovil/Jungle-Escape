@@ -32,6 +32,8 @@ var _challenge_total_coins: int = 0    # set by Game3D before level_completed fi
 var _challenge_completion_stars: int = 0  # set by Game3D before level_completed fires
 
 func _ready() -> void:
+	is_logged_in = SupabaseClient.is_authenticated()
+	is_guest = not is_logged_in
 	EventBus.level_completed.connect(_on_level_completed)
 	EventBus.level_failed.connect(_on_level_failed)
 	EventBus.login_completed.connect(_on_login_completed)
@@ -288,6 +290,8 @@ func _award_daily_challenge() -> void:
 		return
 
 	var gems: int = int(daily_challenge_data.get("reward_gems", 3))
+	if str(SaveManager.get_setting("home_plot", "")) == "savanna":
+		gems += 1   # Savanna Overlook land perk
 	SaveManager.add_gems(gems)
 	var today := _date_key()
 	# Streak logic

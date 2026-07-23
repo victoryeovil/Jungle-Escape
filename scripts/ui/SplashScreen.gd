@@ -11,12 +11,8 @@ func _ready() -> void:
 	_navigate()
 
 func _add_atmosphere() -> void:
-	var bg := get_node_or_null("Background") as ColorRect
-	if bg:
-		bg.color = Color(0.04, 0.11, 0.04, 1.0)
-
 	_glow = ColorRect.new()
-	_glow.color = Color(0.78, 0.60, 0.08, 0.07)
+	_glow.color = Color(0.0, 0.02, 0.0, 0.12)
 	_glow.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_glow)

@@ -1,6 +1,7 @@
-[gd_scene format=3 uid="uid://clfg72vx3skq"]
+[gd_scene load_steps=3 format=3 uid="uid://clfg72vx3skq"]
 
 [ext_resource type="Script" uid="uid://d1owuflxa84c4" path="res://scripts/ui/SplashScreen.gd" id="1_splash"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/bg_opening_cinematic.png" id="2_bg"]
 
 [node name="SplashScreen" type="Control" unique_id=1164837174]
 layout_mode = 3
@@ -11,14 +12,16 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_splash")
 
-[node name="Background" type="ColorRect" parent="." unique_id=770104060]
+[node name="Background" type="TextureRect" parent="." unique_id=770104060]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.17542103, 0.19148058, 0.12515649, 1)
+texture = ExtResource("2_bg")
+expand_mode = 1
+stretch_mode = 6
 
 [node name="VBox" type="VBoxContainer" parent="." unique_id=1869409890]
 layout_mode = 1
@@ -28,9 +31,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -150.0
-offset_top = -100.0
+offset_top = -330.0
 offset_right = 150.0
-offset_bottom = 100.0
+offset_bottom = -110.0
 grow_horizontal = 2
 grow_vertical = 2
 alignment = 1
@@ -42,7 +45,7 @@ text = "JUNGLE ESCAPE"
 horizontal_alignment = 1
 
 [node name="LblSubtitle" type="Label" parent="VBox" unique_id=1965015593]
-modulate = Color(0.8, 1, 0.6, 1)
+modulate = Color(1, 0.82, 0.25, 1)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Lost Path"

@@ -72,6 +72,7 @@ var _standing_collision_height: float = 1.8
 var _standing_collision_y: float = 0.9
 var _current_surface: String = "dirt"
 var _lane_offsets: Array[float] = DEFAULT_LANE_OFFSETS.duplicate()
+var _guided_lane_count: int = 3
 var _last_grass_step_position: Vector3 = Vector3.ZERO
 var _grass_step_side: int = -1
 # Direction system — updated when player turns
@@ -276,11 +277,21 @@ func move_lane(direction: int) -> void:
 func set_path_guidance(_row: int, center: Vector3, fwd: Vector3, right: Vector3, surface: String, mode: String, _path_width: float, lane_count: int) -> void:
 	if _is_dead:
 		return
+	var new_lane_count := clampi(lane_count, 1, 3)
+	# A curve updates guidance every row. Recalculating the nearest lane from the
+	# changing world axes made the selected lane drift toward the inside of the
+	# bend. Preserve the player's lane until the path genuinely changes width.
+	if new_lane_count != _guided_lane_count:
+		var old_fraction := 0.5
+		if _guided_lane_count > 1:
+			old_fraction = float(current_lane) / float(_guided_lane_count - 1)
+		_lane_offsets = _lane_offsets_for_count(new_lane_count)
+		current_lane = roundi(old_fraction * float(new_lane_count - 1)) if new_lane_count > 1 else 0
+		_guided_lane_count = new_lane_count
+	else:
+		_lane_offsets = _lane_offsets_for_count(new_lane_count)
 	_move_fwd = fwd.normalized()
 	_move_right = right.normalized()
-	var local_offset := (global_position - center).dot(_move_right)
-	_lane_offsets = _lane_offsets_for_count(lane_count)
-	current_lane = _nearest_lane_index(local_offset)
 	_right_comp_baseline = center.x * _move_right.x + center.z * _move_right.z
 	_current_surface = surface
 	_set_movement_mode(mode)

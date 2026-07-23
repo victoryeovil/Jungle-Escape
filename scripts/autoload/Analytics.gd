@@ -1,14 +1,11 @@
 extends Node
 
 # Anonymous play-event tracker.
-# Sends structured events to Supabase so level designers can see
+# Sends structured events to the Django backend so level designers can see
 # exactly where players fail, how long levels take, and what's too hard.
 #
 # Fill in URL and KEY after running supabase_schema.sql.
 # Leave them empty and nothing is sent — game works 100% offline.
-
-const SUPABASE_URL := "http://192.168.1.67:54321"
-const SUPABASE_KEY := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzQxODI0MDAwLCJleHAiOjE4OTk1OTA0MDB9.rdpDFdPRK_GXBl2XJ0IxMQbFd8kRPm4EnDVFsDVy5jA"
 
 const FLUSH_INTERVAL := 30.0   # seconds between automatic batch sends
 const MAX_QUEUE     := 20      # force-flush when queue hits this size
@@ -44,8 +41,9 @@ func event(type: String, payload: Dictionary = {}) -> void:
 	_queue.append({
 		"device_id":  _device_id,
 		"session_id": _session_id,
-		"event_type": type,
-		"payload":    payload,
+		"event_name": type,
+		"event_data": payload,
+		"app_version": str(ProjectSettings.get_setting("application/config/version", "unknown")),
 	})
 	_save_queue()
 	if _queue.size() >= MAX_QUEUE:
@@ -76,37 +74,22 @@ func resource_pick(level_id: int, resource_type: String, row: int) -> void:
 # ── HTTP flush ────────────────────────────────────────────────────────────────
 
 func _flush() -> void:
-	if _queue.is_empty() or _flushing or SUPABASE_URL.is_empty() or SUPABASE_KEY.is_empty():
+	if _queue.is_empty() or _flushing:
 		return
 	_flushing = true
 	var batch := _queue.duplicate()
 	_queue.clear()
 	_save_queue()
 
-	var req := HTTPRequest.new()
-	add_child(req)
-	req.request_completed.connect(func(_result, code, _headers, _body):
+	SupabaseClient.send_events(batch, func(ok: bool):
 		_flushing = false
-		req.queue_free()
-		if code < 200 or code >= 300:
+		if not ok:
 			# Re-queue the batch so nothing is lost
 			for ev in batch:
 				_queue.push_front(ev)
 			_save_queue()
 	)
 
-	var headers := PackedStringArray([
-		"Content-Type: application/json",
-		"apikey: " + SUPABASE_KEY,
-		"Authorization: Bearer " + SUPABASE_KEY,
-		"Prefer: return=minimal",
-	])
-	req.request(
-		SUPABASE_URL + "/rest/v1/game_events",
-		headers,
-		HTTPClient.METHOD_POST,
-		JSON.stringify(batch)
-	)
 
 # ── Persistence helpers ───────────────────────────────────────────────────────
 

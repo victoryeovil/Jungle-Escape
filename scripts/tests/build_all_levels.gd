@@ -9,6 +9,21 @@ const LEVEL_PATH := "res://data/levels3d/level3d_%03d.json"
 
 func _ready() -> void:
 	var failures := 0
+
+	# Compile-check every game script (UI screens aren't exercised by builds)
+	for dir_path in ["res://scripts/autoload", "res://scripts/data", "res://scripts/gameplay", "res://scripts/ui"]:
+		var dir := DirAccess.open(dir_path)
+		if dir == null:
+			continue
+		for file in dir.get_files():
+			if not file.ends_with(".gd"):
+				continue
+			var script := load(dir_path + "/" + file) as Script
+			if script == null or not script.can_instantiate():
+				print("COMPILE-FAIL  %s/%s" % [dir_path, file])
+				failures += 1
+	print("script compile check done")
+
 	for level_id in range(1, 21):
 		var path := LEVEL_PATH % level_id
 		if not FileAccess.file_exists(path):

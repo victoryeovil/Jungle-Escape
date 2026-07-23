@@ -423,6 +423,7 @@ func _spawn_ground(data: Dictionary) -> void:
 	var length: int = data.get("length", 30)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = int(data.get("seed", 42)) + 101
+	var underlay_batches: Dictionary = {}
 
 	for i in range(length + 5):
 		var seg_p: Vector3 = _seg_pos.get(i, Vector3(0.0, 0.0, -float(i) * TILE_Z))
@@ -447,12 +448,74 @@ func _spawn_ground(data: Dictionary) -> void:
 			Vector3(0.0, -0.08, 0.0),
 			{"surface": surface}
 		)
+		# Keep a built-in mesh below the smooth ribbon. Some mobile GPU/driver
+		# combinations can leave SurfaceTool meshes invisible even though their
+		# collisions work, which otherwise makes only the player appear.
+		if not _gap_rows.has(i):
+			_queue_path_underlay(underlay_batches, seg_p, heading_y, path_width, surface)
 		_add_path_guide(segment, i, path_width, surface, mode, lane_count)
 
 		if i % 2 == 0 and i < length:
 			_spawn_path_edge_details(i, rng)
 
+	_flush_path_underlays(underlay_batches)
 	_build_road_ribbon(data)
+
+func _queue_path_underlay(batches: Dictionary, pos: Vector3, heading_y: float, path_width: float, surface: String) -> void:
+	var key := "%s:%.2f" % [surface, path_width]
+	if not batches.has(key):
+		batches[key] = {
+			"surface": surface,
+			"width": path_width,
+			"transforms": [],
+		}
+	var xform := Transform3D(Basis(Vector3.UP, heading_y), pos + Vector3(0.0, -0.055, 0.0))
+	(batches[key]["transforms"] as Array).append(xform)
+
+func _flush_path_underlays(batches: Dictionary) -> void:
+	for key in batches:
+		var batch: Dictionary = batches[key]
+		var transforms: Array = batch["transforms"]
+		if transforms.is_empty():
+			continue
+		var box := BoxMesh.new()
+		box.size = Vector3(float(batch["width"]) + 0.10, 0.10, TILE_Z + 0.12)
+		var multi_mesh := MultiMesh.new()
+		multi_mesh.transform_format = MultiMesh.TRANSFORM_3D
+		multi_mesh.mesh = box
+		multi_mesh.instance_count = transforms.size()
+		for i in range(transforms.size()):
+			multi_mesh.set_instance_transform(i, transforms[i])
+		var underlay := MultiMeshInstance3D.new()
+		underlay.name = "PathUnderlay_" + str(key).replace(":", "_").replace(".", "_")
+		underlay.multimesh = multi_mesh
+		underlay.material_override = _shared_material(_path_underlay_color(str(batch["surface"])))
+		underlay.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		underlay.visibility_range_end = ROAD_CULL_DISTANCE
+		underlay.visibility_range_end_margin = 8.0
+		underlay.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+		_group("JunglePath").add_child(underlay)
+
+func _path_underlay_color(surface: String) -> Color:
+	match surface:
+		"grass":
+			return _theme.get("grass", COLOR_GRASS)
+		"wood":
+			return _theme.get("log", COLOR_LOG)
+		"stone":
+			return _theme.get("stone", COLOR_STONE)
+		"sand":
+			return Color(0.78, 0.64, 0.38)
+		"mud":
+			return COLOR_MUD
+		"water_slide":
+			return Color(0.05, 0.42, 0.62)
+		"boat":
+			return Color(0.04, 0.27, 0.38)
+		"skating":
+			return Color(0.24, 0.29, 0.39)
+		_:
+			return _theme.get("dirt_light", COLOR_DIRT_LIGHT)
 
 # ─── Smooth road ribbon ──────────────────────────────────────────────────────
 # The visible road is one continuous vertex-colored ribbon that follows a
@@ -1058,17 +1121,17 @@ func _spawn_dressing(data: Dictionary) -> void:
 			var mid_x: float = side * rng.randf_range(path_edge + 1.05, path_edge + 1.85)
 			var far_x: float = side * rng.randf_range(path_edge + 2.35, path_edge + 3.35)
 
-			if rng.randf() < 0.40:
+			if rng.randf() < 0.62:
 				_grass_clump(_row_local(row, near_x, 0.0, rng.randf_range(-0.8, 0.8)), rng)
-			if rng.randf() < 0.25:
+			if rng.randf() < 0.42:
 				_fern(_row_local(row, near_x + side * rng.randf_range(0.2, 0.45), 0.0, rng.randf_range(-0.6, 0.6)), rng)
-			if rng.randf() < 0.35:
+			if rng.randf() < 0.48:
 				_bush(_row_local(row, mid_x, 0.0, rng.randf_range(-0.9, 0.9)), rng)
 			if rng.randf() < 0.15:
 				_pebble_cluster(_group("RocksAndLogs"), _row_local(row, mid_x + side * 0.30, 0.04, rng.randf_range(-0.8, 0.8)), rng)
 
-			if row % 4 == 0:
-				if rng.randf() < 0.45:
+			if row % 3 == 0:
+				if rng.randf() < 0.38:
 					_palm_tree(_row_local(row, far_x, 0.0), rng)
 				else:
 					_jungle_tree(_row_local(row, far_x, 0.0), rng)
@@ -1080,12 +1143,20 @@ func _spawn_dressing(data: Dictionary) -> void:
 				_ruin_fragment(_row_local(row, side * rng.randf_range(path_edge + 2.0, path_edge + 2.8), 0.0), rng)
 
 			# Dense jungle wall in the far background — one MultiMesh draw call
-			if row % 5 == 0:
+			if row % 4 == 0:
+				var cluster_scale := rng.randf_range(0.85, 1.45)
 				var cluster_xf := Transform3D(
-					Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3.ONE * rng.randf_range(0.9, 1.4)),
-					_row_local(row, side * rng.randf_range(7.5, 11.0), 0.0, rng.randf_range(-1.2, 1.2))
+					Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3(cluster_scale, rng.randf_range(0.95, 1.35) * cluster_scale, cluster_scale)),
+					_row_local(row, side * rng.randf_range(6.5, 10.0), 0.0, rng.randf_range(-1.6, 1.6))
 				)
 				_batch_glb("res://assets/3d/environment/trees/tree_cluster_bg.glb", cluster_xf)
+			if row % 7 == 2:
+				var deep_scale := rng.randf_range(1.35, 1.9)
+				var deep_xf := Transform3D(
+					Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3(deep_scale, deep_scale * rng.randf_range(1.0, 1.25), deep_scale)),
+					_row_local(row, side * rng.randf_range(11.0, 15.0), -0.2, rng.randf_range(-2.0, 2.0))
+				)
+				_batch_glb("res://assets/3d/environment/trees/tree_cluster_bg.glb", deep_xf)
 
 			# Worn trail-edge pieces bordering dirt/grass paths
 			if row % 4 == 2 and rng.randf() < 0.45 and str(_seg_surface.get(row, "dirt")) in ["dirt", "grass", "mud"]:
@@ -1190,7 +1261,8 @@ func _bush(pos: Vector3, rng: RandomNumberGenerator) -> void:
 
 func _palm_tree(pos: Vector3, rng: RandomNumberGenerator) -> void:
 	# Trees are the heaviest GLBs — always batched into one MultiMesh draw call
-	var batch_xf := Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)), pos)
+	var palm_scale := rng.randf_range(0.85, 1.30)
+	var batch_xf := Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3(palm_scale, palm_scale * rng.randf_range(0.92, 1.22), palm_scale)), pos)
 	if _batch_glb("res://assets/3d/environment/trees/palms.glb", batch_xf):
 		return
 	var root := Node3D.new()
@@ -1245,7 +1317,8 @@ func _palm_tree(pos: Vector3, rng: RandomNumberGenerator) -> void:
 		_vine(root, Vector3(rng.randf_range(-0.16, 0.16), height * 0.68, rng.randf_range(-0.14, 0.14)), rng)
 
 func _jungle_tree(pos: Vector3, rng: RandomNumberGenerator) -> void:
-	var batch_xf := Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)), pos)
+	var tree_scale := rng.randf_range(0.80, 1.35)
+	var batch_xf := Transform3D(Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3(tree_scale, tree_scale * rng.randf_range(0.90, 1.28), tree_scale)), pos)
 	if _batch_glb("res://assets/3d/environment/trees/jungle_trees.glb", batch_xf):
 		return
 	var root := Node3D.new()

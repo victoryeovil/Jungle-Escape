@@ -547,6 +547,11 @@ func _on_player_died() -> void:
 		var elapsed := Time.get_ticks_msec() / 1000.0 - GameManager._level_start_time
 		Analytics.level_fail(0, "endless_end", _last_row, elapsed, _stage)
 		SupabaseClient.submit_endless_score(best)
+		# Weekly board: only submit improvements over this week's local best
+		var week_setting := "endless_week_best_" + SupabaseClient.week_key()
+		if _endless_distance_m > int(SaveManager.get_setting(week_setting, 0)):
+			SaveManager.set_setting(week_setting, _endless_distance_m)
+			SupabaseClient.submit_weekly_score(_endless_distance_m)
 		game_over.call("show_endless_over", _endless_distance_m, best, is_record, can_revive, REVIVE_GEM_COST)
 		return
 
@@ -613,6 +618,15 @@ func _on_finish_reached() -> void:
 	EventBus.play_sfx.emit("level_complete")
 	var coins := GameManager.session_coins
 	var stars := _calc_stars(coins, level_mgr.get_total_coins())
+	# Land plot perks (see Constants.LAND_PLOTS)
+	match str(SaveManager.get_setting("home_plot", "")):
+		"riverside":
+			var bonus := int(ceil(float(coins) * 0.10))
+			if bonus > 0:
+				SaveManager.add_coins(bonus)
+		"baobab":
+			if stars >= 3:
+				SaveManager.add_gems(1)
 	SaveManager.complete_level(_level_id, stars, coins)
 	_award_level_resources(_level_id)
 	# Provide challenge context before level_completed fires

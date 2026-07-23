@@ -211,13 +211,60 @@ const UPGRADES: Array = [
 ]
 
 # ── Land / home building stages ─────────────────────────────────────────────
+# Stage 1 (Buy Land) cost comes from the chosen LAND_PLOT; stages 2-6 costs
+# are scaled by the chosen HOUSE_PLAN's cost_scale.
 const HOME_STAGES: Array = [
-	{ "stage": 1, "name": "Buy Land",     "cost": { "coins": 250, "map_pieces": 1 } },
-	{ "stage": 2, "name": "Foundation",   "cost": { "bricks": 20, "tools": 3 } },
+	{ "stage": 1, "name": "Buy Land",     "cost": { "coins": 250, "map_pieces": 1 }, "description": "Choose a plot of land for your home." },
+	{ "stage": 2, "name": "Foundation",   "cost": { "bricks": 20, "tools": 3 }, "description": "Choose a house plan and lay the foundation." },
 	{ "stage": 3, "name": "Walls",        "cost": { "bricks": 30, "wood": 10 } },
 	{ "stage": 4, "name": "Roof & Tiles", "cost": { "tiles": 5,   "wood": 5 } },
 	{ "stage": 5, "name": "Windows",      "cost": { "windows": 2 } },
 	{ "stage": 6, "name": "Complete Home","cost": { "tools": 2,   "wood": 5 } },
+]
+
+# Gems awarded for finishing each build stage (final stage adds the plan bonus)
+const HOME_STAGE_REWARD_GEMS := 3
+
+# Land plots — each gives a permanent gameplay perk once bought
+const LAND_PLOTS: Array = [
+	{
+		"id": "riverside", "name": "Riverside Clearing", "icon": "🏞",
+		"cost": { "coins": 250, "map_pieces": 1 },
+		"perk": "+10% coins from every finished level",
+		"unlock_level": 5,
+	},
+	{
+		"id": "savanna", "name": "Savanna Overlook", "icon": "🌄",
+		"cost": { "coins": 400, "map_pieces": 2 },
+		"perk": "+1 bonus gem from daily challenges",
+		"unlock_level": 8,
+	},
+	{
+		"id": "baobab", "name": "Baobab Grove", "icon": "🌳",
+		"cost": { "coins": 600, "map_pieces": 3 },
+		"perk": "+1 gem on every 3-star finish",
+		"unlock_level": 12,
+	},
+]
+
+# House plans — pick one at the Foundation stage; bigger plans cost more but
+# pay a larger completion bonus
+const HOUSE_PLANS: Array = [
+	{
+		"id": "hut", "name": "Jungle Hut", "icon": "🛖",
+		"cost_scale": 1.0, "reward_gems": 10,
+		"desc": "A cozy quick build. Standard costs.",
+	},
+	{
+		"id": "cabin", "name": "River Cabin", "icon": "🏡",
+		"cost_scale": 1.5, "reward_gems": 25,
+		"desc": "Solid timber home. +50% costs, bigger reward.",
+	},
+	{
+		"id": "lodge", "name": "Explorer Lodge", "icon": "🏰",
+		"cost_scale": 2.2, "reward_gems": 60,
+		"desc": "A grand lodge for legends. Double costs, grand reward.",
+	},
 ]
 
 # ── Wildlife tips (shown during loads) ─────────────────────────────────────
