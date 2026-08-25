@@ -173,13 +173,20 @@ func _group(name: String) -> Node3D:
 	return _groups.get(name, self) as Node3D
 
 func _parse_turns(data: Dictionary) -> void:
+	# Authored 90-degree turns are independent of the gradual curves supplied by
+	# path modules. Load them first so modular levels retain their sharp turns.
+	for t in data.get("turns", []):
+		if not (t is Dictionary):
+			continue
+		var turn_row := int(t.get("row", 0))
+		var turn_dir := signi(int(t.get("dir", 1)))
+		if turn_row > 0 and turn_dir != 0:
+			_turn_rows[turn_row] = turn_dir
+
 	var modules: Array = data.get("path_modules", [])
 	if not modules.is_empty():
 		_parse_path_modules(data, modules)
 		return
-
-	for t in data.get("turns", []):
-		_turn_rows[int(t.get("row", 0))] = int(t.get("dir", 1))
 
 	var length: int = data.get("length", 30)
 	var cursor := Vector3.ZERO
@@ -254,6 +261,12 @@ func _parse_path_modules(data: Dictionary, modules: Array) -> void:
 			if absf(actual_curve_step) > 0.0001:
 				fwd = fwd.rotated(Vector3.UP, actual_curve_step).normalized()
 				right = right.rotated(Vector3.UP, actual_curve_step).normalized()
+			# The approach segment keeps its heading; the next segment starts on
+			# the new 90-degree heading, matching the player's corner action.
+			if _turn_rows.has(row):
+				var sharp_dir: int = _turn_rows[row]
+				fwd = fwd.rotated(Vector3.UP, -float(sharp_dir) * PI * 0.5).normalized()
+				right = right.rotated(Vector3.UP, -float(sharp_dir) * PI * 0.5).normalized()
 			cursor += fwd * TILE_Z
 			row += 1
 
@@ -830,6 +843,40 @@ func _spawn_obstacle(kind: String, lane: int, row: int) -> void:
 			_remove_ground_at(row)
 		_:
 			_obstacle_rock(lane_pos + Vector3(0.0, 0.42, 0.0))
+
+	# Keep lethal gameplay objects visually distinct from decorative rocks,
+	# logs, and foliage. Low amber approach bars remain readable beneath the
+	# character without covering the obstacle model itself.
+	if kind not in ["mud", "gap"]:
+		var spans_path := kind in ["log", "branch", "low_branch", "floating_log"]
+		var warning_pos: Vector3 = base if spans_path else lane_pos
+		var warning_width: float = float(_seg_width.get(row, PATH_WIDTH)) * 0.82 if spans_path else 1.15
+		_add_hazard_telegraph(warning_pos, heading_y, warning_width)
+
+func _add_hazard_telegraph(world_pos: Vector3, heading_y: float, marker_width: float) -> void:
+	var root := Node3D.new()
+	root.name = "HazardTelegraph"
+	root.position = world_pos + Vector3(0.0, 0.035, 0.0)
+	root.rotation.y = heading_y
+	_group("Obstacles").add_child(root)
+
+	var glow := StandardMaterial3D.new()
+	glow.albedo_color = Color(1.0, 0.32, 0.04, 0.82)
+	glow.emission_enabled = true
+	glow.emission = Color(1.0, 0.16, 0.015)
+	glow.emission_energy_multiplier = 1.35
+	glow.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+
+	for i in range(2):
+		var stripe := _add_box(
+			root,
+			"WarningStripe%d" % i,
+			Vector3(marker_width, 0.025, 0.12),
+			Vector3(0.0, 0.0, 0.58 + float(i) * 0.30),
+			Color(1.0, 0.32, 0.04, 0.82)
+		)
+		stripe.material_override = glow
 
 func _obstacle_log(pos: Vector3, heading_y: float = 0.0) -> void:
 	var root := Node3D.new()

@@ -15,8 +15,8 @@ const PANELS: Array[Dictionary] = [
 		"tip": "Wildlife Tip: Respect animals from a safe distance.",
 	},
 	{
-		"title": "Sand Shoes — New Gear Required",
-		"body": "The Wildlands path is covered in deep sand.\n\nTo walk safely, jump, and continue the expedition,\nyou need Sand Shoes.\n\nCost: 150 Coins\n\nReplay earlier levels to collect more coins, or visit the Upgrade Shop.",
+		"title": "Sand Shoes — Expedition Reward",
+		"body": "The Wildlands path is covered in deep sand.\n\nYour successful Temple expedition has earned you Sand Shoes.\nThey are now equipped, so you can walk, jump, and continue safely.\n\nLevel 6 is ready.",
 		"tip": "Wildlife Tip: The jungle is home to many creatures. Move with care.",
 	},
 ]

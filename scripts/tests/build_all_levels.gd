@@ -44,6 +44,26 @@ func _ready() -> void:
 		mgr.build(data)
 		var build_ms := Time.get_ticks_msec() - t0
 
+		# Modular paths must retain authored sharp turns. This guards against the
+		# regression where declaring path_modules silently discarded `turns`.
+		var authored_turns: Array = data.get("turns", [])
+		if mgr._turn_rows.size() != authored_turns.size():
+			print("TURN-FAIL level %d expected=%d built=%d" % [level_id, authored_turns.size(), mgr._turn_rows.size()])
+			failures += 1
+		for raw_turn in authored_turns:
+			if not (raw_turn is Dictionary):
+				continue
+			var turn_row := int(raw_turn.get("row", 0))
+			if not mgr._turn_rows.has(turn_row) or not mgr._seg_fwd.has(turn_row + 1):
+				print("TURN-FAIL level %d missing row=%d" % [level_id, turn_row])
+				failures += 1
+				continue
+			var approach: Vector3 = mgr._seg_fwd[turn_row]
+			var exit_dir: Vector3 = mgr._seg_fwd[turn_row + 1]
+			if absf(approach.dot(exit_dir)) > 0.30:
+				print("TURN-FAIL level %d row=%d heading did not rotate sharply" % [level_id, turn_row])
+				failures += 1
+
 		var stats := {"nodes": 0, "mesh": 0, "multimesh": 0, "mm_instances": 0, "areas": 0, "bodies": 0}
 		_walk(mgr, stats)
 		print("OK  level %2d  len=%3d  build=%4dms  nodes=%5d  meshinst=%4d  multimesh=%2d (x%4d)  areas=%3d  bodies=%3d" % [

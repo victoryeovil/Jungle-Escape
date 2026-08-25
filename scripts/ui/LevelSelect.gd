@@ -1458,7 +1458,7 @@ func _build_sand_shoes_popup() -> void:
 
 	var desc := Label.new()
 	desc.name = "SandDesc"
-	desc.text = "The path ahead is covered in deep sand.\nBuy Sand Shoes from the expedition supply shop to walk, jump, and continue.\n\nCost: 150 Coins"
+	desc.text = "The path ahead is covered in deep sand.\nComplete Level 5 to earn Sand Shoes, or buy them early from the expedition supply shop.\n\nEarly price: 150 Coins"
 	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD
 	desc.add_theme_font_size_override("font_size", 13)
@@ -1597,8 +1597,13 @@ func _hide_preview() -> void:
 func _on_marker(level_id: int) -> void:
 	EventBus.play_sfx.emit("button")
 	if level_id == 6 and not SaveManager.has_upgrade("sand_shoes"):
-		_sand_popup.visible = true
-		return
+		# Self-heal older or partially migrated saves before showing the fallback
+		# purchase prompt.
+		if SaveManager.is_level_completed(5):
+			SaveManager.unlock_upgrade("sand_shoes")
+		else:
+			_sand_popup.visible = true
+			return
 	_show_preview(level_id)
 
 func _show_no_lives_popup(message: String = "") -> void:
@@ -1678,7 +1683,7 @@ func _on_buy_sand_shoes() -> void:
 		_show_preview(6)
 	else:
 		var desc := _sand_popup.get_node("SandDesc") as Label
-		desc.text = "Not enough coins!\n\nNeeded: 150 Coins\n\nReplay earlier levels to collect more coins."
+		desc.text = "Not enough coins for the early purchase.\n\nNeeded: 150 Coins\n\nYou can also complete Level 5 to earn Sand Shoes."
 
 func _on_back() -> void:
 	if _lives_popup != null and _lives_popup.visible:

@@ -61,6 +61,10 @@ func complete_level(level_id: int, stars: int, coins_earned: int) -> void:
 		set_current_level(level_id + 1)
 	if level_id == 3:
 		_activate_lives_if_needed()
+	# Sand Shoes are the Level 5 expedition reward. This keeps the story gate
+	# while removing a forced replay grind before the player can enter Level 6.
+	if level_id == 5 and not has_upgrade("sand_shoes"):
+		unlock_upgrade("sand_shoes")
 
 func get_total_stars() -> int:
 	var total := 0
@@ -401,6 +405,10 @@ func load_settings() -> void:
 func load_all() -> void:
 	load_game()
 	load_settings()
+	# Migration for saves that cleared Level 5 before Sand Shoes became a
+	# campaign reward.
+	if is_level_completed(5) and not has_upgrade("sand_shoes"):
+		unlock_upgrade("sand_shoes")
 
 func reset_all_data() -> void:
 	_save_data = {}

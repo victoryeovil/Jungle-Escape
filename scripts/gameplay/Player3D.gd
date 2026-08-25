@@ -3,6 +3,7 @@ class_name Player3D
 
 const DEFAULT_LANE_OFFSETS: Array[float] = [-1.8, 0.0, 1.8]
 const LANE_SWITCH_SPEED: float = 20.0
+const TURN_EXECUTE_DISTANCE: float = 0.65
 const RUN_SPEED: float = 8.0  # default; overridden per-level by Game3D
 var _run_speed: float = RUN_SPEED
 
@@ -187,10 +188,11 @@ func _physics_process(delta: float) -> void:
 	if _sand_trail != null:
 		_sand_trail.emitting = on_floor_now and (_current_surface == "sand" or _movement_mode == "skating")
 
-	# Auto-execute a queued turn — fires within one full tile (3 m) of the corner
+	# Auto-execute a queued turn close to the corner so the player follows the
+	# authored path instead of cutting across the inside edge.
 	if _queued_turn != 0:
 		var dist_to_corner := (position - _turn_corner_pos).dot(_move_fwd)
-		if dist_to_corner >= -3.0:
+		if dist_to_corner >= -TURN_EXECUTE_DISTANCE:
 			_execute_turn(_queued_turn)
 			_queued_turn = 0
 
@@ -265,7 +267,7 @@ func move_lane(direction: int) -> void:
 		# direction — the player doesn't need to swipe the exact correct side.
 		_queued_turn = _turn_zone_dir
 		var dist := (position - _turn_corner_pos).dot(_move_fwd)
-		if dist >= -3.0:
+		if dist >= -TURN_EXECUTE_DISTANCE:
 			_execute_turn(_queued_turn)
 			_queued_turn = 0
 		return

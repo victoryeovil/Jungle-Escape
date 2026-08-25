@@ -60,7 +60,7 @@ jungle_escape/
 - **Swipe down** (or S) — slide under low branches.
 - **Path turns** — at corner tiles, a "TURN LEFT / TURN RIGHT" prompt appears; swipe any direction to execute. A log-jam dam blocks going straight.
 - Collect coins, gems, and resources. Hit an obstacle → Game Over. Reach the finish gate → Level Complete (1–3 stars).
-- **Level 6** requires **Sand Shoes** (150 Coins, bought in the Upgrade Shop) — deep sand blocks movement without them.
+- **Level 6** requires **Sand Shoes**, awarded for completing Level 5 (or purchasable early for 150 Coins) — deep sand blocks movement without them.
 
 ---
 
@@ -130,7 +130,7 @@ These are the most impactful missing assets blocking visual polish:
 
 | ID | Name | Cost | Effect |
 |----|------|------|--------|
-| `sand_shoes` | Sand Shoes | 150 Coins | Unlocks Level 6. Required to walk and jump on sand. |
+| `sand_shoes` | Sand Shoes | Level 5 reward (or 150 Coins early) | Unlocks Level 6. Required to walk and jump on sand. |
 
 Upgrades are purchased from the **Upgrade Shop** (`scenes/menus/UpgradeShop.tscn`).
 

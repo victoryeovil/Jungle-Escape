@@ -202,8 +202,8 @@ const UPGRADES: Array = [
 	{
 		"id": "sand_shoes",
 		"name": "Sand Shoes",
-		"desc": "Walk safely on sand and jump across sandy gaps. Required for Level 6.",
-		"unlock_after_level": 5,
+		"desc": "Walk safely on sand and jump across sandy gaps. Earned after Level 5, or available early from the supply shop.",
+		"unlock_after_level": 0,
 		"cost": { "coins": 150 },
 		"icon": "👟",
 		"icon_path": "res://assets/ui/icons/sand_shoes_icon.png",

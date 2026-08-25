@@ -55,7 +55,7 @@ transform = Transform3D(0.707, 0.354, -0.612, 0, 0.866, 0.5, 0.707, -0.354, 0.61
 light_energy = 0.3
 
 [node name="CamPivot" type="Node3D" parent="." unique_id=1840362111]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 4.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.05, 5.4)
 
 [node name="Camera3D" type="Camera3D" parent="CamPivot" unique_id=1831357404]
 transform = Transform3D(1, 0, 0, 0, 0.921, 0.391, 0, -0.391, 0.921, 0, 0, 0)

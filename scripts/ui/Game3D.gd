@@ -19,7 +19,7 @@ const REVIVE_GEM_COST := 5
 var _level_id: int   = 1
 var _finished: bool  = false
 var _dead: bool      = false
-var _cam_xz: Vector2 = Vector2(0.0, 4.5)  # smoothed (x-behind, z-behind) from player
+var _cam_xz: Vector2 = Vector2(0.0, 5.4)  # smoothed (x-behind, z-behind) from player
 var _active_mode: String = "run"
 var _junction_active: bool = false
 var _shake_time: float = 0.0
@@ -465,11 +465,11 @@ func _camera_distance() -> float:
 		"water_slide":
 			return 5.7
 		"skating":
-			return 5.3
-		"chase", "escape":
 			return 5.8
+		"chase", "escape":
+			return 6.2
 		_:
-			return 4.5
+			return 5.4
 
 func _camera_height() -> float:
 	if _junction_active:
@@ -478,13 +478,13 @@ func _camera_height() -> float:
 		"boat":
 			return 3.3
 		"water_slide":
-			return 2.05
+			return 2.55
 		"skating":
-			return 2.35
+			return 2.85
 		"chase", "escape":
-			return 2.65
+			return 3.05
 		_:
-			return 2.5
+			return 3.05
 
 func _mode_title(mode: String) -> String:
 	match mode:
