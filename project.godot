@@ -32,6 +32,7 @@ Analytics="*res://scripts/autoload/Analytics.gd"
 SaveManager="*res://scripts/autoload/SaveManager.gd"
 AdaptiveDifficulty="*res://scripts/autoload/AdaptiveDifficulty.gd"
 GameManager="*res://scripts/autoload/GameManager.gd"
+ExpeditionProgress="*res://scripts/autoload/ExpeditionProgress.gd"
 AudioManager="*res://scripts/autoload/AudioManager.gd"
 
 [display]

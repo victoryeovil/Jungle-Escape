@@ -12,21 +12,32 @@ const C_BLUE  := Color(0.42, 0.82, 1.00)
 const CHALLENGES := [
 	{"title": "Coin Rush",     "desc": "Complete Level %d collecting 10 or more coins.", "target": "coins_10",  "reward_gems": 3},
 	{"title": "No Stumbles",   "desc": "Complete Level %d without falling once.",         "target": "no_fail",   "reward_gems": 4},
-	{"title": "Speed Run",     "desc": "Complete Level %d in under 60 seconds.",          "target": "speed_60",  "reward_gems": 5},
-	{"title": "3-Star Run",    "desc": "Earn 3 stars on Level %d.",                       "target": "stars_3",   "reward_gems": 4},
-	{"title": "Resource Hunt", "desc": "Complete Level %d picking up every item.",        "target": "all_items", "reward_gems": 3},
-	{"title": "Flawless Run",  "desc": "Complete Level %d in a single attempt.",          "target": "one_shot",  "reward_gems": 5},
+	{"title": "Speed Run",     "desc": "Complete Level %d in under 60 seconds. Pauses don't count.", "target": "speed_60", "reward_gems": 5},
+	{"title": "Star Explorer", "desc": "Earn at least 2 stars on Level %d.",               "target": "stars_2",   "reward_gems": 4},
+	{"title": "Coin Trail",    "desc": "Complete Level %d collecting at least half the trail coins.", "target": "coins_half", "reward_gems": 3},
+	{"title": "Flawless Run",  "desc": "Complete Level %d without retries or revives.",     "target": "one_shot",  "reward_gems": 5},
 ]
 
 var _countdown_label: Label = null
 var _timer: Timer = null
+var _displayed_date: String = ""
+var _start_button: Button = null
+var _status_label: Label = null
+var _displayed_challenge: Dictionary = {}
 
 func _ready() -> void:
-	# Hide any nodes that came from the .tscn
-	for child in get_children():
-		child.visible = false
-	_build_ui()
+	_refresh_daily_ui()
 	_start_countdown_timer()
+
+func _refresh_daily_ui() -> void:
+	for child in get_children():
+		if child != _timer:
+			remove_child(child)
+			child.queue_free()
+	_countdown_label = null
+	_displayed_date = _date_key()
+	_displayed_challenge = _today_challenge()
+	_build_ui()
 
 # ── Build ─────────────────────────────────────────────────────────────────────
 
@@ -47,8 +58,7 @@ func _build_ui() -> void:
 		add_child(stripe)
 
 	_build_header()
-	var challenge := _today_challenge()
-	_build_challenge_card(challenge)
+	_build_challenge_card(_displayed_challenge)
 	_build_streak_row()
 	_build_countdown_row()
 
@@ -89,7 +99,7 @@ func _build_header() -> void:
 	hdr.add_child(lbl)
 
 func _build_challenge_card(challenge: Dictionary) -> void:
-	var panel := _mk_panel(Vector2(18, 78), Vector2(444, 276))
+	var panel := _mk_panel(Vector2(18, 78), Vector2(444, 312))
 	add_child(panel)
 
 	# Date badge strip
@@ -150,6 +160,7 @@ func _build_challenge_card(challenge: Dictionary) -> void:
 	# Start / completed button
 	var already_done := _is_today_done()
 	var btn := Button.new()
+	_start_button = btn
 	btn.custom_minimum_size = Vector2(366, 52)
 	btn.position = Vector2(38, 188)
 	btn.focus_mode = Control.FOCUS_NONE
@@ -165,11 +176,24 @@ func _build_challenge_card(challenge: Dictionary) -> void:
 		_style_btn(btn, Color(0.10, 0.42, 0.18))
 	panel.add_child(btn)
 
+	_status_label = Label.new()
+	_status_label.position = Vector2(20, 248)
+	_status_label.size = Vector2(404, 52)
+	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_status_label.add_theme_font_size_override("font_size", 12)
+	_status_label.add_theme_color_override("font_color", C_GREEN)
+	panel.add_child(_status_label)
+	_update_start_status()
+
 func _build_streak_row() -> void:
-	var panel := _mk_panel(Vector2(18, 366), Vector2(444, 76))
+	var panel := _mk_panel(Vector2(18, 402), Vector2(444, 76))
 	add_child(panel)
 
 	var streak: int = int(SaveManager.get_setting("daily_streak", 0))
+	var last_done := str(SaveManager.get_setting("daily_last_done", ""))
+	if last_done != _date_key() and last_done != GameManager.get_previous_daily_date_key():
+		streak = 0
 	var lbl := Label.new()
 	lbl.text = "🔥  Streak:  " + str(streak) + " day" + ("s" if streak != 1 else "")
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -192,7 +216,7 @@ func _build_streak_row() -> void:
 		panel.add_child(lbl_best)
 
 func _build_countdown_row() -> void:
-	var panel := _mk_panel(Vector2(18, 454), Vector2(444, 72))
+	var panel := _mk_panel(Vector2(18, 490), Vector2(444, 72))
 	add_child(panel)
 
 	var prefix := Label.new()
@@ -219,34 +243,58 @@ func _build_countdown_row() -> void:
 # ── Daily challenge logic ─────────────────────────────────────────────────────
 
 func _today_challenge() -> Dictionary:
-	var d := Time.get_date_dict_from_system()
+	var today := _date_key()
+	var saved: Dictionary = SaveManager.get_setting("daily_offer", {})
+	if str(saved.get("date_key", "")) == today and GameManager.is_daily_level_accessible(int(saved.get("level_id", 0))):
+		return saved.duplicate(true)
+	var available: Array[int] = []
+	for level_id in range(1, 7):
+		if GameManager.is_daily_level_accessible(level_id):
+			available.append(level_id)
+	var d := Time.get_date_dict_from_system(false)
 	var seed_val := int(d.get("day", 1)) + int(d.get("month", 1)) * 31 + int(d.get("year", 2025)) * 366
-	var idx  := seed_val % CHALLENGES.size()
-	var lvl  := (seed_val % 6) + 1
-	var c: Dictionary = CHALLENGES[idx].duplicate()
-	c["level_id"] = lvl
-	c["desc"]     = c["desc"] % lvl
-	return c
+	var idx := seed_val % CHALLENGES.size()
+	var level_id: int = available[seed_val % available.size()] if not available.is_empty() else 1
+	var challenge: Dictionary = CHALLENGES[idx].duplicate(true)
+	challenge["date_key"] = today
+	challenge["level_id"] = level_id
+	challenge["desc"] = challenge["desc"] % level_id
+	# Keep the same daily trail when more campaign levels unlock later today.
+	SaveManager.set_setting("daily_offer", challenge.duplicate(true))
+	return challenge
 
 func _is_today_done() -> bool:
-	var today := _date_key()
-	return SaveManager.get_setting("daily_done_date", "") == today
+	return str(SaveManager.get_setting("daily_done_date", "")) == _date_key()
 
 func _date_key() -> String:
-	var d := Time.get_date_dict_from_system()
-	return "%d-%02d-%02d" % [int(d.get("year", 0)), int(d.get("month", 0)), int(d.get("day", 0))]
+	return GameManager.get_daily_date_key()
+
+func _update_start_status() -> void:
+	if _start_button == null or _status_label == null:
+		return
+	var error := GameManager.get_daily_challenge_start_error(_displayed_challenge)
+	_start_button.disabled = not error.is_empty()
+	if _is_today_done():
+		_start_button.text = "Completed Today!"
+		_status_label.text = "Reward collected. A new expedition arrives at local midnight."
+	elif not error.is_empty():
+		_status_label.text = error
+	else:
+		_start_button.text = "Start Challenge"
+		var level_id := int(_displayed_challenge.get("level_id", 1))
+		_status_label.text = "Level %d is unlocked. %s" % [level_id, "No lives needed on this trail." if level_id <= 3 else "Expedition Lives: " + SaveManager.get_lives_display()]
 
 func _update_countdown() -> void:
+	if _displayed_date != _date_key():
+		_refresh_daily_ui()
+		return
 	if _countdown_label == null:
 		return
-	var now    := Time.get_unix_time_from_system()
-	var dt     := Time.get_datetime_dict_from_unix_time(int(now))
-	# Seconds until midnight
-	var secs   := (23 - int(dt.get("hour", 0))) * 3600 + (59 - int(dt.get("minute", 0))) * 60 + (59 - int(dt.get("second", 0)))
-	var h      := secs / 3600
-	var m      := (secs % 3600) / 60
-	var s      := secs % 60
-	_countdown_label.text = "%02d : %02d : %02d" % [h, m, s]
+	# Use the same local calendar as challenge selection and reward claims.
+	var dt := Time.get_time_dict_from_system(false)
+	var secs := 86400 - (int(dt.get("hour", 0)) * 3600 + int(dt.get("minute", 0)) * 60 + int(dt.get("second", 0)))
+	_countdown_label.text = "%02d : %02d : %02d" % [secs / 3600, (secs % 3600) / 60, secs % 60]
+	_update_start_status()
 
 func _start_countdown_timer() -> void:
 	_timer = Timer.new()
@@ -259,9 +307,11 @@ func _start_countdown_timer() -> void:
 
 func _on_start(challenge: Dictionary) -> void:
 	EventBus.play_sfx.emit("button")
-	GameManager.in_daily_challenge     = true
-	GameManager.daily_challenge_data   = challenge
-	GameManager.go_to_gameplay_3d(int(challenge.get("level_id", 1)))
+	if _displayed_date != _date_key():
+		_refresh_daily_ui()
+		return
+	if not GameManager.start_daily_challenge(challenge):
+		_update_start_status()
 
 func _on_back() -> void:
 	EventBus.play_sfx.emit("button")

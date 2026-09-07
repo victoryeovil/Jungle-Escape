@@ -8,19 +8,29 @@ signal revive_requested
 
 var _btn_revive: Button = null
 var _lbl_top: Label = null
+var _run_progress: VBoxContainer = null
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	var panel := $Panel as Panel
-	panel.offset_left = -174
-	panel.offset_right = 174
-	panel.offset_top = -196
-	panel.offset_bottom = 196
-	lbl_reason.custom_minimum_size = Vector2(306, 118)
+	panel.offset_left = -210
+	panel.offset_right = 210
+	panel.offset_top = -290
+	panel.offset_bottom = 290
+	RunProgressSummary.style_panel(panel, $Panel/VBox)
+	lbl_reason.custom_minimum_size = Vector2(0, 114)
+	lbl_reason.add_theme_font_size_override("font_size", 20)
+	btn_retry.custom_minimum_size.y = 48
+	btn_map.custom_minimum_size.y = 48
 	lbl_reason.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lbl_reason.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_build_revive_button()
 	_build_top_label()
+	var endless := Button.new()
+	endless.text = "Endless Run · free to play"
+	endless.custom_minimum_size.y = 44
+	endless.pressed.connect(func() -> void: GameManager.go_to_endless())
+	($Panel/VBox as VBoxContainer).add_child(endless)
 	btn_retry.pressed.connect(_on_retry)
 	btn_map.pressed.connect(_on_map)
 	visible = false
@@ -70,6 +80,7 @@ func show_fail(reason: String = "", can_revive: bool = false, revive_cost: int =
 		btn_retry.disabled = false
 		btn_retry.text = "↺ Retry"
 	lbl_reason.text = body
+	_show_run_progress()
 	_lbl_top.visible = false
 	_set_revive(can_revive, revive_cost)
 	visible = true
@@ -80,13 +91,29 @@ func show_endless_over(distance_m: int, best_m: int, is_record: bool, can_revive
 		body += "\n★ NEW RECORD! ★"
 	else:
 		body += "\nBest:  %d m" % best_m
+		body += "\nOnly %d m to beat your best" % maxi(1, best_m - distance_m + 1)
 	lbl_reason.text = body
+	_show_run_progress()
 	btn_retry.disabled = false
 	btn_retry.text = "↺ New Run"
 	_set_revive(can_revive, revive_cost)
 	_lbl_top.visible = false
 	_fetch_leaderboard()
 	visible = true
+
+func _show_run_progress() -> void:
+	if is_instance_valid(_run_progress):
+		_run_progress.get_parent().remove_child(_run_progress)
+		_run_progress.queue_free()
+	_run_progress = RunProgressSummary.build()
+	var vbox := $Panel/VBox as VBoxContainer
+	vbox.add_child(_run_progress)
+	vbox.move_child(_run_progress, 1)
+	var coins := Label.new()
+	coins.text = "%d coins collected · saved to your wallet" % GameManager.session_coins
+	coins.add_theme_font_size_override("font_size", 13)
+	coins.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_run_progress.add_child(coins)
 
 func _set_revive(can_revive: bool, revive_cost: int) -> void:
 	_btn_revive.visible = can_revive

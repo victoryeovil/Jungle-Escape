@@ -7,14 +7,18 @@ extends Control
 @onready var btn_map:    Button = $Panel/VBox/Buttons/BtnMap
 
 var lbl_story: Label = null
+var _run_progress: VBoxContainer = null
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	var panel := $Panel as Panel
-	panel.offset_left = -190
-	panel.offset_right = 190
-	panel.offset_top = -216
-	panel.offset_bottom = 216
+	panel.offset_left = -210
+	panel.offset_right = 210
+	panel.offset_top = -310
+	panel.offset_bottom = 310
+	RunProgressSummary.style_panel(panel, $Panel/VBox)
+	for button in [btn_next, btn_replay, btn_map]:
+		button.custom_minimum_size.y = 48
 	_ensure_story_label()
 	btn_next.pressed.connect(_on_next)
 	btn_replay.pressed.connect(_on_replay)
@@ -36,6 +40,18 @@ func show_result(stars: int, coins: int, level_id: int = -1, resources: Dictiona
 		SaveManager.mark_lives_intro_seen()
 	_apply_register_gate(active_level)
 	_show_resource_rewards(resources)
+	if is_instance_valid(_run_progress):
+		_run_progress.get_parent().remove_child(_run_progress)
+		_run_progress.queue_free()
+	_run_progress = RunProgressSummary.build()
+	var vbox := $Panel/VBox as VBoxContainer
+	vbox.add_child(_run_progress)
+	vbox.move_child(_run_progress, 3)
+	var daily: Dictionary = GameManager.last_daily_result
+	if bool(daily.get("attempted", false)):
+		lbl_story.text = str(daily.get("message", "")) + "\n\n" + teaser
+	if active_level >= 20:
+		btn_next.text = "Endless Run"
 	visible = true
 	_animate_stars(stars)
 	_animate_coins(coins)
@@ -108,7 +124,17 @@ func _apply_register_gate(level_id: int) -> void:
 	btn_next.add_theme_stylebox_override("hover", sbh)
 
 func _animate_stars(stars: int) -> void:
-	# Build 3 individual star labels layered over lbl_stars
+	# Let the result layout reserve space for stars, including on narrow screens.
+	for child in lbl_stars.get_children():
+		lbl_stars.remove_child(child)
+		child.queue_free()
+	lbl_stars.custom_minimum_size.y = 52
+	var row := HBoxContainer.new()
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 14)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lbl_stars.add_child(row)
 	for i in 3:
 		var sl := Label.new()
 		sl.text = "★" if i < stars else "☆"
@@ -118,18 +144,13 @@ func _animate_stars(stars: int) -> void:
 		sl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.60))
 		sl.add_theme_constant_override("shadow_offset_x", 2)
 		sl.add_theme_constant_override("shadow_offset_y", 2)
-		sl.size = Vector2(48, 48)
+		sl.custom_minimum_size = Vector2(48, 48)
 		sl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		sl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-		# Position relative to the Panel; lbl_stars is inside Panel/VBox
-		# We place stars directly on Panel so we can control their position
-		var panel := $Panel as Panel
-		var panel_w: float = panel.offset_right - panel.offset_left   # ~380
-		var cx: float = panel_w * 0.5
-		sl.position = Vector2(cx - 72 + i * 62 - 24, 12)
+		sl.pivot_offset = Vector2(24, 24)
 		sl.scale    = Vector2.ZERO
 		sl.modulate = Color(1, 1, 1, 0)
-		panel.add_child(sl)
+		row.add_child(sl)
 
 		var delay := 0.08 + i * 0.22
 		var tw := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -140,7 +161,6 @@ func _animate_stars(stars: int) -> void:
 
 func _animate_coins(coins: int) -> void:
 	var tw := create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	var dummy := {"v": 0}
 	tw.tween_method(func(v: int) -> void:
 		lbl_coins.text = "+" + str(v) + " Coins"
 	, 0, coins, 0.70).set_delay(0.45)
@@ -202,7 +222,7 @@ func _ensure_story_label() -> void:
 	var vbox := lbl_coins.get_parent()
 	lbl_story = Label.new()
 	lbl_story.name = "LblStory"
-	lbl_story.custom_minimum_size = Vector2(344.0, 122.0)
+	lbl_story.custom_minimum_size = Vector2(0.0, 90.0)
 	lbl_story.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl_story.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	lbl_story.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -219,7 +239,7 @@ func _story_message(level_id: int) -> String:
 			return "The forest opens, but the lost path grows darker."
 		3:
 			if SaveManager.is_lives_intro_pending():
-				return "The River of Echoes has tested your courage.\n\nFrom here, the Lost Path becomes more dangerous. Ancient ruins, wild trails, deep forests, and hidden traps await.\n\nYou now have Expedition Lives. Lose a life when you fail a run, but recover them over time, earn them through rewards, or continue your journey with help from the expedition camp."
+				return "Expedition Lives unlocked! From Level 4, a crash costs one life. Lives recover over time. Endless Run is always free to play."
 			return "The River of Echoes guards another Sunstone shard."
 		4:
 			return "A strange symbol glows on the ancient temple stone."
@@ -233,6 +253,9 @@ func _story_message(level_id: int) -> String:
 func _on_next() -> void:
 	EventBus.play_sfx.emit("button")
 	var completed := GameManager.current_level_id
+	if completed >= 20:
+		GameManager.go_to_endless()
+		return
 	# After Level 5, route to the Wildlands story unlock screen
 	if completed == 5 and not SaveManager.has_upgrade("sand_shoes"):
 		get_tree().paused = false
@@ -252,6 +275,9 @@ func _on_next() -> void:
 
 func _on_replay() -> void:
 	EventBus.play_sfx.emit("button")
+	if GameManager.in_daily_challenge:
+		GameManager.restart_level()
+		return
 	_try_start_level(GameManager.current_level_id)
 
 func _on_map() -> void:

@@ -34,8 +34,16 @@ var _revive_used: bool = false
 var _last_row: int = 0
 var _last_guidance: Array = []   # cached args of the latest path_segment_entered
 var _tutorial_hints: Dictionary = {}
+var _run_distance_m: int = 0
+var _level_length: int = 1
+var _banked_coins: int = 0
+var _run_coins: int = 0
+var _run_started: bool = false
 
 func _ready() -> void:
+	ExpeditionProgress.begin_run()
+	_run_started = true
+	EventBus.coin_collected.connect(_on_run_coin)
 	_endless = GameManager.endless_mode
 	_level_id = GameManager.current_level_id
 	_apply_level_atmosphere(EndlessLevel.theme_for_stage(1) if _endless else _level_id)
@@ -69,6 +77,8 @@ func _ready() -> void:
 		level_mgr.spawn_vfx(kind, pos)
 	)
 	hud.call("setup", _level_id)
+	if not _endless:
+		hud.call("set_run_progress", 0, _level_length)
 	GameManager.state = GameManager.GameState.PLAYING
 	EventBus.play_music.emit("gameplay")
 
@@ -88,6 +98,7 @@ func _load_and_build_level() -> void:
 	if data.is_empty():
 		push_warning("Game3D: level data missing for " + str(_level_id) + "; using defaults")
 		data = _default_level(_level_id)
+	_level_length = maxi(1, int(data.get("length", 1)))
 	level_mgr.build(data)
 	player.set_level_speed(_level_id)
 	_setup_tutorial(data)
@@ -103,7 +114,8 @@ func _setup_tutorial(data: Dictionary) -> void:
 	_tutorial_hints.clear()
 	if _level_id != 1 or bool(SaveManager.get_setting("tutorial_seen", false)):
 		return
-	_tutorial_hints[1] = "Swipe  ◀ ▶  to change lanes"
+	var touch := DisplayServer.is_touchscreen_available()
+	_tutorial_hints[1] = "Swipe left / right to change lanes" if touch else "A / D or arrow keys to change lanes"
 	var first_jump := -1
 	var first_slide := -1
 	var first_dodge := -1
@@ -122,11 +134,11 @@ func _setup_tutorial(data: Dictionary) -> void:
 				if first_dodge < 0 or row < first_dodge:
 					first_dodge = row
 	if first_dodge > 3:
-		_tutorial_hints[first_dodge - 3] = "Rock ahead — swipe  ◀ ▶  to dodge!"
+		_tutorial_hints[first_dodge - 3] = "Rock ahead — change lanes to dodge!"
 	if first_jump > 3:
-		_tutorial_hints[first_jump - 3] = "Log ahead — swipe  ▲  to JUMP!"
+		_tutorial_hints[first_jump - 3] = "Log ahead — swipe up to JUMP!" if touch else "Log ahead — press SPACE to JUMP!"
 	if first_slide > 3:
-		_tutorial_hints[first_slide - 3] = "Branch ahead — swipe  ▼  to SLIDE!"
+		_tutorial_hints[first_slide - 3] = "Branch ahead — swipe down to SLIDE!" if touch else "Branch ahead — press S to SLIDE!"
 
 func _apply_level_atmosphere(id: int) -> void:
 	if world_env.environment == null:
@@ -426,9 +438,12 @@ func _on_path_segment_entered(row: int, center: Vector3, fwd: Vector3, right: Ve
 	_last_row = row
 	_last_guidance = [row, center, fwd, right, surface, mode, width, lanes]
 	GameManager.last_fail_row = row
+	_run_distance_m = maxi(_run_distance_m, (_stage_rows_done + row) * 3)
 	if _endless:
-		_endless_distance_m = int(float(_stage_rows_done + row) * 3.0)
+		_endless_distance_m = _run_distance_m
 		hud.call("set_progress_text", "Stage %d  •  %d m" % [_stage, _endless_distance_m])
+	else:
+		hud.call("set_run_progress", row, _level_length)
 	if _tutorial_hints.has(row):
 		hud.call("show_hint", str(_tutorial_hints[row]))
 		_tutorial_hints.erase(row)
@@ -524,8 +539,8 @@ func _on_player_died() -> void:
 	if _dead:
 		return
 	_dead = true
-	if GameManager.in_daily_challenge:
-		GameManager._challenge_fail_count += 1
+	_bank_run_coins()
+	ExpeditionProgress.record_run(_run_coins, _run_distance_m, false, _level_id)
 	EventBus.play_sfx.emit("game_over")
 	level_mgr.spawn_vfx("hit", player.global_position + Vector3(0.0, 0.9, 0.0))
 	# Brief slow-motion beat so the player sees what killed them
@@ -558,11 +573,13 @@ func _on_player_died() -> void:
 	# Feed the fail into analytics + adaptive difficulty (was previously
 	# only wired for the 2D grid mode)
 	EventBus.level_failed.emit(_level_id, "obstacle")
-	var message := "You hit an obstacle!"
+	var percent := clampi(int(100.0 * float(_last_row) / float(_level_length)), 0, 100)
+	var message := "%d%% of the trail explored" % percent
+	message += "\nChange lanes for rocks. Jump logs. Slide branches."
 	if _level_id > 3:
 		var lost_life := SaveManager.lose_life(_level_id)
 		if lost_life:
-			message += "\n\nExpedition Life lost. " + SaveManager.get_lives_display() + " remain."
+			message += "\n" + SaveManager.get_lives_display() + " lives remain."
 		else:
 			message += "\n\nNo Expedition Lives were available."
 	game_over.call("show_fail", message, can_revive, REVIVE_GEM_COST)
@@ -599,6 +616,20 @@ func _on_revive_requested() -> void:
 
 func _exit_tree() -> void:
 	Engine.time_scale = 1.0
+	# Leaving from pause also preserves earned progress. Cached run totals avoid
+	# reading the next run's counters after navigation has already reset them.
+	if _run_started and not _finished and not _dead:
+		_bank_run_coins()
+		ExpeditionProgress.record_run(_run_coins, _run_distance_m, false, _level_id)
+
+func _on_run_coin(total: int) -> void:
+	_run_coins = total
+
+func _bank_run_coins() -> void:
+	var earned := maxi(0, _run_coins - _banked_coins)
+	if earned > 0:
+		SaveManager.add_coins(earned)
+		_banked_coins = _run_coins
 
 func _on_finish_reached() -> void:
 	if _finished or _dead:
@@ -611,6 +642,7 @@ func _on_finish_reached() -> void:
 			_advance_endless_stage.call_deferred()
 		return
 	_finished = true
+	_run_distance_m = maxi(_run_distance_m, _level_length * 3)
 	if _level_id == 1:
 		SaveManager.set_setting("tutorial_seen", true)
 	player.play_victory()
@@ -627,7 +659,9 @@ func _on_finish_reached() -> void:
 		"baobab":
 			if stars >= 3:
 				SaveManager.add_gems(1)
-	SaveManager.complete_level(_level_id, stars, coins)
+	SaveManager.complete_level(_level_id, stars, maxi(0, coins - _banked_coins))
+	_banked_coins = coins
+	ExpeditionProgress.record_run(_run_coins, _run_distance_m, true, _level_id, stars)
 	_award_level_resources(_level_id)
 	# Provide challenge context before level_completed fires
 	GameManager._challenge_completion_stars = stars

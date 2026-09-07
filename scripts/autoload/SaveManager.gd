@@ -168,6 +168,48 @@ func mark_first_launch_done() -> void:
 func get_levels_completed_count() -> int:
 	return get_completed_levels().size()
 
+# Expedition goals and their coin rewards share a save transaction. Missing
+# data is an empty journal, so older saves keep their existing economy intact.
+func get_expedition_progress() -> Dictionary:
+	var progress: Variant = _save_data.get("expedition_progress", {})
+	return progress.duplicate(true) if progress is Dictionary else {}
+
+func set_expedition_progress(progress: Dictionary, reward_coins: int = 0) -> void:
+	_save_data["expedition_progress"] = progress.duplicate(true)
+	if reward_coins > 0:
+		_save_data["coins"] = get_coins() + reward_coins
+	save_game()
+
+func _merge_expedition_progress(cloud: Dictionary) -> void:
+	var remote: Variant = cloud.get("expedition_progress", {})
+	if not (remote is Dictionary) or remote.is_empty():
+		return
+	var local := get_expedition_progress()
+	if local.is_empty():
+		_save_data["expedition_progress"] = remote.duplicate(true)
+		return
+	for key in ["xp", "total_coins", "total_distance", "completed_runs"]:
+		local[key] = maxi(int(local.get(key, 0)), int(remote.get(key, 0)))
+	var local_missions: Dictionary = local.get("missions", {})
+	var remote_missions: Variant = remote.get("missions", {})
+	if remote_missions is Dictionary:
+		for key in ["coins", "distance", "levels"]:
+			var ours: Dictionary = local_missions.get(key, {})
+			var theirs: Variant = remote_missions.get(key, {})
+			if not (theirs is Dictionary):
+				continue
+			var our_stage := int(ours.get("stage", 0))
+			var their_stage := int(theirs.get("stage", 0))
+			# Advancing a stage records that its reward was already paid. Never
+			# replay a completed mission when an older cloud save is restored.
+			if their_stage > our_stage:
+				local_missions[key] = theirs.duplicate(true)
+			elif their_stage == our_stage:
+				ours["progress"] = maxi(int(ours.get("progress", 0)), int(theirs.get("progress", 0)))
+				local_missions[key] = ours
+	local["missions"] = local_missions
+	_save_data["expedition_progress"] = local
+
 # --- Expedition Lives -------------------------------------------------------
 
 func should_show_lives() -> bool:
@@ -514,6 +556,8 @@ func sync_to_cloud() -> void:
 	SupabaseClient.upload_save(get_save_snapshot())
 
 func restore_from_cloud(cloud: Dictionary) -> void:
+	# Merge paid mission stages before any existing helper can write a save.
+	_merge_expedition_progress(cloud)
 	# Coins / gems / hints — never reduce local
 	_save_data["coins"] = max(get_coins(), int(cloud.get("coins", 0)))
 	_save_data["gems"]  = max(get_gems(),  int(cloud.get("gems",  0)))

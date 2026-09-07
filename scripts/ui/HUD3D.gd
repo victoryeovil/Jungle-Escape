@@ -18,6 +18,7 @@ var _lives_lbl    : Label = null
 var _level_id     : int = 1
 var _hint_lbl     : Label = null
 var _hint_timer   : float = 0.0
+var _run_progress: ProgressBar = null
 
 func _ready() -> void:
 	btn_pause.pressed.connect(_on_pause)
@@ -28,6 +29,21 @@ func _ready() -> void:
 	_build_sand_warning()
 	_build_resource_bar()
 	_build_mode_labels()
+	_run_progress = ProgressBar.new()
+	_run_progress.name = "TrailProgress"
+	_run_progress.position = Vector2(14, 58)
+	_run_progress.size = Vector2(452, 5)
+	_run_progress.show_percentage = false
+	_run_progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_run_progress.visible = not GameManager.endless_mode
+	add_child(_run_progress)
+
+func set_run_progress(row: int, total_rows: int) -> void:
+	if _run_progress == null:
+		return
+	_run_progress.max_value = maxi(1, total_rows)
+	_run_progress.value = row
+	lbl_level.text = "Level %d · %d%%" % [_level_id, clampi(int(100.0 * float(row) / maxf(1.0, float(total_rows))), 0, 100)]
 
 func _process(delta: float) -> void:
 	if _sand_warn_timer > 0.0:
