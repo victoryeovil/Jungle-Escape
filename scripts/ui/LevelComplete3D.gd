@@ -55,6 +55,16 @@ func show_result(stars: int, coins: int, level_id: int = -1, resources: Dictiona
 	visible = true
 	_animate_stars(stars)
 	_animate_coins(coins)
+	_fit_result.call_deferred()
+
+func _fit_result() -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	RunProgressSummary.fit_panel($Panel, $Panel/VBox)
+
+func show_chain_result(best: int, bonus: int) -> void:
+	RunProgressSummary.add_chain_result(_run_progress, best, bonus)
+	_fit_result.call_deferred()
 
 # "Next carrot" teaser — surface what's waiting one level ahead at the moment
 # of highest engagement.
@@ -276,6 +286,9 @@ func _on_next() -> void:
 func _on_replay() -> void:
 	EventBus.play_sfx.emit("button")
 	if GameManager.in_daily_challenge:
+		if not SaveManager.can_start_level(GameManager.current_level_id):
+			lbl_story.text = "No Expedition Lives left. Recover lives on the map, or play Endless Run from camp."
+			return
 		GameManager.restart_level()
 		return
 	_try_start_level(GameManager.current_level_id)

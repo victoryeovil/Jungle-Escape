@@ -44,6 +44,8 @@ signal junction_exited(junction_id: String)
 var level_data: Dictionary = {}
 var _coin_count: int = 0
 var _total_coins: int = 0
+var _star_coin_target: int = 0
+var _star_coin_rows: Dictionary = {}
 var _coin_nodes: Array[Node3D] = []
 var _collectable_nodes: Array[Node3D] = []
 var _butterflies: Array[Dictionary] = []
@@ -81,6 +83,8 @@ func build(data: Dictionary) -> void:
 	level_data = data
 	_coin_count = 0
 	_total_coins = 0
+	_star_coin_target = 0
+	_star_coin_rows.clear()
 	_time = 0.0
 	_coin_nodes.clear()
 	_collectable_nodes.clear()
@@ -1095,6 +1099,7 @@ func _spawn_coin(lane: int, row: int, is_gem: bool) -> void:
 	coin.position = Vector3(base_pos.x, 0.80, base_pos.z)
 	coin.set_meta("base_y", coin.position.y)
 	coin.set_meta("phase", float(row) * 0.35 + float(lane))
+	coin.set_meta("is_gem", is_gem)
 
 	var _glb_key := "gem" if is_gem else "coin"
 	if _place_glb(coin, "res://assets/3d/collectibles/%s.glb" % _glb_key, Vector3.ZERO, Vector3(0.35, 0.35, 0.35)) == null:
@@ -1115,33 +1120,22 @@ func _spawn_coin(lane: int, row: int, is_gem: bool) -> void:
 	area.add_child(col)
 	area.set_meta("coin", true)
 	area.set_meta("is_gem", is_gem)
-	area.body_entered.connect(_on_coin_body_entered.bind(coin, is_gem))
+	area.body_entered.connect(_on_coin_body_entered.bind(coin))
 	coin.add_child(area)
 
 	_coin_nodes.append(coin)
 	_group("Collectibles").add_child(coin)
+	if not is_gem:
+		_register_star_coin(lane, row)
 
-func _collect_coin_node(coin_node: Node3D) -> void:
-	if not is_instance_valid(coin_node):
+func _collect_coin_node(coin_node: Node3D, body: Node3D = null) -> void:
+	if not _can_collect_pickup(body) or not _claim_pickup(coin_node):
 		return
-	coin_node.queue_free()
 	_coin_nodes.erase(coin_node)
-	EventBus.play_sfx.emit("coin")
-	GameManager.collect_coin()
-	_coin_count += 1
-	coin_collected.emit(_coin_count)
-
-func _on_coin_body_entered(body: Node3D, coin_node: Node3D, is_gem: bool) -> void:
-	if not (body is CharacterBody3D):
-		return
-	if not is_instance_valid(coin_node):
-		return
-	if body.has_method("play_collect"):
+	if body != null and body.has_method("play_collect"):
 		body.call("play_collect")
 	spawn_vfx("pickup", coin_node.global_position)
-	coin_node.queue_free()
-	_coin_nodes.erase(coin_node)
-	if is_gem:
+	if bool(coin_node.get_meta("is_gem", false)):
 		EventBus.play_sfx.emit("gem")
 		GameManager.collect_gem()
 	else:
@@ -1149,6 +1143,43 @@ func _on_coin_body_entered(body: Node3D, coin_node: Node3D, is_gem: bool) -> voi
 		GameManager.collect_coin()
 		_coin_count += 1
 		coin_collected.emit(_coin_count)
+
+func _on_coin_body_entered(body: Node3D, coin_node: Node3D) -> void:
+	if body is CharacterBody3D:
+		_collect_coin_node(coin_node, body)
+
+func _can_collect_pickup(body: Node3D = null) -> bool:
+	if GameManager.state != GameManager.GameState.PLAYING:
+		return false
+	# Magnet calls have no body argument; check the active runner as well as
+	# direct contacts, including the brief death animation before GAME_OVER.
+	var runner := body as Player3D
+	if runner == null and body == null:
+		runner = get_tree().get_first_node_in_group("player3d") as Player3D
+	return runner == null or not runner._is_dead
+
+func _claim_pickup(pickup: Node3D) -> bool:
+	if not is_instance_valid(pickup) or pickup.is_queued_for_deletion():
+		return false
+	# Claim before feedback or reward signals can re-enter another pickup path.
+	pickup.hide()
+	pickup.queue_free()
+	return true
+
+func _register_star_coin(lane: int, row: int) -> void:
+	if row < 0 or row >= int(level_data.get("length", 30)):
+		return
+	var lane_counts: Dictionary = _star_coin_rows.get(row, {})
+	var previous_best := 0
+	for count in lane_counts.values():
+		previous_best = maxi(previous_best, int(count))
+	# Authored lanes collapse on narrow paths. Overlapping rewards in that
+	# physical lane can all be collected; simultaneous separate lanes cannot.
+	var lane_x := snappedf(_lane_x_for_row(row, lane), 0.01)
+	var next_count := int(lane_counts.get(lane_x, 0)) + 1
+	lane_counts[lane_x] = next_count
+	_star_coin_rows[row] = lane_counts
+	_star_coin_target += maxi(0, next_count - previous_best)
 
 func _spawn_dressing(data: Dictionary) -> void:
 	var length: int = data.get("length", 30)
@@ -2129,6 +2160,12 @@ func _count_total_coins(data: Dictionary) -> void:
 func get_total_coins() -> int:
 	return _total_coins
 
+func get_collected_coins() -> int:
+	return _coin_count
+
+func get_star_coin_target() -> int:
+	return _star_coin_target
+
 func get_row_center(row: int) -> Vector3:
 	return _row_center(row)
 
@@ -2141,6 +2178,8 @@ func clear_obstacles_near(world_pos: Vector3, radius: float) -> void:
 			child.queue_free()
 
 func attract_coins(player_pos: Vector3, radius: float) -> void:
+	if not _can_collect_pickup():
+		return
 	var radius_sq := radius * radius
 	for coin in _coin_nodes.duplicate():
 		if not is_instance_valid(coin):
@@ -2276,13 +2315,12 @@ func _spawn_single_collectable(res_type: String, lane: int, row: int) -> void:
 func _on_collectable_body_entered(body: Node3D, coll_node: Node3D, res_type: String) -> void:
 	if not (body is CharacterBody3D):
 		return
-	if not is_instance_valid(coll_node):
+	if not _can_collect_pickup(body) or not _claim_pickup(coll_node):
 		return
+	_collectable_nodes.erase(coll_node)
 	if body.has_method("play_collect"):
 		body.call("play_collect")
 	spawn_vfx("pickup", coll_node.global_position)
-	coll_node.queue_free()
-	_collectable_nodes.erase(coll_node)
 	match res_type:
 		"relic_key":
 			EventBus.play_sfx.emit("key")

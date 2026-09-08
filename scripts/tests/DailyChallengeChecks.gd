@@ -52,6 +52,14 @@ func _run() -> void:
 	_check(_manager.get_daily_date_key() == Time.get_date_string_from_system(false), "local calendar date")
 	_check(_manager.is_daily_level_accessible(1), "starter level accessible")
 	_check(not _manager.is_daily_level_accessible(2), "locked level excluded")
+	var unavailable := _challenge()
+	unavailable["level_id"] = 2
+	_check(not _manager.start_daily_challenge(unavailable), "locked trail cannot start a daily run")
+	var stale := _challenge()
+	stale["date_key"] = _manager.get_previous_daily_date_key()
+	_check(not _manager.start_daily_challenge(stale), "previous day's offer cannot start")
+	_check(not _manager.start_daily_challenge(_challenge("unknown")), "unknown challenge target cannot start")
+	_check(_manager.launches == 0, "rejected offers never launch gameplay")
 	SaveManager._save_data["completed_levels"] = [1, 2, 3, 4, 5]
 	_check(not _manager.is_daily_level_accessible(4), "registration gate honored")
 	var key_file := FileAccess.open(SupabaseClient.REG_KEY_PATH, FileAccess.WRITE)
@@ -118,6 +126,11 @@ func _run() -> void:
 	_check(not _manager._challenge_retry_used, "fresh challenge resets retry flag")
 
 	_start("coins_half")
+	_manager._challenge_total_coins = 0
+	_manager._challenge_collected_coins = 10
+	_manager._award_daily_challenge()
+	_check(not _manager.last_daily_result["passed"], "missing trail total cannot award half-coin challenge")
+	_manager.restart_level()
 	_manager._challenge_total_coins = 17
 	_manager._challenge_collected_coins = 8
 	_manager._award_daily_challenge()
@@ -146,6 +159,16 @@ func _run() -> void:
 	_manager.state = _manager.GameState.PAUSED
 	_manager._process(1.0)
 	_check(_manager.get_level_elapsed_seconds() == 0.0, "pauses excluded from active time")
+	_manager.state = _manager.GameState.PLAYING
+	_manager._last_elapsed_tick = Time.get_ticks_msec() - 1000
+	get_tree().paused = true
+	_manager._process(1.0)
+	get_tree().paused = false
+	_check(_manager.get_level_elapsed_seconds() == 0.0, "paused scene tree excluded even while state remains playing")
+	_manager.state = _manager.GameState.LEVEL_COMPLETE
+	_manager._last_elapsed_tick = Time.get_ticks_msec() - 1000
+	_manager._process(1.0)
+	_check(_manager.get_level_elapsed_seconds() == 0.0, "result screens excluded from active time")
 	_manager.state = _manager.GameState.PLAYING
 	_manager._last_elapsed_tick = Time.get_ticks_msec() - 1000
 	Engine.time_scale = 0.35

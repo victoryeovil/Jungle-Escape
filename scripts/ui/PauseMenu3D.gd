@@ -36,7 +36,7 @@ func _on_resume() -> void:
 func _on_restart() -> void:
 	EventBus.play_sfx.emit("button")
 	GameManager.resume_game()
-	GameManager.go_to_gameplay_3d(GameManager.current_level_id)
+	GameManager.restart_level()
 
 func _on_menu() -> void:
 	EventBus.play_sfx.emit("button")

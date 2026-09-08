@@ -15,6 +15,9 @@ const LEVEL_DATA_PATH := "res://data/levels3d/level3d_%03d.json"
 @onready var ambient_fill:    DirectionalLight3D = $AmbientFill
 
 const REVIVE_GEM_COST := 5
+const COIN_CHAIN_WINDOW := 3.0
+const COIN_CHAIN_STEP := 5
+const COIN_CHAIN_REWARD := 2
 
 var _level_id: int   = 1
 var _finished: bool  = false
@@ -39,6 +42,10 @@ var _level_length: int = 1
 var _banked_coins: int = 0
 var _run_coins: int = 0
 var _run_started: bool = false
+var _chain_count: int = 0
+var _chain_remaining: float = 0.0
+var _best_chain: int = 0
+var _chain_bonus_coins: int = 0
 
 func _ready() -> void:
 	ExpeditionProgress.begin_run()
@@ -58,6 +65,7 @@ func _ready() -> void:
 	player.died.connect(_on_player_died)
 	player.sand_blocked.connect(func() -> void: hud.call("show_sand_warning"))
 	level_mgr.finish_reached.connect(_on_finish_reached)
+	level_mgr.coin_collected.connect(_on_trail_coin)
 	level_mgr.turn_zone_entered.connect(player._on_turn_zone_entered)
 	level_mgr.turn_zone_exited.connect(player._on_turn_zone_exited)
 	level_mgr.turn_zone_entered.connect(func(dir: int, cp: Vector3) -> void: hud.call("show_turn_prompt", dir, cp))
@@ -77,6 +85,7 @@ func _ready() -> void:
 		level_mgr.spawn_vfx(kind, pos)
 	)
 	hud.call("setup", _level_id)
+	_update_skill_hud()
 	if not _endless:
 		hud.call("set_run_progress", 0, _level_length)
 	GameManager.state = GameManager.GameState.PLAYING
@@ -409,6 +418,7 @@ func _default_level(id: int) -> Dictionary:
 func _process(delta: float) -> void:
 	if _finished or _dead:
 		return
+	_tick_coin_chain(delta)
 	# Keep camera behind the player in their heading direction.
 	# Snap instantly when the required movement is large (just after a turn)
 	# so the player never runs off-screen; smooth-lerp for minor adjustments.
@@ -470,6 +480,39 @@ func _on_junction_route_chosen(junction_id: String, direction: String, route: Di
 	level_mgr.apply_junction_choice(junction_id, direction, route)
 	hud.call("hide_junction_prompt")
 	hud.call("show_route_chosen", str(route.get("label", "Route")))
+	_update_skill_hud()
+
+func _on_trail_coin(_total: int) -> void:
+	if _dead or _finished or player._is_dead:
+		return
+	_chain_count += 1
+	_chain_remaining = COIN_CHAIN_WINDOW
+	_best_chain = maxi(_best_chain, _chain_count)
+	if _chain_count % COIN_CHAIN_STEP == 0:
+		# Skill bonuses are currency, not extra physical pickups. They must not
+		# feed this signal again or inflate a daily challenge's trail-coin count.
+		_chain_bonus_coins += COIN_CHAIN_REWARD
+		GameManager.session_coins += COIN_CHAIN_REWARD
+		EventBus.coin_collected.emit(GameManager.session_coins)
+		hud.call("show_chain_bonus", _chain_count, COIN_CHAIN_REWARD)
+		EventBus.play_sfx.emit("key")
+	_update_skill_hud()
+
+func _tick_coin_chain(delta: float) -> void:
+	if _chain_remaining <= 0.0:
+		return
+	_chain_remaining = maxf(0.0, _chain_remaining - delta)
+	if _chain_remaining == 0.0:
+		_chain_count = 0
+	_update_skill_hud()
+
+func _reset_coin_chain() -> void:
+	_chain_count = 0
+	_chain_remaining = 0.0
+	_update_skill_hud()
+
+func _update_skill_hud() -> void:
+	hud.call("set_skill_progress", level_mgr.get_collected_coins(), level_mgr.get_star_coin_target(), _chain_count, _chain_remaining / COIN_CHAIN_WINDOW, _endless)
 
 func _camera_distance() -> float:
 	if _junction_active:
@@ -539,6 +582,7 @@ func _on_player_died() -> void:
 	if _dead:
 		return
 	_dead = true
+	_reset_coin_chain()
 	_bank_run_coins()
 	ExpeditionProgress.record_run(_run_coins, _run_distance_m, false, _level_id)
 	EventBus.play_sfx.emit("game_over")
@@ -551,6 +595,7 @@ func _on_player_died() -> void:
 		return
 	GameManager.state = GameManager.GameState.GAME_OVER
 	get_tree().paused = true
+	hud.hide()
 	var can_revive := not _revive_used and SaveManager.get_gems() >= REVIVE_GEM_COST
 
 	if _endless:
@@ -568,6 +613,7 @@ func _on_player_died() -> void:
 			SaveManager.set_setting(week_setting, _endless_distance_m)
 			SupabaseClient.submit_weekly_score(_endless_distance_m)
 		game_over.call("show_endless_over", _endless_distance_m, best, is_record, can_revive, REVIVE_GEM_COST)
+		game_over.call("show_chain_result", _best_chain, _chain_bonus_coins)
 		return
 
 	# Feed the fail into analytics + adaptive difficulty (was previously
@@ -583,6 +629,7 @@ func _on_player_died() -> void:
 		else:
 			message += "\n\nNo Expedition Lives were available."
 	game_over.call("show_fail", message, can_revive, REVIVE_GEM_COST)
+	game_over.call("show_chain_result", _best_chain, _chain_bonus_coins)
 
 func _advance_endless_stage() -> void:
 	_stage_rows_done += _stage_length
@@ -590,6 +637,7 @@ func _advance_endless_stage() -> void:
 	_active_mode = "run"
 	_apply_level_atmosphere(EndlessLevel.theme_for_stage(_stage))
 	_build_endless_stage()
+	_reset_coin_chain()
 	player.reset(1)
 	player.global_position = Vector3(0.0, 0.5, 0.0)
 	player.set_run_speed(EndlessLevel.speed_for_stage(_stage))
@@ -606,6 +654,7 @@ func _on_revive_requested() -> void:
 	get_tree().paused = false
 	GameManager.state = GameManager.GameState.PLAYING
 	game_over.visible = false
+	hud.show()
 	var safe_row: int = max(_last_row - 1, 0)
 	var safe_pos: Vector3 = level_mgr.get_row_center(safe_row) + Vector3(0.0, 0.6, 0.0)
 	level_mgr.clear_obstacles_near(safe_pos, 15.0)
@@ -643,13 +692,14 @@ func _on_finish_reached() -> void:
 		return
 	_finished = true
 	_run_distance_m = maxi(_run_distance_m, _level_length * 3)
+	hud.call("set_run_progress", _level_length, _level_length)
 	if _level_id == 1:
 		SaveManager.set_setting("tutorial_seen", true)
 	player.play_victory()
 	player._is_dead = true
 	EventBus.play_sfx.emit("level_complete")
 	var coins := GameManager.session_coins
-	var stars := _calc_stars(coins, level_mgr.get_total_coins())
+	var stars := _calc_stars(level_mgr.get_collected_coins(), level_mgr.get_star_coin_target())
 	# Land plot perks (see Constants.LAND_PLOTS)
 	match str(SaveManager.get_setting("home_plot", "")):
 		"riverside":
@@ -669,8 +719,10 @@ func _on_finish_reached() -> void:
 	EventBus.level_completed.emit(_level_id, stars, coins, 0)
 	GameManager.state = GameManager.GameState.LEVEL_COMPLETE
 	get_tree().paused = true
+	hud.hide()
 	var rewards := _level_resource_rewards(_level_id)
 	level_complete.call("show_result", stars, coins, _level_id, rewards)
+	level_complete.call("show_chain_result", _best_chain, _chain_bonus_coins)
 
 func _award_level_resources(level_id: int) -> void:
 	for res_id: String in _level_resource_rewards(level_id):

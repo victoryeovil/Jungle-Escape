@@ -19,6 +19,12 @@ var _level_id     : int = 1
 var _hint_lbl     : Label = null
 var _hint_timer   : float = 0.0
 var _run_progress: ProgressBar = null
+var _skill_card: Panel = null
+var _star_goal: Label = null
+var _chain_label: Label = null
+var _chain_timer: ProgressBar = null
+var _chain_popup: Label = null
+var _chain_popup_tween: Tween = null
 
 func _ready() -> void:
 	btn_pause.pressed.connect(_on_pause)
@@ -29,14 +35,25 @@ func _ready() -> void:
 	_build_sand_warning()
 	_build_resource_bar()
 	_build_mode_labels()
+	_build_skill_meter()
 	_run_progress = ProgressBar.new()
 	_run_progress.name = "TrailProgress"
 	_run_progress.position = Vector2(14, 58)
 	_run_progress.size = Vector2(452, 5)
 	_run_progress.show_percentage = false
 	_run_progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var track := StyleBoxFlat.new()
+	track.bg_color = Color(0.04, 0.12, 0.07, 0.75)
+	track.set_corner_radius_all(3)
+	_run_progress.add_theme_stylebox_override("background", track)
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = Color("edc567")
+	fill.set_corner_radius_all(3)
+	_run_progress.add_theme_stylebox_override("fill", fill)
+	_run_progress.size = Vector2(452, 5)
 	_run_progress.visible = not GameManager.endless_mode
 	add_child(_run_progress)
+	_run_progress.set_deferred("size", Vector2(452, 5))
 
 func set_run_progress(row: int, total_rows: int) -> void:
 	if _run_progress == null:
@@ -202,6 +219,63 @@ func show_hint(text: String, seconds: float = 2.6) -> void:
 	_hint_lbl.text = text
 	_hint_lbl.visible = true
 	_hint_timer = seconds
+
+func _build_skill_meter() -> void:
+	_skill_card = Panel.new()
+	_skill_card.name = "SkillMeter"
+	_skill_card.position = Vector2(24, 760)
+	_skill_card.size = Vector2(432, 72)
+	_skill_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var background := StyleBoxFlat.new()
+	background.bg_color = Color(0.03, 0.10, 0.06, 0.88)
+	background.set_corner_radius_all(12)
+	background.border_color = Color(0.92, 0.76, 0.40, 0.55)
+	background.set_border_width_all(1)
+	_skill_card.add_theme_stylebox_override("panel", background)
+	add_child(_skill_card)
+	_star_goal = _hud_label("StarGoal", Vector2(12, 6), Vector2(408, 25), 14)
+	_skill_card.add_child(_star_goal)
+	_chain_label = _hud_label("CoinChain", Vector2(12, 30), Vector2(408, 24), 13)
+	_chain_label.add_theme_color_override("font_color", Color("d9eacb"))
+	_skill_card.add_child(_chain_label)
+	_chain_timer = ProgressBar.new()
+	_chain_timer.show_percentage = false
+	_chain_timer.max_value = 1.0
+	_chain_timer.position = Vector2(14, 60)
+	_chain_timer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var track := StyleBoxFlat.new()
+	track.bg_color = Color("0e2419")
+	track.set_corner_radius_all(3)
+	_chain_timer.add_theme_stylebox_override("background", track)
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = Color("edc567")
+	fill.set_corner_radius_all(3)
+	_chain_timer.add_theme_stylebox_override("fill", fill)
+	_skill_card.add_child(_chain_timer)
+	_chain_timer.set_deferred("size", Vector2(404, 5))
+
+func set_skill_progress(coins: int, target: int, chain: int, remaining: float, endless: bool) -> void:
+	if _star_goal == null:
+		return
+	_star_goal.text = "STAGE COINS  %d" % coins if endless else "3-STAR GOAL  %d / %d trail coins" % [mini(coins, target), target]
+	var next_bonus := (int(chain / 5.0) + 1) * 5
+	_chain_label.text = "Link 5 pickups for +2 bonus coins" if chain == 0 else "COIN CHAIN  %d / %d  ·  Next bonus +2" % [chain, next_bonus]
+	_chain_timer.value = remaining
+
+func show_chain_bonus(chain: int, bonus: int) -> void:
+	if _chain_popup == null:
+		_chain_popup = _hud_label("ChainBonus", Vector2(50, 365), Vector2(380, 62), 24)
+		add_child(_chain_popup)
+	if _chain_popup_tween != null and _chain_popup_tween.is_valid():
+		_chain_popup_tween.kill()
+	_chain_popup.text = "%d-COIN CHAIN!\n+%d bonus coins" % [chain, bonus]
+	_chain_popup.position.y = 365
+	_chain_popup.modulate.a = 1.0
+	_chain_popup.visible = true
+	_chain_popup_tween = create_tween()
+	_chain_popup_tween.tween_property(_chain_popup, "position:y", 340.0, 0.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_chain_popup_tween.tween_property(_chain_popup, "modulate:a", 0.0, 0.3)
+	_chain_popup_tween.tween_callback(func() -> void: _chain_popup.visible = false)
 
 # ─── Sand warning ─────────────────────────────────────────────────────────────
 

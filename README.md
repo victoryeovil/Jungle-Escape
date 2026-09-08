@@ -2,7 +2,7 @@
 
 A **3D lane runner adventure game** for Android, built with Godot 4.6 + GDScript.
 
-The player controls Kairo or Zuri through procedurally built jungle environments, collecting coins and resources, avoiding obstacles, and making Temple-Run-style 90° path turns across 6 levels — ending in the Wildlands of Peace where Sand Shoes are required to continue.
+The player controls Kairo or Zuri through procedurally built jungle environments, collecting coins and resources, avoiding obstacles, and making Temple-Run-style 90° path turns across 20 campaign levels. The opening six-level journey reaches the Wildlands of Peace, where Sand Shoes are required to continue.
 
 ---
 
@@ -183,5 +183,54 @@ Then bump `TOTAL_LEVELS` in `scripts/ui/LevelSelect.gd` and add an entry to `LEV
 
 ## Save Data
 
-Progress saved to `user://save_data.json`. Tracks: coins, stars per level, unlocked levels, resource inventory, owned upgrades, home building stage.  
-Cloud sync is stubbed — wire Firebase/Supabase in `SaveManager.gd`.
+### Expedition goals and returning players
+
+The home screen now continues directly to the next unlocked campaign level and
+shows the nearest expedition goal. Open **Journal** to see three persistent goals:
+collect coins, travel distance, and finish campaign levels. Goals carry over
+between runs and award coins automatically. Completed goals are replaced with
+progressively larger targets; extra progress carries into the next goal.
+
+Coins, distance and completions earn explorer XP and ranks. Failed runs and runs
+left through the pause menu keep earned coins and goal progress. Reviving continues
+the same run without duplicating its rewards. Results show XP, bonuses and the
+next goal. Endless Run remains available without spending lives.
+
+Daily expeditions choose an accessible trail and keep that day's offer stable.
+Goals use achievable coin/star targets, pauses do not count against speed runs,
+and rewards can be collected only once per local calendar day. Registration and
+Expedition Life requirements for the campaign are unchanged.
+
+### Retention regression checks
+
+Use Godot 4.6.3. The progression test uses an in-memory save store:
+
+```powershell
+$env:APPDATA = Join-Path (Get-Location) '.godot/progression-test-profile'
+New-Item -ItemType Directory -Force -Path $env:APPDATA | Out-Null
+godot --headless --path . res://scenes/tests/ExpeditionProgressTest.tscn
+```
+
+The daily and integration checks require separate test saves. Run these from the
+project folder in PowerShell; the scripts refuse to use a normal player profile:
+
+```powershell
+$env:APPDATA = Join-Path (Get-Location) '.godot/daily-test-profile'
+New-Item -ItemType Directory -Force -Path $env:APPDATA | Out-Null
+godot --headless --path . res://scenes/tests/DailyChallengeChecks.tscn -- --daily-test-isolated
+
+$env:APPDATA = Join-Path (Get-Location) '.godot/retention-test-profile'
+New-Item -ItemType Directory -Force -Path $env:APPDATA | Out-Null
+godot --headless --path . res://scenes/tests/RetentionChecks.tscn -- --retention-test-isolated
+```
+
+For screen captures, run the integration scene without `--headless`, use
+`--rendering-method gl_compatibility`, and add `--capture-visuals` after `--`.
+Images are saved under `.godot/retention-captures/`. The existing
+`scenes/tests/BuildAllLevels.tscn` also checks all scripts, 20 campaign levels and
+three generated endless stages. Close the test shell afterwards to restore your
+normal `APPDATA` environment for subsequent game launches.
+
+### Storage
+
+Progress is saved to `user://save_data.json`, including coins, level stars, unlocked levels, resources, upgrades, home building, and `expedition_progress` (goals, XP, and the current run's reward totals). Cloud sync uses the configured backend through `SupabaseClient`; expedition progress is included in the save snapshot.

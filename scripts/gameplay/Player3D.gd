@@ -38,6 +38,10 @@ func set_run_speed(speed: float) -> void:
 const JUMP_VELOCITY: float = 8.5
 const SLIDE_DURATION: float = 0.7
 const GRAVITY: float = 22.0
+const JUMP_BUFFER_TIME: float = 0.14
+const COYOTE_TIME: float = 0.10
+const FAST_FALL_SPEED: float = 13.0
+const LANDING_SLIDE_BUFFER_TIME: float = 0.45
 const OUTFIT_SCENE_PATHS := {
 	"upgrade": "res://assets/3d/outfits/upgrade/UpgradeOutfit.tscn",
 	"skating": "res://assets/3d/outfits/skating/SkatingOutfit.tscn",
@@ -64,6 +68,11 @@ var current_lane: int = 1
 var state: State = State.RUN
 var _is_dead: bool = false
 var _slide_timer: float = 0.0
+var _jump_buffer_timer: float = 0.0
+var _coyote_timer: float = 0.0
+var _landing_slide_timer: float = 0.0
+var _jump_consumed: bool = false
+var _standing_query_shape: CapsuleShape3D = null
 var _strafe_anim_timer: float = 0.0
 var _strafe_anim_name: String = ""
 var _character_model: Node3D = null
@@ -105,6 +114,7 @@ var _was_on_floor: bool = true
 var _sand_trail: GPUParticles3D = null   # assets/3d/vfx/sand_trail.tscn
 
 signal died
+signal action_performed(action: String)
 signal sand_blocked   # emitted when player tries to jump on sand without Sand Shoes
 signal junction_route_chosen(junction_id: String, direction: String, route: Dictionary)
 signal attract_coins_request(pos: Vector3, radius: float)  # Treasure: magnet pull
@@ -125,6 +135,14 @@ func _ready() -> void:
 	_setup_trail()
 	_setup_sand_trail()
 	_update_character_animation(true)
+
+func _notification(what: int) -> void:
+	if what in [NOTIFICATION_PAUSED, NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_WM_WINDOW_FOCUS_OUT]:
+		_clear_buffered_actions()
+
+func _clear_buffered_actions() -> void:
+	_jump_buffer_timer = 0.0
+	_landing_slide_timer = 0.0
 
 func _setup_sand_trail() -> void:
 	const SAND_TRAIL_PATH := "res://assets/3d/vfx/sand_trail.tscn"
@@ -150,10 +168,15 @@ func _physics_process(delta: float) -> void:
 		die()
 		return
 
+	_jump_buffer_timer = maxf(0.0, _jump_buffer_timer - delta)
+	_landing_slide_timer = maxf(0.0, _landing_slide_timer - delta)
+	if is_on_floor() and velocity.y <= 0.0 and not _jump_consumed:
+		_coyote_timer = COYOTE_TIME
+	else:
+		_coyote_timer = maxf(0.0, _coyote_timer - delta)
 	if not is_on_floor():
 		velocity.y -= GRAVITY * delta
-	elif state == State.JUMP:
-		state = State.RUN
+	_try_buffered_jump()
 
 	# Forward velocity along current heading
 	var effective_speed := _run_speed * _mode_speed_multiplier()
@@ -172,7 +195,7 @@ func _physics_process(delta: float) -> void:
 
 	if state == State.SLIDE:
 		_slide_timer -= delta
-		if _slide_timer <= 0.0:
+		if _slide_timer <= 0.0 and _can_stand():
 			state = State.RUN
 			_set_slide_collision(false)
 
@@ -184,6 +207,15 @@ func _physics_process(delta: float) -> void:
 	if on_floor_now and not _was_on_floor and state != State.DEAD:
 		EventBus.play_sfx.emit("land")
 		vfx_requested.emit("dust", global_position)
+	if on_floor_now and velocity.y <= 0.0:
+		_jump_consumed = false
+		_coyote_timer = COYOTE_TIME
+		_detect_surface()
+		if state == State.JUMP:
+			state = State.RUN
+		if _landing_slide_timer > 0.0:
+			_start_slide()
+		_try_buffered_jump()
 	_was_on_floor = on_floor_now
 	if _sand_trail != null:
 		_sand_trail.emitting = on_floor_now and (_current_surface == "sand" or _movement_mode == "skating")
@@ -215,6 +247,7 @@ func jump() -> void:
 	if _is_dead:
 		return
 	if _at_junction and _has_junction_direction("up"):
+		_clear_buffered_actions()
 		_choose_junction_route("up")
 		return
 	# Sand blocks jumping entirely without Sand Shoes
@@ -222,33 +255,65 @@ func jump() -> void:
 		sand_blocked.emit()
 		EventBus.play_sfx.emit("bump")
 		return
-	if is_on_floor() or state == State.RUN:
-		_set_slide_collision(false)
-		var jump_vel := JUMP_VELOCITY
-		match _current_surface:
-			"mud":
-				jump_vel *= 0.70
-			"stone":
-				jump_vel *= 1.06
-		# Monkey: jumps carry further — boosted velocity
-		if _skin_id == "monkey":
-			jump_vel *= 1.28
-		velocity.y = jump_vel
-		state = State.JUMP
-		EventBus.play_sfx.emit("jump")
-		_update_character_animation(true)
+	_landing_slide_timer = 0.0
+	_jump_buffer_timer = JUMP_BUFFER_TIME
+	_try_buffered_jump()
+
+func _try_buffered_jump() -> void:
+	if _jump_buffer_timer <= 0.0 or _jump_consumed:
+		return
+	if not is_on_floor() and _coyote_timer <= 0.0:
+		return
+	if state == State.SLIDE and not _can_stand():
+		return
+	_jump_buffer_timer = 0.0
+	if _current_surface == "sand" and not SaveManager.has_upgrade("sand_shoes"):
+		sand_blocked.emit()
+		EventBus.play_sfx.emit("bump")
+		return
+	_coyote_timer = 0.0
+	_jump_consumed = true
+	_slide_timer = 0.0
+	_set_slide_collision(false)
+	var jump_vel := JUMP_VELOCITY
+	match _current_surface:
+		"mud":
+			jump_vel *= 0.70
+		"stone":
+			jump_vel *= 1.06
+	# Monkey keeps its longer jump, including buffered jumps.
+	if _skin_id == "monkey":
+		jump_vel *= 1.28
+	velocity.y = jump_vel
+	state = State.JUMP
+	EventBus.play_sfx.emit("jump")
+	action_performed.emit("jump")
+	_update_character_animation(true)
 
 func slide() -> void:
 	if _is_dead:
 		return
-	if state == State.RUN:
-		state = State.SLIDE
-		# Zuri: nimble — slides complete faster
-		_slide_timer = SLIDE_DURATION * (0.55 if _skin_id == "jungle_girl" else 1.0)
-		_set_slide_collision(true)
-		EventBus.play_sfx.emit("slide")
-		vfx_requested.emit("dust", global_position)
-		_update_character_animation(true)
+	_jump_buffer_timer = 0.0
+	if is_on_floor() and velocity.y <= 0.0 and not _jump_consumed:
+		if state != State.SLIDE:
+			_start_slide()
+		return
+	# Down during a jump gives immediate control over the landing point.
+	velocity.y = minf(velocity.y, -FAST_FALL_SPEED)
+	_landing_slide_timer = LANDING_SLIDE_BUFFER_TIME
+	state = State.JUMP
+	action_performed.emit("dive")
+
+func _start_slide() -> void:
+	_landing_slide_timer = 0.0
+	state = State.SLIDE
+	# Zuri keeps her shorter roll.
+	_slide_timer = SLIDE_DURATION * (0.55 if _skin_id == "jungle_girl" else 1.0)
+	_set_slide_collision(true)
+	EventBus.play_sfx.emit("slide")
+	action_performed.emit("slide")
+	vfx_requested.emit("dust", global_position)
+	_update_character_animation(true)
 
 func move_lane(direction: int) -> void:
 	if _is_dead:
@@ -439,6 +504,10 @@ func revive(safe_pos: Vector3) -> void:
 	global_position = safe_pos
 	_queued_turn = 0
 	_slide_timer = 0.0
+	_clear_buffered_actions()
+	_coyote_timer = 0.0
+	_jump_consumed = false
+	_was_on_floor = false
 	_set_slide_collision(false)
 	_invincible_timer = 2.2
 	EventBus.play_sfx.emit("gem")
@@ -461,6 +530,8 @@ func die() -> void:
 		return
 	_is_dead = true
 	state = State.DEAD
+	_clear_buffered_actions()
+	_coyote_timer = 0.0
 	velocity = Vector3.ZERO
 	_set_slide_collision(false)
 	EventBus.play_sfx.emit("damage")
@@ -480,6 +551,10 @@ func reset(lane: int = 1) -> void:
 	state = State.RUN
 	velocity = Vector3.ZERO
 	_slide_timer = 0.0
+	_clear_buffered_actions()
+	_coyote_timer = 0.0
+	_jump_consumed = false
+	_was_on_floor = false
 	_strafe_anim_timer = 0.0
 	_strafe_anim_name = ""
 	_move_fwd = Vector3(0.0, 0.0, -1.0)
@@ -813,8 +888,24 @@ func _cache_collision_shape() -> void:
 		return
 	var capsule := _collision_shape.shape as CapsuleShape3D
 	if capsule != null:
+		# Collision resources may be shared by scene instances.
+		capsule = capsule.duplicate() as CapsuleShape3D
+		_collision_shape.shape = capsule
 		_standing_collision_height = capsule.height
+		_standing_query_shape = capsule.duplicate() as CapsuleShape3D
 	_standing_collision_y = _collision_shape.position.y
+
+func _can_stand() -> bool:
+	if _standing_query_shape == null or _collision_shape == null or not is_inside_tree():
+		return true
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = _standing_query_shape
+	query.transform = _collision_shape.global_transform
+	# Lift slightly above the floor; only a ceiling should keep us crouched.
+	query.transform.origin += global_basis.y * (_standing_collision_y - _collision_shape.position.y + 0.03)
+	query.collision_mask = collision_mask
+	query.exclude = [get_rid()]
+	return get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
 
 func _set_slide_collision(is_sliding: bool) -> void:
 	if _collision_shape == null:

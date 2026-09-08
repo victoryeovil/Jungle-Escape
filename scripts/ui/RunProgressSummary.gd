@@ -32,6 +32,12 @@ static func build() -> VBoxContainer:
 	return box
 
 static func style_panel(panel: Panel, vbox: VBoxContainer) -> void:
+	var backdrop := ColorRect.new()
+	backdrop.name = "ResultBackdrop"
+	backdrop.color = Color(0.01, 0.04, 0.02, 0.6)
+	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	panel.get_parent().add_child(backdrop)
+	panel.get_parent().move_child(backdrop, 0)
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color("14291e")
 	style.border_color = Color("bb9647")
@@ -45,6 +51,16 @@ static func style_panel(panel: Panel, vbox: VBoxContainer) -> void:
 	vbox.offset_top = 20
 	vbox.offset_bottom = -20
 	vbox.add_theme_constant_override("separation", 12)
+
+static func fit_panel(panel: Panel, vbox: VBoxContainer) -> void:
+	var height := clampf(vbox.get_combined_minimum_size().y + 40.0, 360.0, 750.0)
+	panel.offset_top = -height * 0.5
+	panel.offset_bottom = height * 0.5
+
+static func add_chain_result(parent: VBoxContainer, best: int, bonus: int) -> void:
+	if not is_instance_valid(parent) or best < 2:
+		return
+	_add_label(parent, "Best coin chain: %d  ·  %d bonus coins included" % [best, bonus], Color("edc567"), 13)
 
 static func _add_label(parent: Control, text: String, color: Color, font_size: int) -> void:
 	var label := Label.new()

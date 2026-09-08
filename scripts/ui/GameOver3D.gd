@@ -84,6 +84,7 @@ func show_fail(reason: String = "", can_revive: bool = false, revive_cost: int =
 	_lbl_top.visible = false
 	_set_revive(can_revive, revive_cost)
 	visible = true
+	_fit_result.call_deferred()
 
 func show_endless_over(distance_m: int, best_m: int, is_record: bool, can_revive: bool, revive_cost: int) -> void:
 	var body := "Run over!\n\nDistance:  %d m" % distance_m
@@ -100,6 +101,16 @@ func show_endless_over(distance_m: int, best_m: int, is_record: bool, can_revive
 	_lbl_top.visible = false
 	_fetch_leaderboard()
 	visible = true
+	_fit_result.call_deferred()
+
+func _fit_result() -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	RunProgressSummary.fit_panel($Panel, $Panel/VBox)
+
+func show_chain_result(best: int, bonus: int) -> void:
+	RunProgressSummary.add_chain_result(_run_progress, best, bonus)
+	_fit_result.call_deferred()
 
 func _show_run_progress() -> void:
 	if is_instance_valid(_run_progress):
@@ -133,6 +144,7 @@ func _fetch_leaderboard() -> void:
 				rank += 1
 		_lbl_top.text = "\n".join(lines)
 		_lbl_top.visible = true
+		_fit_result.call_deferred()
 	)
 
 func _on_revive() -> void:
