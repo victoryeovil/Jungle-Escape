@@ -22,7 +22,7 @@ func _run() -> void:
 	Analytics._queue.clear()
 	Analytics.set_process(false)
 	SaveManager._save_data = {"coins": 0, "gems": 5, "completed_levels": []}
-	SaveManager._settings = {"cloud_backup": false}
+	SaveManager._settings = {"cloud_backup": false, "sfx_on": false, "music_on": false}
 	SupabaseClient._access_token = ""
 	SupabaseClient._user_id = ""
 	GameManager.is_logged_in = false
@@ -30,6 +30,9 @@ func _run() -> void:
 	GameManager.clear_daily_challenge()
 	GameManager.start_level(1)
 	var game: Node = load("res://scenes/game3d/Game3D.tscn").instantiate()
+	# Match a normal gameplay scene. This harness itself must keep processing
+	# while paused so it can observe the pause and resume the test.
+	game.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(game)
 	game.player.set_physics_process(false)
 	await get_tree().process_frame

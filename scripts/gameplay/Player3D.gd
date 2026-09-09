@@ -328,8 +328,8 @@ func move_lane(direction: int) -> void:
 			_strafe_anim_timer = 0.20
 			_update_character_animation(true)
 			return
-		# Any swipe while inside the turn zone queues the turn in the required
-		# direction — the player doesn't need to swipe the exact correct side.
+		# Queue the matching directional swipe until the runner reaches the
+		# corner, allowing the player to react before the exact turn point.
 		_queued_turn = _turn_zone_dir
 		var dist := (position - _turn_corner_pos).dot(_move_fwd)
 		if dist >= -TURN_EXECUTE_DISTANCE:

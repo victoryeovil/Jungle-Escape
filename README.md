@@ -58,9 +58,34 @@ jungle_escape/
 - **Swipe left / right** (or A/D keys) — change lanes or trigger a path turn.
 - **Swipe up** (or W/Space) — jump over logs and obstacles.
 - **Swipe down** (or S) — slide under low branches.
-- **Path turns** — at corner tiles, a "TURN LEFT / TURN RIGHT" prompt appears; swipe any direction to execute. A log-jam dam blocks going straight.
+- **Path turns** — at corner tiles, a "TURN LEFT / TURN RIGHT" prompt appears; swipe in that direction to queue the turn. A log-jam dam blocks going straight.
 - Collect coins, gems, and resources. Hit an obstacle → Game Over. Reach the finish gate → Level Complete (1–3 stars).
 - **Level 6** requires **Sand Shoes**, awarded for completing Level 5 (or purchasable early for 150 Coins) — deep sand blocks movement without them.
+
+Swipes now trigger as soon as the gesture crosses the movement threshold.
+Desktop players can also drag with the left mouse button. Slightly early jump
+inputs are remembered until landing, and jumping just after leaving an edge has
+a brief grace period. Press down while airborne to dive and slide on landing;
+the runner stays crouched until an overhead obstacle clears.
+
+Link five normal coin pickups, with no more than three seconds between pickups,
+to earn two bonus coins. The chain timer pauses with the game. The HUD shows the
+next bonus and the three-star coin target; bonus currency does not inflate star
+ratings or daily pickup targets. Coins in competing lanes on the same row no
+longer all need to be collected for three stars.
+
+Endless stages now alternate obstacle sequences with breathing room, protect
+lane and movement-mode transitions, and place coin trails through open routes.
+Hazard spacing accounts for movement speed and jump recovery; narrow sand and
+water sections use hazards that can be passed with the available controls.
+
+Gameplay regression scenes are `RunnerControlChecks`, `EndlessFairnessChecks`,
+`PickupFairness`, and `SkillGameplayChecks` in `scenes/tests`. Run them with
+isolated `APPDATA` folders `.godot/controls-test-profile`,
+`.godot/endless-test-profile`, `.godot/pickup-test-profile`, and
+`.godot/skill-test-profile` respectively, plus the matching
+`-- --controls-test-isolated` (or `endless`, `pickup`, `skill`) argument.
+The skill scene also accepts `--capture-visuals` with a real renderer.
 
 ---
 

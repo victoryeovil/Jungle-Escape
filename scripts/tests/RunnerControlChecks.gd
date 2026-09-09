@@ -50,7 +50,7 @@ func _run() -> void:
 	ProjectSettings.set_setting("jungle_escape/backend_url", "http://127.0.0.1:1")
 	Analytics._queue.clear()
 	Analytics.set_process(false)
-	SaveManager._settings = {"cloud_backup": false, "vibration_on": false}
+	SaveManager._settings = {"cloud_backup": false, "vibration_on": false, "sfx_on": false, "music_on": false}
 	SaveManager._save_data = {"coins": 0, "gems": 0, "upgrades": []}
 	SupabaseClient._access_token = ""
 	SupabaseClient._user_id = ""

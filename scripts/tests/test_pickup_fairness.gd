@@ -33,6 +33,7 @@ func _ready() -> void:
 		get_tree().quit(2)
 		return
 	GameManager.state = GameManager.GameState.PLAYING
+	SaveManager._settings = {"cloud_backup": false, "sfx_on": false, "music_on": false}
 	GameManager.session_coins = 0
 	SaveManager.set_selected_skin("explorer")
 	_test_single_awards_and_dead_runner()
@@ -44,6 +45,10 @@ func _test_single_awards_and_dead_runner() -> void:
 	var manager := TestLevel.new()
 	add_child(manager)
 	var runner := TestRunner.new()
+	var collision := CollisionShape3D.new()
+	collision.name = "CollisionShape3D"
+	collision.shape = CapsuleShape3D.new()
+	runner.add_child(collision)
 	add_child(runner)
 	var collected_totals: Array[int] = []
 	manager.coin_collected.connect(func(total: int): collected_totals.append(total))
